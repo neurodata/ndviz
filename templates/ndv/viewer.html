@@ -4,13 +4,13 @@
   <title>ocpviz: viewing {{ project_name }}</title>
   {% load staticfiles %}
   {# boostrap files #}
-  <link rel="stylesheet" type ="text/css" href="{% static 'css/bootstrap.css' %}" />
+  <link rel="stylesheet" type ="text/css" href="{% static 'bootstrap/css/bootstrap.css' %}" />
 
   {# jquery UI #}
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
 
   {# leaflet files #}
-  <link rel="stylesheet" href="{% static 'ocpviz/leaflet/leaflet.css' %}" /> 
+  <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" /> 
 
   {# buttons, buttons, buttons #} 
   {# old FA: <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet"> #}
@@ -130,22 +130,22 @@
     }
 	</style>
 
-  <script src="{% static 'ocpviz/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <script src="{% static "ocpviz/js/easy-button.js" %}"></script>	
-  <script src="{% static "ocpviz/js/ocp-leaflet.js" %}"></script>	
+  <script src="{% static "ndv/js/easy-button.js" %}"></script>	
+  <script src="{% static "ndv/js/ocp-leaflet.js" %}"></script>	
 	</head>
 <body>
 
 
   {# Begin Modal Code Includes #}
-  {% include "ocpviz/help.html" %}
+  {% include "ndv/help.html" %}
 
-  {% include "ocpviz/nav.html" %}
+  {% include "ndv/nav.html" %}
   
-  {% include "ocpviz/add_data.html" %}
+  {% include "ndv/add_data.html" %}
   
-  {% include "ocpviz/dataview.html" %}
+  {% include "ndv/dataview.html" %}
 
   {# End Modal Code Includes #}
 
@@ -1084,7 +1084,7 @@
 </body>
 {# jquery and bootstrap js #}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script src="{% static "js/bootstrap.min.js" %}"></script>
+<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
 {# jquery ui (for slider) #}
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 {# jquery ui on mobile #}

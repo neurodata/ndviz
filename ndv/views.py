@@ -15,7 +15,7 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, HttpResponseBadRequest 
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound 
 
 from django.template import RequestContext 
 from django.contrib.sites.models import Site
@@ -23,13 +23,10 @@ from django.contrib.sites.models import Site
 from models import VizProject 
 from models import VizLayer 
 
-from ocpuser.models import Dataset
-from ocpuser.models import Project
-from ocpuser.models import Token
-from ocpuser.models import Channel
-
 import urllib2
 import json
+
+VERSION = 'v0.2.1'
 
 VALID_SERVERS = {
     'localhost':'localhost',
@@ -67,8 +64,9 @@ def default(request):
       'zstart': 0,
       'marker': 0,
       'timeseries': False,
+      'version': VERSION,
       }
-  return render(request, 'ocpviz/viewer.html', context)
+  return render(request, 'ndv/viewer.html', context)
 
 # View a project dynamically generated based on token (and channel) 
 def tokenview(request, webargs):
@@ -113,23 +111,62 @@ def tokenview(request, webargs):
     # return error 
     return HttpResponseBadRequest('Error: Invalid REST arguments.')
   
-  # get data from ocpuser 
-  token = get_object_or_404(Token, pk=token_str)
-  project = Project.objects.get(pk=token.project_id)
-  dataset = Dataset.objects.get(pk=project.dataset) 
+  # get data from ocp running locally
+  # make get request to projinfo
+  addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token_str + '/info/' 
+  try:
+    r = urllib2.urlopen(addr)
+  except urllib2.HTTPError, e:
+    r = '[ERROR]: ' + str(e.getcode())
+    return HttpResponse(r) 
+  # AB TODO better error handling 
+  
+  jsoninfo = json.loads(r.read())
+
+  # get project metadata
+  project_name = jsoninfo['project']['name']
+  project_description = jsoninfo['project']['description']
+
+  # get dataset metadata
+  ximagesize = jsoninfo['dataset']['imagesize'][0]
+  yimagesize = jsoninfo['dataset']['imagesize'][1]
+  zimagesize = jsoninfo['dataset']['imagesize'][2]
+
+  xoffset = jsoninfo['dataset']['offset'][0]
+  yoffset = jsoninfo['dataset']['offset'][1]
+  zoffset = jsoninfo['dataset']['offset'][2]
+
+  scalinglevels = jsoninfo['dtaset']['scalinglevels']
+  
+  starttime = jsoninfo['dataset']['timerange'][0]
+  endtime = jsoninfo['dataset']['timerange'][0]
+  
+  # read in all channel info first 
+  channel_info = {}
+  for channel in jsoninfo['channels'].keys():
+    channel_info[channel] = {}
+    channel_info[channel]['channel_name'] = channel
+    channel_info[channel]['channel_type'] = jsoninfo['channels'][channel]['channel_type']
+
+  # add channels to dict  
+  channels = []
   if (channels_str is not None) and (len(channels_str[0]) > 0):
-    channels = []
     for channel_str in channels_str:
       if len(channel_str) > 0:
         if len(channel_str.split(':')) > 1: 
-          channels.append(get_object_or_404(Channel, channel_name=channel_str.split(':')[0], project=token.project))
-          channel_colors[channel_str.split(':')[0]] = channel_str.split(':')[1]
+          if ( channel_str.split(':')[0] not in jsoninfo['channels'].keys() ):
+            return HttpResponseNotFound("[Error]: Could not find channel {} for token {}.".format(channel_str, project_name))
+          else:
+            channel_colors[channel_str.split(':')[0]] = channel_str.split(':')[1]
+            channels.append( channel_info[ channel_str.split(':')[0] ] )
         else:
-          channels.append(get_object_or_404(Channel, channel_name=channel_str, project=token.project))
+          channels.append( channel_info[ channel_str ] )
   else:
     # get all channels for projects
-    channels = Channel.objects.filter(project=project)
-  
+    for channel in channel_info.keys():
+      channels.append( channel_info[channel] )
+
+
   layers = []
   timeseries = False # should we display timeseries controls? 
   # we convert the channels to layers here 
@@ -145,47 +182,46 @@ def tokenview(request, webargs):
   # convert all channels to layers 
   for channel in channels:
     tmp_layer = VizLayer()
-    tmp_layer.layer_name = channel.channel_name
-    tmp_layer.layer_description = token.token_description 
-    if channel.channel_type == 'timeseries':
+    tmp_layer.layer_name = channels[channel]['channel_name']
+    tmp_layer.layer_description = projet_description 
+    if channels[channel]['channel_type'] == 'timeseries':
       timeseries = True 
-    tmp_layer.layertype = channel.channel_type
-    tmp_layer.token = token.token_name
-    #tmp_layer.channel = channel     
-    tmp_layer.channel = channel.channel_name   
+    tmp_layer.layertype = channels[channel]['channel_type']
+    tmp_layer.token = project_name
+    tmp_layer.channel = channels[channel]['channel_name']   
     tmp_layer.server = request.META['HTTP_HOST'];
     tmp_layer.tilecache = False 
-    if channel.channel_name in channel_colors.keys():
-      tmp_layer.color = channel_colors[channel.channel_name].upper()
+    if channels[channel]['channel_name'] in channel_colors.keys():
+      tmp_layer.color = channel_colors[ channels[channel]['channel_name'] ].upper()
     layers.append(tmp_layer)
 
   # package data for the template
-  xdownmax = (dataset.ximagesize + dataset.xoffset - 1)/(2**dataset.scalinglevels)
-  ydownmax = (dataset.yimagesize + dataset.yoffset - 1)/(2**dataset.scalinglevels)
+  xdownmax = (ximagesize + xoffset - 1)/(2**scalinglevels)
+  ydownmax = (yimagesize + yoffset - 1)/(2**scalinglevels)
   # center the map on the image, if no other coordinate is specified  
   if x is None:
     x = xdownmax/2
   if y is None:
     y = ydownmax/2
   if z is None:
-    z = dataset.zoffset
+    z = zoffset
   if res is None:
-    res = dataset.scalinglevels 
+    res = scalinglevels 
   
   context = {
       'layers': layers,
-      'project_name': token.token_name,
-      'xsize': dataset.ximagesize,
-      'ysize': dataset.yimagesize,
-      'zsize': dataset.zimagesize,
-      'xoffset': dataset.xoffset,
-      'yoffset': dataset.yoffset,
-      'zoffset': dataset.zoffset,
+      'project_name': project_name,
+      'xsize': ximagesize,
+      'ysize': yimagesize,
+      'zsize': zimagesize,
+      'xoffset': xoffset,
+      'yoffset': yoffset,
+      'zoffset': zoffset,
       'xdownmax': xdownmax,
       'ydownmax': ydownmax,
-      'starttime': dataset.starttime,
-      'endtime': dataset.endtime,
-      'maxres': dataset.scalinglevels,
+      'starttime': starttime,
+      'endtime': endtime,
+      'maxres': scalinglevels,
       'minres':0,
       'res': res,
       'xstart': x,
@@ -193,8 +229,9 @@ def tokenview(request, webargs):
       'zstart': z,
       'marker': marker,
       'timeseries': timeseries,
+      'version': VERSION,
   }
-  return render(request, 'ocpviz/viewer.html', context)
+  return render(request, 'ndv/viewer.html', context)
 
 
 # View a VizProject (pre-prepared project in the database)
@@ -268,8 +305,9 @@ def projectview(request, webargs):
       'endtime': project.endtime,
       'marker': marker,
       'timeseries': timeseries,
+      'version': VERSION,
   }
-  return render(request, 'ocpviz/viewer.html', context)
+  return render(request, 'ndv/viewer.html', context)
 
 def getDataview(request, webargs):
   """ get the info from the dataview from the db and return it for the modal """
@@ -300,8 +338,9 @@ def dataview(request, webargs):
       'marker': 0,
       'timeseries': False,
       'dataview': 'test',
+      'version': VERSION,
       }
-  return render(request, 'ocpviz/viewer.html', context) 
+  return render(request, 'ndv/viewer.html', context) 
 
 def dataviewsPublic(request):
   """ display a list of all public dataviews """

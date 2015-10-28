@@ -13,11 +13,10 @@
 # limitations under the License.
 
 from django.conf.urls import *
-from ocpuser.views import *
 import django.contrib.auth
   # ocp/viz/ramoninfo/<<server>>/<<token>>/<<channel>>/<<id>>/
 
-urlpatterns = patterns('ocpviz.views',
+urlpatterns = patterns('ndv.views',
     # data views
     url(r'^dataview/(?P<webargs>[\w:,/-]+)', 'dataview'),
     url(r'^public/$', 'dataviewsPublic'),
