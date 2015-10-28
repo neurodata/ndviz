@@ -1,0 +1,33 @@
+#############
+# Django Files #
+#############
+
+settings_secret.py
+settings.py
+activation_email.txt
+
+###################
+# Compiled source #
+###################
+*.pyc
+*.py~
+*.o
+*.so
+*.out
+*.exe
+*.a
+*.log
+
+##############
+# Data Files #
+##############
+*.h5
+*.JSON
+*.csv
+
+######################
+# OS Generated Files #
+######################
+.DS_Store
+*.swp
+
