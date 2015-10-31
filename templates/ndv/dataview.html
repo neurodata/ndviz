@@ -34,20 +34,6 @@
               </select>
               </div>
             </div>
-              <script> 
-              $(function() {
-                $('#serverSelect').change(function(e) {
-                  var changed = $(e.target);
-
-                  var html = '<div class="form-group"><label for="serverNameOther">Server Name</label><input name="serverNameOther" type="text" class="form-control" id="serverNameOther" placeholder="(e.g. http://openconnecto.me )"></div>';
-                  if (changed.is('select[name="servers"]')) {
-                    if (changed.val() == 'other') {
-                      changed.parent().after(html);
-                    }
-                  }
-                });
-              });  
-            </script>
             <button type="submit" class="btn btn-primary">Add Data</button>
           </form>
           <div class="add_data_info">
