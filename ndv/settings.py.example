@@ -16,6 +16,12 @@ import settings_secret
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# If the OCP_SERVER is set to None, the current domain + '/ocp/' will be used
+OCP_SERVER = None
+# If the OCP server you would like to use is at a different domain, comment out
+# the line above and uncomment the line below. 
+# Do NOT include the beginning "http://" or the trailing "/ocp/" 
+# OCP_SERVER = 'openconnecto.me' 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/

@@ -18,7 +18,9 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound 
 
 from django.template import RequestContext 
-from django.contrib.sites.models import Site
+#from django.contrib.sites.models import Site
+
+from django.conf import settings 
 
 from models import VizProject 
 from models import VizLayer 
@@ -113,13 +115,24 @@ def tokenview(request, webargs):
   
   # get data from ocp running locally
   # make get request to projinfo
-  addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token_str + '/info/' 
+  
+  if settings.OCP_SERVER is None:
+    addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token_str + '/info/' 
+  else:
+    addr = 'http://' + settings.OCP_SERVER + '/ocp/ca/' + token_str + '/info/' 
+
   try:
     r = urllib2.urlopen(addr)
   except urllib2.HTTPError, e:
-    r = '[ERROR]: ' + str(e.getcode())
-    return HttpResponse(r) 
-  # AB TODO better error handling 
+    if e.getcode() == 404:
+      r = '[ERROR]: Token {} does not exist!'.format(token_str)
+      return HttpResponseNotFound(r)
+    elif e.getcode() == 500:
+      r = '[ERROR]: The remote OCP server encountered a problem. (error code: {})'.format( e.getcode() )
+      return HttpResponseBadRequest(r)
+    else:
+      r = '[ERROR]: Unknown error. (error code: {})'.format( e.getcode() )
+      return HttpResponseBadRequest(r)
   
   jsoninfo = json.loads(r.read())
 
@@ -128,18 +141,18 @@ def tokenview(request, webargs):
   project_description = jsoninfo['project']['description']
 
   # get dataset metadata
-  ximagesize = jsoninfo['dataset']['imagesize'][0]
-  yimagesize = jsoninfo['dataset']['imagesize'][1]
-  zimagesize = jsoninfo['dataset']['imagesize'][2]
+  ximagesize = jsoninfo['dataset']['imagesize']['0'][0]
+  yimagesize = jsoninfo['dataset']['imagesize']['0'][1]
+  zimagesize = jsoninfo['dataset']['imagesize']['0'][2]
 
-  xoffset = jsoninfo['dataset']['offset'][0]
-  yoffset = jsoninfo['dataset']['offset'][1]
-  zoffset = jsoninfo['dataset']['offset'][2]
+  xoffset = jsoninfo['dataset']['offset']['0'][0]
+  yoffset = jsoninfo['dataset']['offset']['0'][1]
+  zoffset = jsoninfo['dataset']['offset']['0'][2]
 
-  scalinglevels = jsoninfo['dtaset']['scalinglevels']
+  scalinglevels = jsoninfo['dataset']['scalinglevels']
   
   starttime = jsoninfo['dataset']['timerange'][0]
-  endtime = jsoninfo['dataset']['timerange'][0]
+  endtime = jsoninfo['dataset']['timerange'][1]
   
   # read in all channel info first 
   channel_info = {}
@@ -160,7 +173,10 @@ def tokenview(request, webargs):
             channel_colors[channel_str.split(':')[0]] = channel_str.split(':')[1]
             channels.append( channel_info[ channel_str.split(':')[0] ] )
         else:
-          channels.append( channel_info[ channel_str ] )
+          if ( channel_str not in jsoninfo['channels'].keys() ):
+            return HttpResponseNotFound("[Error]: Could not find channel {} for token {}.".format(channel_str, project_name))
+          else:
+            channels.append( channel_info[ channel_str ] )
   else:
     # get all channels for projects
     for channel in channel_info.keys():
@@ -182,17 +198,20 @@ def tokenview(request, webargs):
   # convert all channels to layers 
   for channel in channels:
     tmp_layer = VizLayer()
-    tmp_layer.layer_name = channels[channel]['channel_name']
-    tmp_layer.layer_description = projet_description 
-    if channels[channel]['channel_type'] == 'timeseries':
+    tmp_layer.layer_name = channel['channel_name']
+    tmp_layer.layer_description = project_description 
+    if channel['channel_type'] == 'timeseries':
       timeseries = True 
-    tmp_layer.layertype = channels[channel]['channel_type']
+    tmp_layer.layertype = channel['channel_type']
     tmp_layer.token = project_name
-    tmp_layer.channel = channels[channel]['channel_name']   
-    tmp_layer.server = request.META['HTTP_HOST'];
+    tmp_layer.channel = channel['channel_name'] 
+    if settings.OCP_SERVER is None: 
+      tmp_layer.server = request.META['HTTP_HOST'];
+    else:
+      tmp_layer.server = settings.OCP_SERVER 
     tmp_layer.tilecache = False 
-    if channels[channel]['channel_name'] in channel_colors.keys():
-      tmp_layer.color = channel_colors[ channels[channel]['channel_name'] ].upper()
+    if channel['channel_name'] in channel_colors.keys():
+      tmp_layer.color = channel_colors[ channel['channel_name'] ].upper()
     layers.append(tmp_layer)
 
   # package data for the template
@@ -358,7 +377,10 @@ def query(request, queryargs):
   # make get request
   if server == 'localhost':
     #addr = Site.objects.get_current().domain + '/ocp/' + oquery
-    addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/' + oquery 
+    if settings.OCP_SERVER is None:
+      addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/' + oquery 
+    else:
+      addr = 'http://' + settings.OCP_SERVER + '/ocp/' + oquery 
   else: 
     addr = 'http://' + VALID_SERVERS[server] + '/ocp/' + oquery
   try:
@@ -379,7 +401,10 @@ def ramoninfo(request, webargs):
     return HttpResponse("Error: Server not valid.")
 
   if server == 'localhost':
-    addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( request.META['HTTP_HOST'], token, channel, objids )
+    if settings.OCP_SERVER is None:
+      addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( request.META['HTTP_HOST'], token, channel, objids )
+    else:
+      addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( settings.OCP_SERVER, token, channel, objids )
   else: 
     addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( VALID_SERVERS[server], token, channel, objids )
   try:
@@ -418,7 +443,10 @@ def projinfo(request, queryargs):
 
   if server == 'localhost':
     #addr = Site.objects.get_current().domain + '/ocp/' + oquery
-    addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token + '/info/' 
+    if settings.OCP_SERVER == None:
+      addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token + '/info/'
+    else:
+      addr = 'http://' + settings.OCP_SERVER + '/ocp/ca/' + token + '/info/'
   else: 
     addr = 'http://' + VALID_SERVERS[server] + '/ocp/ca/' + token + '/info/'
   try:

@@ -16,7 +16,7 @@ from django.conf.urls import *
 import django.contrib.auth
   # ocp/viz/ramoninfo/<<server>>/<<token>>/<<channel>>/<<id>>/
 
-urlpatterns = patterns('ndv.views',
+base_urlpatterns = patterns('ndv.views',
     # data views
     url(r'^dataview/(?P<webargs>[\w:,/-]+)', 'dataview'),
     url(r'^public/$', 'dataviewsPublic'),
@@ -34,4 +34,9 @@ urlpatterns = patterns('ndv.views',
     # NOTE: this must be last (because of the tokenview view)
     url(r'^project/(?P<webargs>[\w:,/-]+)', 'projectview'),
     url(r'(?P<webargs>[\w:,/-]+)$', 'tokenview'),
+)
+
+urlpatterns = patterns('',
+  url('^ndv/', include(base_urlpatterns)),
+  url('^', include(base_urlpatterns)), # maintain unprefixed URLs
 )

@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" /> 
 
   {# buttons, buttons, buttons #} 
-  {# old FA: <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet"> #}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
   <style>
     body {
@@ -594,7 +593,7 @@
     // expects a L.point object for point and a number for zoom
     // TODO if the server is localhost (the query server) that doesnt work
 		function getAnnoId(point, zoom) {
-      var ocpUrlBase = "http://{{ request.get_host }}/ocp/viz/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
+      var ocpUrlBase = "http://{{ request.get_host }}/ndv/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
 			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/"; 
 			var ocpUrl = ocpUrlBase.concat(cutout);
       // store the return data
@@ -623,7 +622,7 @@
       // string for return 
       var objstr = 'ID: ' + objid;
       
-      var ramonUrl = "http://{{ request.get_host }}/ocp/viz/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
+      var ramonUrl = "http://{{ request.get_host }}/ndv/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
       console.log(ramonUrl);    
       // make request (using jquery)
       var jqxhr = $.ajax({
@@ -648,7 +647,7 @@
     function getProjInfo() {
       // we use the token from the first layer (for now)   
       var infoToken = "{{ layers.0.token }}"; 
-      var infoUrl = "http://{{ request.get_host }}/ocp/viz/projinfo/localhost/" + infoToken + "/";
+      var infoUrl = "http://{{ request.get_host }}/ndv/projinfo/localhost/" + infoToken + "/";
       // store the return data
 			var data = null;
 
