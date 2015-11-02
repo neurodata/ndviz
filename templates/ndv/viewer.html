@@ -79,6 +79,11 @@
       width: 60%;
       margin: 5px;
     }
+    #resolution { 
+      /* float: left; */
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
     #blendmode { 
       float: left;
       padding-top: 5px;
@@ -342,7 +347,7 @@
     controls.options.position = 'topright';
     controls.onAdd = function (map) {
 			this._div = L.DomUtil.create('div', 'controls');
-      var header = '<h4>Control Panel</h4><br />';
+      var header = '<h4>Control Panel</h4>';
       var datainfo = '<div id="opacity-control">{% spaceless %}
         {% for layer in layers %}
         <div class="controls-{{ "layer_"|add:layer.layer_name|cut:" " }}">
@@ -370,9 +375,9 @@
       {% else %}
       var playdelay = '';
       {% endif %}
-
+      var rescontrol = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + minres + '" max="' + maxres + '" value="' + res + '" /></div>';
       var add_data = '<br /><div id="add_data_link"><a href="#" data-toggle="modal" data-target="#add_data">Add Data to Current View</a></div>'
-      this._div.innerHTML = header + datainfo + blendmode + playdelay + add_data;
+      this._div.innerHTML = header + rescontrol + datainfo + blendmode + playdelay + add_data;
 			return this._div;
 		};
 
@@ -406,6 +411,17 @@
     // update coordinates on pan, zoom, and load
     map.on('drag', coordinatesUpdate);
     map.on('zoomend', coordinatesUpdate);
+
+    function resolutionUpdate() {
+      $( "#res-input" ).val( map.getMaxZoom() - map.getZoom() );
+    }
+
+    map.on('zoomend', resolutionUpdate);
+
+    $( "#res-input" ).on('input', function() {
+      var val = $( "#res-input" ).val();
+      map.setZoom( map.getMaxZoom() - val );
+    });
 
     // navigation 
     // first, intercept the form 
