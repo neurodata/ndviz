@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from django.conf.urls import *
+from django.contrib import admin
 import django.contrib.auth
   # ocp/viz/ramoninfo/<<server>>/<<token>>/<<channel>>/<<id>>/
 
@@ -30,6 +31,7 @@ base_urlpatterns = patterns('ndv.views',
     url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
     url(r'^$', 'default'),
     url(r'^manage/$', 'default'),
+    url(r'^admin/', include(admin.site.urls)),
     # for displaying ocpviz projects 
     # NOTE: this must be last (because of the tokenview view)
     url(r'^project/(?P<webargs>[\w:,/-]+)', 'projectview'),
