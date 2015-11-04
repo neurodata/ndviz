@@ -94,23 +94,27 @@ class VizProject ( models.Model ):
 class DataViewItem ( models.Model ):
   name = models.CharField(max_length=255, verbose_name="An item attached to a particular dataview.")
   desc_int = models.CharField(max_length=255, verbose_name="An internal description for this item. The external description will be the project description.")
+  caption = models.CharField(max_length=255, verbose_name="A caption for this dataview item (to be displayed publically")
   user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True)
   
   # link to the vizproject 
-  vizproject = models.ForeignKey(VizLayer)
+  vizproject = models.ForeignKey(VizProject)
  
   # optional fields to allow a user to define a different starting position 
+  # TODO add bool to allow user to turn these on or off  
   xstart = models.IntegerField(default=0)
   ystart = models.IntegerField(default=0)
   zstart = models.IntegerField(default=0)
+  resstart = models.IntegerField(default=0)
 
   marker_start = models.BooleanField(default=False)
 
-  thumbnail_img = models.ImageField(upload_to='ocpviz/thumbnails/')  
+  # TODO reenable
+  #thumbnail_img = models.ImageField(upload_to='ocpviz/thumbnails/')  
   thumbnail_url = models.CharField(max_length=255, default='') 
 
   def __unicode__(self):
-    return self.item_name 
+    return self.name 
 
 class DataView ( models.Model ):
   name = models.CharField(max_length=255, primary_key=True, verbose_name="Long name for this data view.")
@@ -123,5 +127,5 @@ class DataView ( models.Model ):
   public = models.BooleanField(default=False)
 
   def __unicode__(self):
-    return self.dataview_name
+    return self.name
 

@@ -24,9 +24,12 @@ from django.conf import settings
 
 from models import VizProject 
 from models import VizLayer 
+from models import DataView
+from models import DataViewItem
 
 import urllib2
 import json
+import re
 
 VERSION = 'v0.2.1'
 
@@ -333,8 +336,26 @@ def getDataview(request, webargs):
 
 def dataview(request, webargs):
   """ display the given dataview """
-  """ ocp/ocpviz/dataview/<<dataview name>> """
-  # TODO get dataview name from webargs 
+  """ /dataview/<<dataview name>> """
+ 
+  try: 
+    m = re.match(r"(?P<token>[\w:,-]+)(\/)?$", webargs)
+    [token, misc] = [i for i in m.groups()]
+    if token is None:
+      return HttpResponseNotFound("[ERROR]: No token provided.")
+
+  except Exception, e:
+    print e
+    return HttpResponseNotFound("[ERROR]: Incorrect format for web argument. Argument should be of the form '/dataview/token_for_dataview'")
+  
+  # get dataview from database 
+  dv = get_object_or_404( DataView, token = token )
+
+  # build the URL to this view
+  dv_url = "http://{}{}/".format(request.META['HTTP_HOST'], request.META['PATH_INFO'])
+  vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
+  dv_items = dv.items.all()
+
   context = {
       'layers': None,
       'project_name': None,
@@ -358,6 +379,12 @@ def dataview(request, webargs):
       'timeseries': False,
       'dataview': 'test',
       'version': VERSION,
+      'dv_token': dv.token,
+      'dv_desc': dv.desc,
+      'dv_name': dv.name,
+      'dv_link': dv_url,
+      'dv_items': dv_items,
+      'vizprojecturl': vizprojecturl,
       }
   return render(request, 'ndv/viewer.html', context) 
 
