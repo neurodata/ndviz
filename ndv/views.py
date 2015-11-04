@@ -352,8 +352,13 @@ def dataview(request, webargs):
   dv = get_object_or_404( DataView, token = token )
 
   # build the URL to this view
-  dv_url = "http://{}{}/".format(request.META['HTTP_HOST'], request.META['PATH_INFO'])
-  vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
+  dv_url = "http://{}{}".format(request.META['HTTP_HOST'], request.META['PATH_INFO'])
+  
+  if (request.META['SCRIPT_NAME'] == ''):
+    vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
+  else:
+    vizprojecturl = "http://{}/{}/project/".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'] )
+    
   dv_items = dv.items.all()
 
   context = {
