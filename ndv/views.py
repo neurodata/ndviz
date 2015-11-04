@@ -357,7 +357,7 @@ def dataview(request, webargs):
   if (request.META['SCRIPT_NAME'] == ''):
     vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
   else:
-    vizprojecturl = "http://{}/{}/project/".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'] )
+    vizprojecturl = "http://{}{}/project/".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'] )
     
   dv_items = dv.items.all()
 
