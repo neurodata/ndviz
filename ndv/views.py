@@ -67,6 +67,7 @@ def default(request):
       'xstart': 0,
       'ystart': 0,
       'zstart': 0,
+      'plane': 'xy',
       'marker': 0,
       'timeseries': False,
       'version': VERSION,
@@ -75,47 +76,41 @@ def default(request):
 
 # View a project dynamically generated based on token (and channel) 
 def tokenview(request, webargs):
-  # we expect /ocp/viz/token/channel(s)/res/x/y/z/
+  """ /<<token>>/<<channel1,channel2,...>>/<<plane>>(opt)/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
   # res (x,y,z) will center the map at (x,y,z) for a given res  
   channels_str = None   
   channels = None 
   channel_colors = {}
-  [token_str, restargs] = webargs.split('/', 1)
-  restsplit = restargs.split('/')
+  
   # initialize these variables, which will be passed to the template
   x = None
   y = None
   z = None
   res = None
   marker = False 
-
-  if len(restsplit) == 5:
-    # assume no channels, just res/x/y/z/
-    res = int(restsplit[0])
-    x = int(restsplit[1])
-    y = int(restsplit[2])
-    z = int(restsplit[3])
-    marker = True 
-
-  elif len(restsplit) > 5:
-    # assume channels + res/x/y/z 
-    channels_str = restsplit[0].split(',')
-    res = int(restsplit[1])
-    x = int(restsplit[2])
-    y = int(restsplit[3])
-    z = int(restsplit[4])
-    marker = True 
-
-  elif len(restsplit) == 2:
-    # assume just channels
-    channels_str = restsplit[0].split(',')
-  elif len(restsplit) == 1:
-    # all channels (get from project)
-    channels_str = None 
-  else:
-    # return error 
-    return HttpResponseBadRequest('Error: Invalid REST arguments.')
   
+  # AB TODO process marker as option arg
+  marker = True 
+
+  # process arguments 
+  try:
+    m = re.match(r"(\w+)/?(?P<channels>[\w+,-]+)?/?(xy|xz|yz)?/([\w,/-]+)?$", webargs) 
+    import pdb; pdb.set_trace()
+    [token_str, channels_str, orientation, cutoutstr] = [i for i in m.groups()]
+    
+  except Exception, e:
+    print e
+    return HttpResponseBadRequest("[ERROR]: Invalid RESTful argument.")
+
+  # process cutoutargs
+  if cutoutstr is not None:
+    cutoutargs = cutoutstr.split('/')
+    if len (cutoutstr) >= 4:
+      res = int(cutoutargs[0])
+      x = int(cutoutargs[1])
+      y = int(cutoutargs[2])
+      z = int(cutoutargs[3])
+
   # get data from ocp running locally
   # make get request to projinfo
   
@@ -249,6 +244,7 @@ def tokenview(request, webargs):
       'xstart': x,
       'ystart': y,
       'zstart': z,
+      'plane': orientation,
       'marker': marker,
       'timeseries': timeseries,
       'version': VERSION,
@@ -325,6 +321,7 @@ def projectview(request, webargs):
       'zstart': z,
       'starttime': project.starttime,
       'endtime': project.endtime,
+      'plane': 'xy',
       'marker': marker,
       'timeseries': timeseries,
       'version': VERSION,
@@ -381,6 +378,7 @@ def dataview(request, webargs):
       'ystart': 0,
       'zstart': 0,
       'marker': 0,
+      'plane': 'xy',
       'timeseries': False,
       'dataview': 'test',
       'version': VERSION,
