@@ -95,9 +95,8 @@ def tokenview(request, webargs):
   # process arguments 
   try:
     m = re.match(r"(\w+)/?(?P<channels>[\w+,-]+)?/?(xy|xz|yz)?/([\w,/-]+)?$", webargs) 
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     [token_str, channels_str, orientation, cutoutstr] = [i for i in m.groups()]
-    
   except Exception, e:
     print e
     return HttpResponseBadRequest("[ERROR]: Invalid RESTful argument.")
@@ -161,6 +160,7 @@ def tokenview(request, webargs):
 
   # add channels to dict  
   channels = []
+  channels_str = channels_str.split(',')
   if (channels_str is not None) and (len(channels_str[0]) > 0):
     for channel_str in channels_str:
       if len(channel_str) > 0:
