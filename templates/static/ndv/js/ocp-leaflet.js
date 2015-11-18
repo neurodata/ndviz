@@ -1,6 +1,6 @@
-// for smooth scrolling through z-indices 
+// for smooth scrolling through z-indices
 // TODO
-// Implement blend mode, fix other modes for safari and fx 
+// Implement blend mode, fix other modes for safari and fx
 //
 L.TileLayer.OCPLayer = L.TileLayer.extend({
 
@@ -39,7 +39,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     //Only if we are loading an actual image
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
-      // mark classes by index 
+      // mark classes by index
       L.DomUtil.addClass(this, 'index-' + zindex);
 
       layer.fire('tileload', {
@@ -58,14 +58,14 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
       this._tilesToLoad = 0;
       this._update();
       this._clearBgBuffer();
-      
+
       function unloadTiles() {
         for (key in old_tiles) {
           this._tileContainer.removeChild(old_tiles[key]);
         }
         old_tiles = {};
       };
-      
+
       this.on('load', function () {
           setTimeout(unloadTiles.bind(this), 300);
       });
@@ -76,7 +76,26 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
   _smoothRemoveTile: function(tile) {
     this._tileContainer.removeChild(tile);
   },
-	
+
+	_getZoomForUrl: function () {
+
+		var options = this.options,
+		    zoom = this._map.getZoom();
+
+		if (options.zoomReverse) {
+			if (options.maxNativeZoom) {
+				zoom = options.maxNativeZoom - zoom;
+			}
+			else {
+				zoom = options.maxZoom - zoom;
+			}
+		}
+
+		zoom += options.zoomOffset;
+		//return options.maxNativeZoom ? Math.min(zoom, options.maxNativeZoom) : zoom;
+		return Math.max(0, zoom);
+	},
+
   setBrightness: function (brightness) {
 		this.options.brightness = brightness;
 
@@ -87,10 +106,10 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		return this;
 	},
 
-  _updateBrightness: function () { 
+  _updateBrightness: function () {
     L.DomUtil.setBrightnessContrast(this._container, this.options.brightness, this.options.contrast);
   },
-  
+
   setContrast: function (contrast) {
 		this.options.contrast = contrast;
 
@@ -100,8 +119,8 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
 		return this;
 	},
-  
-  _updateContrast: function () { 
+
+  _updateContrast: function () {
     L.DomUtil.setBrightnessContrast(this._container, this.options.brightness, this.options.contrast);
 
   },
@@ -124,15 +143,13 @@ L.extend(L.DomUtil, {
     }
   },
   setBlendMode: function(el, mode) {
-    // TODO validate this somehow? 
+    // TODO validate this somehow?
     console.log(el.style);
     el.style.setProperty('mix-blend-mode', mode);
   },
- 
+
 });
 
 L.tileLayer.OCPLayer = function (url, options) {
     return new L.TileLayer.OCPLayer(url, options);
 };
-
-

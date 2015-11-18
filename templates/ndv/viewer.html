@@ -185,7 +185,9 @@
 		var map = L.map('map', {
 			doubleClickZoom: false,
     });
-
+    
+    var upsample_num = 2;
+    
     // define layers
 
     // load image layers first 
@@ -228,7 +230,8 @@
             zindex: zindex,
             zoomReverse: true,
             minZoom: maxres,
-            maxZoom: maxres + maxres,
+            maxZoom: maxres + maxres + upsample_num,
+            maxNativeZoom: maxres + maxres,
             tileSize: 512,
             {% if layer.layertype == 'annotation' %}
             opacity: 0.4,
@@ -282,7 +285,8 @@
             zindex: zindex,
             zoomReverse: true,
             minZoom: maxres,
-            maxZoom: maxres + maxres,
+            maxZoom: maxres + maxres + upsample_num,
+            maxNativeZoom: maxres + maxres,
             tileSize: 512,
             {% if layer.layertype == 'annotation' %}
             opacity: 0.4,
