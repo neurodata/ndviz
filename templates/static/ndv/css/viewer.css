@@ -1,0 +1,118 @@
+body {
+  padding: 50px 0px 0px 0px; /* 50px for navbar */
+  margin: 0;
+}
+html, body, #map {
+  height: 100%;
+  width: 100%;
+}
+.has-error .form-control{
+  border-width: 3px;
+  border-color: #FF2D2D !important;
+}
+.leaflet-container {
+  background: #000 !important;
+}
+/* hide controls and navbar for mobile */
+@media only screen and (max-width: 768px), only screen and (max-device-width: 768px) {
+  .controls, .queryres, .projinfo, .navbar {
+    display: none;
+  }
+  body {
+    padding: 0px 0px 0px 0px; /* 50px for navbar */
+    margin: 0;
+  }
+}
+.controls, .queryres, .projinfo {
+  padding: 8px 8px;
+  width: 300px;
+  /*font: 14px/16px Arial, Helvetica, sans-serif;*/
+  font-size: 13px !important;
+  background: white;
+  background: rbga(255,255,255,0.8);
+  box-shadow: 0 0 15px rbga(0,0,0,0.2);
+  border-radius: 2px;
+}
+.projinfo, .queryres {
+  display: none;
+}
+.controls-layer-name {
+  width: 90%;
+  padding-top: 10px;
+  padding-left: 10px;
+}
+.controls-opacity-control-name {
+  float: left;
+  width: 35%;
+  padding-top: 2px;
+  padding-left: 15px;
+}
+#slider > .brightness  {
+  float: right;
+  width: 60%;
+  margin: 5px;
+}
+#slider > .contrast  {
+  float: right;
+  width: 60%;
+  margin: 5px;
+}
+#slider > .opacity {
+  float: right;
+  width: 60%;
+  margin: 5px;
+}
+#resolution { 
+  /* float: left; */
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+#blendmode { 
+  float: left;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+#playdelay { 
+  float: left;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.playdelay-input {
+  width: 75px;
+}
+#add_data_link { 
+  float: left;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.remove-layer {
+  padding-right: 5px;
+  padding-top: 3px;
+}
+.controls, .projinfo, .queryres h4 {
+  margin: 0 0 5px; 
+  color: #777;
+}
+.keyhelp {
+  display: none;
+  background: rgb(34, 34, 34);
+  color: rgb(157, 157, 157);
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 2px;
+}
+.add_data_info {
+  padding-top: 10px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 10px;
+/*  height: 55px;*/
+/*  background-color: #333; */
+}
+
