@@ -14,126 +14,10 @@
 
   {# buttons, buttons, buttons #} 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-  <style>
-    body {
-      padding: 50px 0px 0px 0px; /* 50px for navbar */
-      margin: 0;
-    }
-		html, body, #map {
-			height: 100%;
-      width: 100%;
-		}
-    .has-error .form-control{
-      border-width: 3px;
-      border-color: #FF2D2D !important;
-    }
-    .leaflet-container {
-			background: #000 !important;
-    }
-    /* hide controls and navbar for mobile */
-    @media only screen and (max-width: 768px), only screen and (max-device-width: 768px) {
-      .controls, .queryres, .projinfo, .navbar {
-        display: none;
-      }
-      body {
-        padding: 0px 0px 0px 0px; /* 50px for navbar */
-        margin: 0;
-      }
-    }
-    .controls, .queryres, .projinfo {
-      padding: 8px 8px;
-      width: 300px;
-      /*font: 14px/16px Arial, Helvetica, sans-serif;*/
-      font-size: 13px !important;
-      background: white;
-      background: rbga(255,255,255,0.8);
-      box-shadow: 0 0 15px rbga(0,0,0,0.2);
-      border-radius: 2px;
-    }
-    .projinfo, .queryres {
-      display: none;
-    }
-    .controls-layer-name {
-      width: 90%;
-      padding-top: 10px;
-      padding-left: 10px;
-    }
-    .controls-opacity-control-name {
-      float: left;
-      width: 35%;
-      padding-top: 2px;
-      padding-left: 15px;
-    }
-    #slider > .brightness  {
-      float: right;
-      width: 60%;
-      margin: 5px;
-    }
-    #slider > .contrast  {
-      float: right;
-      width: 60%;
-      margin: 5px;
-    }
-    #slider > .opacity {
-      float: right;
-      width: 60%;
-      margin: 5px;
-    }
-    #resolution { 
-      /* float: left; */
-      padding-top: 5px;
-      padding-bottom: 5px;
-    }
-    #blendmode { 
-      float: left;
-      padding-top: 5px;
-      padding-bottom: 5px;
-    }
-    #playdelay { 
-      float: left;
-      padding-top: 5px;
-      padding-bottom: 5px;
-    }
-    .playdelay-input {
-      width: 75px;
-    }
-    #add_data_link { 
-      float: left;
-      padding-top: 5px;
-      padding-bottom: 5px;
-    }
-    .remove-layer {
-      padding-right: 5px;
-      padding-top: 3px;
-    }
-    .controls, .projinfo, .queryres h4 {
-			margin: 0 0 5px; 
-			color: #777;
-    }
-    .keyhelp {
-      display: none;
-      background: rgb(34, 34, 34);
-      color: rgb(157, 157, 157);
-      padding-top: 5px;
-      padding-bottom: 5px;
-      padding-left: 10px;
-      padding-right: 10px;
-      border-radius: 2px;
-    }
-    .add_data_info {
-      padding-top: 10px;
-    }
-    .footer {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      margin-bottom: 20px;
-      padding: 10px;
-    /*  height: 55px;*/
-    /*  background-color: #333; */
-    }
-	</style>
-
+  
+  {# css file #}
+  <link rel="stylesheet" href="{% static 'ndv/css/viewer.css' %}" />
+  
   <script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <script src="{% static "ndv/js/easy-button.js" %}"></script>	
@@ -150,7 +34,6 @@
   {% include "ndv/add_data.html" %}
   
   {% include "ndv/dataview.html" %}
-
   {# End Modal Code Includes #}
 
   <div id="map"></div>
@@ -345,7 +228,6 @@
       map.on('click', onMapClick);
     });
 
-
 		// display some map controls
 		var controls = L.control();
     controls.options.position = 'topright';
@@ -379,7 +261,7 @@
       {% else %}
       var playdelay = '';
       {% endif %}
-      var rescontrol = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + minres + '" max="' + maxres + '" value="' + res + '" /></div>';
+      var rescontrol = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (minres - upsample_num) + '" max="' + maxres + '" value="' + res + '" /></div>';
       var add_data = '<br /><div id="add_data_link"><a href="#" data-toggle="modal" data-target="#add_data">Add Data to Current View</a></div>'
       this._div.innerHTML = header + rescontrol + datainfo + blendmode + playdelay + add_data;
 			return this._div;
@@ -404,7 +286,7 @@
       $( "#y" ).parent().removeClass("has-error");
       $( "#z" ).parent().removeClass("has-error");
       var center = map.getCenter();
-      var res = map.getMaxZoom() - map.getZoom();
+      var res = map.getMaxZoom() - upsample_num - map.getZoom();
       var coordinates = map.project(center);
 
       $( "#x" ).val(Math.round(coordinates.x));
@@ -417,14 +299,14 @@
     map.on('zoomend', coordinatesUpdate);
 
     function resolutionUpdate() {
-      $( "#res-input" ).val( map.getMaxZoom() - map.getZoom() );
+      $( "#res-input" ).val( map.getMaxZoom() - upsample_num - map.getZoom() );
     }
 
     map.on('zoomend', resolutionUpdate);
 
     $( "#res-input" ).on('input', function() {
       var val = $( "#res-input" ).val();
-      map.setZoom( map.getMaxZoom() - val );
+      map.setZoom( map.getMaxZoom() - upsample_num - val );
     });
 
     // navigation 
@@ -496,12 +378,7 @@
       markers.push(L.marker(center, marker_options).addTo(map));
       
       // get current url
-      var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
-      console.log( markerUrlRaw );
-      var markerUrlArr = markerUrlRaw.split("/", 8);
-      console.log( markerUrlArr );
-      var curZoom = map.getMaxZoom() - map.getZoom();
-      var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      var markerUrl = getCurrentURL(point);
 
       var popup_options = {
         maxWidth: 750,
@@ -528,10 +405,7 @@
       markers.push(L.marker(event.latlng, marker_options).addTo(map));
 
       // get current url
-      var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
-      var markerUrlArr = markerUrlRaw.split("/", 8);
-      var curZoom = map.getMaxZoom() - map.getZoom(); 
-      var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      var markerUrl = getCurrentURL(point);
       var popup_options = {
         maxWidth: 750,
       }
@@ -541,7 +415,15 @@
       // turn query tool back on 
       map.on('click', onMapClick);
     };
-    
+   
+    function getCurrentURL(point) {
+      var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
+      var markerUrlArr = markerUrlRaw.split("/", 8);
+      var curZoom = map.getMaxZoom() - upsample_num - map.getZoom();
+      var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      return markerUrl;
+    };
+
     $( "#addmarkermouse" ).click(function( event ) {
       map.on('click', markerOnClick);
       // turn off query tool
