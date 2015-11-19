@@ -500,22 +500,30 @@
       var ocpUrlBase = "http://{{ request.get_host }}/ndv/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
 			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/"; 
 			var ocpUrl = ocpUrlBase.concat(cutout);
-      // store the return data
-			var data = null;
-
-			// make request 
+			
+      // make request 
 			var xmlHttp = new XMLHttpRequest();
 			xmlHttp.open( "GET", ocpUrl, false );
 			xmlHttp.send( null );
 
 			return xmlHttp.responseText;
-
 		}
     
     function getRamonInfo(point, zoom) {
+      // first, make sure that either zoom > 0 or 
+      // resample point and zoom to be at level 0
+      if (zoom < 0) {
+        var numScales = 0 - zoom;
+        // scale the x and y coordinates of the point
+        var x = Math.round( point.x / ( 2 * numScales ) );
+        var y = Math.round( point.y / ( 2 * numScales ) );
+        point.x = x;
+        point.y = y;
+        zoom = 0;
+      } 
+      
       // get the id of the object at that location 
       objid = getAnnoId(point, zoom);
-      console.log("obj: " + parseInt(objid));
       
       if (parseInt(objid) == 0) {
         return "No RAMON object here.";
@@ -571,7 +579,7 @@
         var reqPoint = map.project(e.latlng);	
         popup
           .setLatLng(e.latlng)
-          .setContent( getRamonInfo(reqPoint, map.getMaxZoom() - map.getZoom()) )
+          .setContent( getRamonInfo(reqPoint, map.getMaxZoom() - upsample_num - map.getZoom()) )
           .openOn(map);
       } 
 		}
@@ -994,5 +1002,3 @@
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 
 </html>
-
-
