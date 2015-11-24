@@ -492,12 +492,18 @@
       markers.push(L.marker(center, marker_options).addTo(map));
       
       // get current url
+      var script_name = '{{ request.SCRIPT_NAME }}'
       var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
       console.log( markerUrlRaw );
       var markerUrlArr = markerUrlRaw.split("/", 8);
       console.log( markerUrlArr );
       var curZoom = map.getMaxZoom() - map.getZoom();
-      var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      if (script_name == '') {
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      } 
+      else {
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      }
 
       var popup_options = {
         maxWidth: 750,
@@ -527,7 +533,14 @@
       var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
       var markerUrlArr = markerUrlRaw.split("/", 8);
       var curZoom = map.getMaxZoom() - map.getZoom(); 
-      var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      var script_name = '{{ request.SCRIPT_NAME }}'
+      if (script_name == '') {
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      } 
+      else {
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      }
+      
       var popup_options = {
         maxWidth: 750,
       }
@@ -1044,8 +1057,6 @@
         timeStepBack();
       });
     });
-
-  
   
   </script>
   {% if timeseries == True %}
