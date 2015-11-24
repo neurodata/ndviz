@@ -70,7 +70,7 @@
         // clear previous info / errors 
         $( '.add_data_info' ).empty();
 
-        var script_name = '{{ request.SCRIPT_NAME }}';
+        var script_name = '{{ request.META.SCRIPT_NAME }}';
         if (script_name == '') {
           var urlBase = "http://{{ request.get_host }}/validate/";
         }
