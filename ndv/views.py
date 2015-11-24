@@ -93,9 +93,8 @@ def tokenview(request, webargs):
 
   # process arguments 
   try:
-    #m = re.match(r"(\w+)/?(?P<channels>[\w+,-]+)?/?(xy|xz|yz)?/([\w,/-]+)?$", webargs) 
-    m = re.match(r"(\w+)/?(?P<channels>[\w,]+)?/?(xy|xz|yz)?/([\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs) 
-    [token_str, channels_str, orientation, cutoutstr, options_str] = [i for i in m.groups()]
+    m = re.match(r"(?P<token>\w+)/?(?!(xy|xz|yz))(?P<channels>[\w,]+)?/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs) 
+    [token_str, neg, channels_str, orientation, cutoutstr, options_str] = [i for i in m.groups()]
   
     if channels_str is not None:
       channels_str = channels_str.split(',')
@@ -347,7 +346,8 @@ def dataview(request, webargs):
   """ /dataview/<<dataview name>> """
  
   try: 
-    m = re.match(r"(?P<token>[\w:,-]+)(\/)?$", webargs)
+    #m = re.match(r"(?P<token>[\w:,-]+)(\/)?$", webargs)
+    m = re.match(r"(?P<token>\w+)/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs) 
     [token, misc] = [i for i in m.groups()]
     if token is None:
       return HttpResponseNotFound("[ERROR]: No token provided.")
