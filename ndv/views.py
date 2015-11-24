@@ -99,6 +99,9 @@ def tokenview(request, webargs):
   
     if channels_str is not None:
       channels_str = channels_str.split(',')
+      if channels_str[0] == 'xy' or channels_str[0] == 'xz' or channels_str[0] == 'yz':
+        channels_str = None
+
   except Exception, e:
     print e
     return HttpResponseBadRequest("[ERROR]: Invalid RESTful argument.")
