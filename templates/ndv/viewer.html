@@ -499,10 +499,10 @@
       console.log( markerUrlArr );
       var curZoom = map.getMaxZoom() - map.getZoom();
       if (script_name == '') {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
       } 
       else {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
       }
 
       var popup_options = {
@@ -535,10 +535,10 @@
       var curZoom = map.getMaxZoom() - map.getZoom(); 
       var script_name = '{{ request.SCRIPT_NAME }}'
       if (script_name == '') {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
       } 
       else {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
       }
       
       var popup_options = {
