@@ -89,7 +89,7 @@ def tokenview(request, webargs):
   res = None
   marker = False 
   
-  options = {}
+  options = None
 
   # process arguments 
   try:
@@ -100,6 +100,7 @@ def tokenview(request, webargs):
       channels_str = channels_str.split(',')
   
     if options_str is not None:
+      options = {}
       options_raw = options_str.split(',')
       for option in options_raw:
         if len(option.split(':')) > 1:
@@ -234,7 +235,13 @@ def tokenview(request, webargs):
     z = zoffset
   if res is None:
     res = scalinglevels 
-  
+ 
+  # process template options
+  if options is not None:
+    if 'marker' in options.keys():
+      marker = True 
+
+
   context = {
       'layers': layers,
       'project_name': project_name,
