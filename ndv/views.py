@@ -31,7 +31,7 @@ import urllib2
 import json
 import re
 
-VERSION = 'v0.3.1'
+VERSION = 'v0.4 beta'
 
 VALID_SERVERS = {
     'localhost':'localhost',
@@ -89,16 +89,25 @@ def tokenview(request, webargs):
   res = None
   marker = False 
   
-  # AB TODO process marker as option arg
-  # marker = True 
+  options = {}
 
   # process arguments 
   try:
-    m = re.match(r"(\w+)/?(?P<channels>[\w+,-]+)?/?(xy|xz|yz)?/([\w,/-]+)?$", webargs) 
-    [token_str, channels_str, orientation, cutoutstr] = [i for i in m.groups()]
+    #m = re.match(r"(\w+)/?(?P<channels>[\w+,-]+)?/?(xy|xz|yz)?/([\w,/-]+)?$", webargs) 
+    m = re.match(r"(\w+)/?(?P<channels>[\w,]+)?/?(xy|xz|yz)?/([\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs) 
+    [token_str, channels_str, orientation, cutoutstr, options_str] = [i for i in m.groups()]
   
     if channels_str is not None:
       channels_str = channels_str.split(',')
+  
+    if options_str is not None:
+      options_raw = options_str.split(',')
+      for option in options_raw:
+        if len(option.split(':')) > 1:
+          options[ option.split(':')[0] ] = option.split(':')[1] 
+        else:
+          options[option] = True 
+
   except Exception, e:
     print e
     return HttpResponseBadRequest("[ERROR]: Invalid RESTful argument.")
