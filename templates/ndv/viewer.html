@@ -417,10 +417,16 @@
     };
    
     function getCurrentURL(point) {
+      var script_name = '{{ request.SCRIPT_NAME }}'
       var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
       var markerUrlArr = markerUrlRaw.split("/", 8);
       var curZoom = map.getMaxZoom() - upsample_num - map.getZoom();
-      var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      if (script_name == '') {
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      } 
+      else {
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+      }
       return markerUrl;
     };
 
@@ -497,7 +503,13 @@
     // expects a L.point object for point and a number for zoom
     // TODO if the server is localhost (the query server) that doesnt work
 		function getAnnoId(point, zoom) {
-      var ocpUrlBase = "http://{{ request.get_host }}/ndv/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
+      var script_name = '{{ request.SCRIPT_NAME }}'
+      if (script_name == '') {
+        var ocpUrlBase = "http://{{ request.get_host }}/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
+      }
+      else {
+        var ocpUrlBase = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
+      }
 			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/"; 
 			var ocpUrl = ocpUrlBase.concat(cutout);
 			
@@ -534,8 +546,14 @@
       // string for return 
       var objstr = 'ID: ' + objid;
       
-      var ramonUrl = "http://{{ request.get_host }}/ndv/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
-      console.log(ramonUrl);    
+      var script_name = '{{ request.SCRIPT_NAME }}'
+      if (script_name == '') {
+        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
+      }
+      else {
+        var ramonUrl = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
+      }
+      
       // make request (using jquery)
       var jqxhr = $.ajax({
         url: ramonUrl,
@@ -559,7 +577,13 @@
     function getProjInfo() {
       // we use the token from the first layer (for now)   
       var infoToken = "{{ layers.0.token }}"; 
-      var infoUrl = "http://{{ request.get_host }}/ndv/projinfo/localhost/" + infoToken + "/";
+      var script_name = '{{ request.SCRIPT_NAME }}'
+      if (script_name == '') {
+        var infoUrl = "http://{{ request.get_host }}/projinfo/localhost/" + infoToken + "/";
+      }
+      else {
+        var infoUrl = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/projinfo/localhost/" + infoToken + "/";
+      }
       // store the return data
 			var data = null;
 
@@ -938,8 +962,6 @@
         timeStepBack();
       });
     });
-
-  
   
   </script>
   {% if timeseries == True %}

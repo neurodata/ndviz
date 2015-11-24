@@ -31,7 +31,7 @@ import urllib2
 import json
 import re
 
-VERSION = 'v0.3'
+VERSION = 'v0.3.1'
 
 VALID_SERVERS = {
     'localhost':'localhost',
@@ -90,7 +90,7 @@ def tokenview(request, webargs):
   marker = False 
   
   # AB TODO process marker as option arg
-  marker = True 
+  # marker = True 
 
   # process arguments 
   try:
@@ -567,4 +567,7 @@ def validate(request, webargs):
 
 
   return HttpResponseBadRequest('Channel not found for project {} on server {}'.format(token, server))
-  
+ 
+def tileloader(request, webargs):
+  # Forward a tile loading request to the appropriate server 
+  return HttpResponse('Tile Loaded')

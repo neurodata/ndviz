@@ -70,8 +70,13 @@
         // clear previous info / errors 
         $( '.add_data_info' ).empty();
 
-        var urlBase = "http://{{ request.get_host }}/ocp/viz/validate/";
-
+        var script_name = '{{ request.SCRIPT_NAME }}';
+        if (script_name == '') {
+          var urlBase = "http://{{ request.get_host }}/validate/";
+        }
+        else {
+          var urlBase = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/validate/";
+        }
         var $inputs = $('#add_data_form :input');
         var values = {};
         $inputs.each(function() {
