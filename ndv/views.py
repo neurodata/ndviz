@@ -237,10 +237,12 @@ def tokenview(request, webargs):
     res = scalinglevels 
  
   # process template options
+  blendmode = 'normal' 
   if options is not None:
     if 'marker' in options.keys():
       marker = True 
-
+    if 'blend' in options.keys():
+      blendmode = options['blend'] # TODO should we validate this?  
 
   context = {
       'layers': layers,
@@ -264,6 +266,7 @@ def tokenview(request, webargs):
       'plane': orientation,
       'marker': marker,
       'timeseries': timeseries,
+      'blendmode': blendmode, 
       'version': VERSION,
   }
   return render(request, 'ndv/viewer.html', context)
