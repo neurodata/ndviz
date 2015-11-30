@@ -790,6 +790,13 @@
     $(function() {
       $( "#togglecontrols" ).click(function() {
         $( ".controls" ).toggle( "slow" )
+      
+      {% if timeseries == True %}
+        // toggle timeseries controls 
+        $( "#timeseries-control-box" ).toggle( "slow" )
+
+      {% endif %}
+        
       });
     });
 
