@@ -356,8 +356,7 @@ def dataview(request, webargs):
   """ /dataview/<<dataview name>> """
  
   try: 
-    #m = re.match(r"(?P<token>[\w:,-]+)(\/)?$", webargs)
-    m = re.match(r"(?P<token>\w+)/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs) 
+    m = re.match(r"(?P<token>[\w:,-]+)(\/)?$", webargs)
     [token, misc] = [i for i in m.groups()]
     if token is None:
       return HttpResponseNotFound("[ERROR]: No token provided.")
