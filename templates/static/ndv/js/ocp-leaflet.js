@@ -35,7 +35,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
   _tileOnLoad: function () {
     var layer = this._layer;
-
+    
     //Only if we are loading an actual image
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
@@ -50,6 +50,24 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
     layer._tileLoaded();
   },
+	
+  _loadTile: function (tile, tilePoint) {
+		tile._layer  = this;
+		tile.onload  = this._tileOnLoad;
+		tile.onerror = this._tileOnError;
+
+		this._adjustTilePoint(tilePoint);
+    if (tilePoint.x < 0 || tilePoint.y < 0) {
+      tile.src = L.Util.emptyImageUrl
+    }
+    else {
+      tile.src     = this.getTileUrl(tilePoint);
+    }
+		this.fire('tileloadstart', {
+			tile: tile,
+			url: tile.src
+		});
+	},
 
   smoothRedraw: function () {
     if (this._map) {
