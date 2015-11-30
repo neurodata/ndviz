@@ -256,14 +256,9 @@
         {% endfor %}
         {% endspaceless %}</div>';
       var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="Screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select></div><span style="float: right; padding-top: 5px;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span>'
-      {% if timeseries == True %}
-      var playdelay = '<br /><div id="playdelay">Play Delay (sec): <input class="playdelay-input" type="number" step="any" min="0" max="100" value="1" /></div><span style="float: right; padding-top: 5px;"><a class="playdelay-submit" href="#"><i class="fa fa-clone fa-lg"></i></a></span>';
-      {% else %}
-      var playdelay = '';
-      {% endif %}
       var rescontrol = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (minres - upsample_num) + '" max="' + maxres + '" value="' + res + '" /></div>';
       var add_data = '<br /><div id="add_data_link"><a href="#" data-toggle="modal" data-target="#add_data">Add Data to Current View</a></div>'
-      this._div.innerHTML = header + rescontrol + datainfo + blendmode + playdelay + add_data;
+      this._div.innerHTML = header + rescontrol + datainfo + blendmode + add_data;
 			return this._div;
 		};
 
@@ -967,38 +962,29 @@
   {% if timeseries == True %}
 
   <footer class="footer">
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
-        <div class="col-md-12">
-          <span class="fa-stack fa-lg">
-            <i class="fa fa-square fa-inverse fa-stack-2x"></i>
-            <a href="#" id="beginning"><i class="fa fa-backward fa-stack-1x"></i></a>
-          </span>
-          
-          <span class="fa-stack fa-lg">
-            <i class="fa fa-square fa-inverse fa-stack-2x"></i>
-            <a href="#" id="back"><i class="fa fa-step-backward fa-stack-1x"></i></a>
-          </span>
-          
-          <span class="fa-stack fa-lg">
-            <i class="fa fa-square fa-inverse fa-stack-2x"></i>
-            <a href="#" id="play"><i class="fa fa-play fa-stack-1x"></i></a>
-          </span>
-          
-          <span class="fa-stack fa-lg">
-            <i class="fa fa-square fa-inverse fa-stack-2x"></i>
-            <a href="#" id="pause"><i class="fa fa-pause fa-stack-1x"></i></a>
-          </span>
-          
-          <span class="fa-stack fa-lg">
-            <i class="fa fa-square fa-inverse fa-stack-2x"></i>
-            <a href="#" id="forward"><i class="fa fa-step-forward fa-stack-1x"></i></a>
-          </span>
-          
-          <span class="fa-stack fa-lg">
-            <i class="fa fa-square fa-inverse fa-stack-2x"></i>
-            <a href="#" id="end"><i class="fa fa-forward fa-stack-1x"></i></a>
-          </span>
+        <div class="col-md-6 col-md-offset-3">
+          <div id="timeseries-control-box">
+            <div id="timeseries-control-buttons">
+              <a href="#" id="beginning"><i class="fa fa-lg fa-backward fa-border"></i></a>
+            
+              <a href="#" id="back"><i class="fa fa-lg fa-step-backward fa-border"></i></a>
+            
+              <a href="#" id="play"><i class="fa fa-lg fa-play fa-border"></i></a>
+            
+              <a href="#" id="pause"><i class="fa fa-lg fa-pause fa-border"></i></a>
+            
+              <a href="#" id="forward"><i class="fa fa-lg fa-step-forward fa-border"></i></a>
+            
+              <a href="#" id="end"><i class="fa fa-lg fa-forward fa-border"></i></a>
+            </div>
+            <div>
+            <small>Play Delay (sec):</small> 
+            <input class="playdelay-input" type="number" step="any" min="0" max="100" value="1" />
+              <a class="playdelay-submit" href="#"><i class="fa fa-clone fa-lg"></i></a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
