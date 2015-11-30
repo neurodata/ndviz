@@ -92,10 +92,8 @@
 
         // remove http:// from the server string
         server = server.substring(7);
-        console.log(server); 
         var args = token + "/" + channel + "/" + server + "/";
         var url = urlBase.concat(args);
-        console.log(url);
         // make request (using jquery)
         var jqxhr = $.ajax({
           url: url,
