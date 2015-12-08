@@ -23,6 +23,10 @@ OCP_SERVER = None
 # Do NOT include the beginning "http://" or the trailing "/ocp/" 
 # OCP_SERVER = 'openconnecto.me' 
 
+# Google Analytics (optional)
+GOOGLE_ANALYTICS_PROPERTY_ID = ''
+GOOGLE_ANALYTICS_DOMAIN = ''
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
@@ -72,6 +76,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'ndv.context_processors.googleanalytics',
             ],
         },
     },
