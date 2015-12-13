@@ -10,22 +10,22 @@
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
 
   {# leaflet files #}
-  <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" /> 
+  <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" />
 
-  {# buttons, buttons, buttons #} 
+  {# buttons, buttons, buttons #}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-  
+
   {# css file #}
   <link rel="stylesheet" href="{% static 'ndv/css/viewer.css' %}" />
-  
+
   {% if GOOGLE_ANALYTICS_PROPERTY_ID %}
     {% include "ndv/analytics.html" %}
-  {% endif %} 
+  {% endif %}
 
   <script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <script src="{% static "ndv/js/easy-button.js" %}"></script>	
-  <script src="{% static "ndv/js/ocp-leaflet.js" %}"></script>	
+  <script src="{% static "ndv/js/easy-button.js" %}"></script>
+  <script src="{% static "ndv/js/ocp-leaflet.js" %}"></script>
 	</head>
 <body>
 
@@ -34,19 +34,21 @@
   {% include "ndv/help.html" %}
 
   {% include "ndv/nav.html" %}
-  
+
   {% include "ndv/add_data.html" %}
-  
+
   {% include "ndv/dataview.html" %}
+
+  {% include "ndv/login.html" %}
   {# End Modal Code Includes #}
 
   <div id="map"></div>
-  <script> 
+  <script>
     // tool variables
     var querytool = false; // disabled by default
-    var querylayer = 'none'; 
-    var querytoken = 'none'; 
-    var querychannel = 'none'; 
+    var querylayer = 'none';
+    var querytoken = 'none';
+    var querychannel = 'none';
 
     // timeseries globals
     var playdelay = 1;
@@ -54,8 +56,8 @@
     // marker array
     var markers = [];
 
-    // dataset info 
-    var xmin = {{ xoffset }};	
+    // dataset info
+    var xmin = {{ xoffset }};
     var xmax = {{ xsize }} + {{ xoffset }} - 1;
     var ymin = {{ yoffset }};
     var ymax = {{ ysize }} + {{ yoffset }} - 1;
@@ -64,24 +66,24 @@
     var maxres = {{ maxres }};
     var res = {{ res }};
     var zmin = {{ zoffset }};
-    var zmax = {{ zsize }} + {{ zoffset }} - 1; 
-    // set zindex to some default (we pick the lowest slice)  
+    var zmax = {{ zsize }} + {{ zoffset }} - 1;
+    // set zindex to some default (we pick the lowest slice)
     var zindex = {{ zstart }};
 
-     // create the map first 
+     // create the map first
 		var map = L.map('map', {
 			doubleClickZoom: false,
     });
-    
+
     var upsample_num = 2;
-    
+
     // define layers
 
-    // load image layers first 
+    // load image layers first
     {% for layer in layers %}
       {% if layer.layertype != 'annotation' %}
-      {# setup the URL #} 
-      
+      {# setup the URL #}
+
         {% if layer.channel %}
           var webtoken = '{{ layer.token }}/{{ layer.channel }}';
           {% if layer.color %}
@@ -91,26 +93,26 @@
           var webtoken = '{{ layer.token }}';
         {% endif %}
 
-        {% if layer.tilecache %} 
+        {% if layer.tilecache %}
           {% if layer.layertype == 'timeseries' %}
-            var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png'; 
+            var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
           {% else %}
             var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          
+
         {% else %}
           {% if layer.color %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
           {% elif layer.layertype == 'timeseries' %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
-          {% else %}  
+          {% else %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
         {% endif %}
-          
-        console.log(url);    
 
-        {# add the layer #}  
+        console.log(url);
+
+        {# add the layer #}
         var {{ "layer_"|add:layer.layer_name|cut:" " }} = L.tileLayer.OCPLayer(
           url,
           {
@@ -131,12 +133,12 @@
           }).addTo(map);
         {% endif %}
     {% endfor %}
-    
-    // now load annotations 
+
+    // now load annotations
     {% for layer in layers %}
       {% if layer.layertype == 'annotation' %}
-      {# setup the URL #} 
-      
+      {# setup the URL #}
+
         {% if layer.channel %}
           var webtoken = '{{ layer.token }}/{{ layer.channel }}';
           {% if layer.color %}
@@ -146,26 +148,26 @@
           var webtoken = '{{ layer.token }}';
         {% endif %}
 
-        {% if layer.tilecache %} 
+        {% if layer.tilecache %}
           {% if layer.layertype == 'timeseries' %}
-            var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png'; 
+            var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
           {% else %}
             var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          
+
         {% else %}
           {% if layer.color %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
           {% elif layer.layertype == 'timeseries' %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
-          {% else %}  
+          {% else %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
         {% endif %}
-          
-        console.log(url);    
 
-        {# add the layer #}  
+        console.log(url);
+
+        {# add the layer #}
         var {{ "layer_"|add:layer.layer_name|cut:" " }} = L.tileLayer.OCPLayer(
           url,
           {
@@ -186,12 +188,12 @@
           }).addTo(map);
         {% endif %}
     {% endfor %}
-  
-    // set the initial view 
+
+    // set the initial view
     var center = map.unproject(L.point({{ xstart }}, {{ ystart }}), maxres + maxres - res);
 		map.setView(center, maxres + maxres - res);
 
-    // display query result 
+    // display query result
     var queryres = L.control();
     queryres.options.position = 'topright';
     queryres.onAdd = function (map) {
@@ -222,7 +224,7 @@
 			return this._div;
     };
 		projinfo.addTo(map);
-    
+
     // disable (and then re-enable) clicking on mouseover
     projinfo.getContainer().addEventListener('mouseover', function() {
       map.off('click', onMapClick);
@@ -246,12 +248,12 @@
         <div id="slider">
         <span class="opacity">{{ "layer_"|add:layer.layer_name|cut:" " }}</span>
         </div><br />
-      
+
         <div class="controls-opacity-control-name">Brightness</div>
         <div id="slider">
           <span class="brightness">{{ "layer_"|add:layer.layer_name|cut:" " }}</span>
         </div><br />
-        
+
         <div class="controls-opacity-control-name">Contrast</div>
         <div id="slider">
           <span class="contrast">{{ "layer_"|add:layer.layer_name|cut:" " }}</span>
@@ -267,7 +269,7 @@
 		};
 
 		controls.addTo(map);
-    
+
     // disable (and then re-enable) clicking on mouseover
     controls.getContainer().addEventListener('mouseover', function() {
       map.off('click', onMapClick);
@@ -308,8 +310,8 @@
       map.setZoom( map.getMaxZoom() - upsample_num - val );
     });
 
-    // navigation 
-    // first, intercept the form 
+    // navigation
+    // first, intercept the form
     $( "#navigate" ).submit(function( event ) {
       event.preventDefault();
       // clear errors
@@ -318,14 +320,14 @@
       $( "#z" ).parent().removeClass("has-error");
 
       // if a valid (x,y) pair was entered, pan and place a marker
-      // note, need to pan before changing slices 
+      // note, need to pan before changing slices
       if ( $( "#x" ).val() && $( "#y" ).val()) {
         var x = $( "#x" ).val();
         var y = $( "#y" ).val();
 
-        // validate 
+        // validate
         if ( x > xmax || x < xmin ) {
-          $( "#x" ).parent().addClass("has-error"); 
+          $( "#x" ).parent().addClass("has-error");
         }
         else if ( y > ymax || y < ymin ) {
           $( "#y" ).parent().addClass("has-error");
@@ -337,8 +339,8 @@
 
           map.panTo(projpoint);
           // place a marker
-          //L.marker(projpoint).addTo(map); 
-        } 
+          //L.marker(projpoint).addTo(map);
+        }
       }
       else {
         if ( $( "#x" ).val() && !$( "#y" ).val() ) {
@@ -346,9 +348,9 @@
         }
         else if ( $( "#y" ).val() && !$( "#x" ).val() ) {
           $( "#x" ).parent().addClass("has-error");
-        }  
-      } 
-      // if a zindex was entered, navigate to that slice 
+        }
+      }
+      // if a zindex was entered, navigate to that slice
       if ( $( "#z" ).val() ) {
         var z = $( "#z" ).val();
         if (z <= zmax && z >= zmin) {
@@ -358,15 +360,15 @@
           $( "#z" ).parent().addClass("has-error");
         }
       }
-      
+
       // handle timestep if timeseries
       {% if timeseries == True %}
-        loadTimeStep( $( "#timestep" ).val() ); 
+        loadTimeStep( $( "#timestep" ).val() );
       {% endif %}
     });
-    
+
     $( "#addmarkercenter" ).click(function( event ) {
-      // place a marker at the current map center 
+      // place a marker at the current map center
       var center = map.getCenter();
       var point = map.project(center);
       var marker_options = {
@@ -375,26 +377,26 @@
 
       // keep track of markers by storing in an array
       markers.push(L.marker(center, marker_options).addTo(map));
-      
+
       // get current url
       var markerUrl = getCurrentURL(point);
 
       var popup_options = {
         maxWidth: 750,
       }
-      
+
       markers[markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
     });
-    
+
     {% if marker == True %}
-      // add a marker to the center 
+      // add a marker to the center
       //L.marker(center).addTo(map);
       $( "#addmarkercenter" ).trigger('click');
     {% endif %}
 
     function markerOnClick(event) {
-      // place a marker at the click 
-           
+      // place a marker at the click
+
       var point = map.project(event.latlng);
       var marker_options = {
         title: point.x + " " + point.y + " " + zindex,
@@ -411,10 +413,10 @@
 
       markers[markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
       map.off('click', markerOnClick);
-      // turn query tool back on 
+      // turn query tool back on
       map.on('click', onMapClick);
     };
-   
+
     function getCurrentURL(point) {
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
@@ -422,7 +424,7 @@
       var curZoom = map.getMaxZoom() - upsample_num - map.getZoom();
       if (script_name == '') {
         var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
-      } 
+      }
       else {
         var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
       }
@@ -439,11 +441,11 @@
       var index;
       for (index = 0; index < markers.length; index++) {
         map.removeLayer(markers[index]);
-        
+
       }
     });
 
-		// z-index arrows 
+		// z-index arrows
 		L.easyButton('fa-arrow-up',
 				incZIndex,
 				'Increase Z-Index'
@@ -461,7 +463,7 @@
     }
 
 		function incZIndex() {
-      map.closePopup();    
+      map.closePopup();
       var oldzindex = zindex;
       if ((zindex + 1) > zmax) {
         $( "#z" ).parent().addClass("has-error");
@@ -509,19 +511,19 @@
       else {
         var ocpUrlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
       }
-			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/"; 
+			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
 			var ocpUrl = ocpUrlBase.concat(cutout);
-			
-      // make request 
+
+      // make request
 			var xmlHttp = new XMLHttpRequest();
 			xmlHttp.open( "GET", ocpUrl, false );
 			xmlHttp.send( null );
 
 			return xmlHttp.responseText;
 		}
-    
+
     function getRamonInfo(point, zoom) {
-      // first, make sure that either zoom > 0 or 
+      // first, make sure that either zoom > 0 or
       // resample point and zoom to be at level 0
       if (zoom < 0) {
         var numScales = 0 - zoom;
@@ -531,20 +533,20 @@
         point.x = x;
         point.y = y;
         zoom = 0;
-      } 
-      
-      // get the id of the object at that location 
+      }
+
+      // get the id of the object at that location
       objid = getAnnoId(point, zoom);
-      
+
       if (parseInt(objid) == 0) {
         return "No RAMON object here.";
       }
-      
-      // AB TODO set this based on the project 
-      var queryserver = "localhost"; 
-      // string for return 
+
+      // AB TODO set this based on the project
+      var queryserver = "localhost";
+      // string for return
       var objstr = 'ID: ' + objid;
-      
+
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       if (script_name == '') {
         var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
@@ -552,12 +554,12 @@
       else {
         var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
       }
-      
+
       // make request (using jquery)
       var jqxhr = $.ajax({
         url: ramonUrl,
         type: 'GET',
-        success: function(response) { 
+        success: function(response) {
           console.log(response);
           $( ".querybody" ).empty();
           $( ".querybody" ).append(response);
@@ -568,14 +570,14 @@
           console.log('failure');
           objstr = 'Failed to retrieve RAMON obj.';
         });
-      console.log(objstr); 
+      console.log(objstr);
       return objstr;
-          
+
     }
-    
+
     function getProjInfo() {
-      // we use the token from the first layer (for now)   
-      var infoToken = "{{ layers.0.token }}"; 
+      // we use the token from the first layer (for now)
+      var infoToken = "{{ layers.0.token }}";
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       if (script_name == '') {
         var infoUrl = "http://{{ request.get_host }}/projinfo/localhost/" + infoToken + "/";
@@ -586,7 +588,7 @@
       // store the return data
 			var data = null;
 
-			// make request 
+			// make request
 			var xmlHttp = new XMLHttpRequest();
 			xmlHttp.open( "GET", infoUrl, false );
 			xmlHttp.send( null );
@@ -595,16 +597,16 @@
 
 		}
 
-		// popup on click (querytool)  
+		// popup on click (querytool)
 		var popup = L.popup();
 		function onMapClick(e) {
       if (querytool) {
-        var reqPoint = map.project(e.latlng);	
+        var reqPoint = map.project(e.latlng);
         popup
           .setLatLng(e.latlng)
           .setContent( getRamonInfo(reqPoint, map.getMaxZoom() - upsample_num - map.getZoom()) )
           .openOn(map);
-      } 
+      }
 		}
 		map.on('click', onMapClick);
 
@@ -632,7 +634,7 @@
             // do nothing
 
         }
-      } 
+      }
     });
     function toggleKeyboardHelp() {
       if ($( ".keyhelp" ).css("display") == "none") {
@@ -645,12 +647,12 @@
           // Animation complete
         });
       }
-    } 
+    }
 
     // tools
     // query tool
 
-    // disable querying 
+    // disable querying
     $( '#query_none' ).click(function(event) {
       if (querytool) {
         $( '#query_' + querylayer + '_check' ).css("visibility","hidden");
@@ -671,7 +673,7 @@
         console.log('Updating ' + querylayer + ' to ' + curlayer);
         $( '#query_' + querylayer + '_check' ).css("visibility","hidden");
         $( '#query_{{ layer.token }}_{{ layer.channel }}_check' ).css("visibility","");
-        querylayer = curlayer; 
+        querylayer = curlayer;
         querytoken = '{{ layer.token }}';
         querychannel = '{{ layer.channel }}';
         querytool = true;
@@ -679,8 +681,8 @@
     });
     {% endif %}
     {% endfor %}
-    
-    // TODO clicking on a marker pops up coordinates 
+
+    // TODO clicking on a marker pops up coordinates
 
     // add keyboard help to map
 		var keyhelp = L.control();
@@ -692,63 +694,63 @@
 		};
 
 		keyhelp.update = function () {
-      this._div.innerHTML = 
+      this._div.innerHTML =
       "<h5>Keyboard Shortcuts</h5><ul class='list-unstyled'>" +
-        "<li><kbd>h</kbd> display help</li>" + 
-        "<li><kbd>w</kbd> increase z-index</li>" + 
-        "<li><kbd>a</kbd> zoom out</li>" + 
-        "<li><kbd>s</kbd> decrease z-index</li>" + 
-        "<li><kbd>d</kbd> zoom in</li>" + 
+        "<li><kbd>h</kbd> display help</li>" +
+        "<li><kbd>w</kbd> increase z-index</li>" +
+        "<li><kbd>a</kbd> zoom out</li>" +
+        "<li><kbd>s</kbd> decrease z-index</li>" +
+        "<li><kbd>d</kbd> zoom in</li>" +
         "</ul><small>Press <kbd>h</kbd> to close.</small>";
 		};
-    
+
     keyhelp.addTo(map);
     {# jquery slider (opacity controls) #}
-    // brightness controls 
+    // brightness controls
     $(function() {
       $( "#slider > .brightness" ).each(function() {
-        var layer = $( this ).text(); 
+        var layer = $( this ).text();
         $( this ).empty().slider({
           min: 0,
           max: 200,
           value: 100,
-          slide: function ( event, ui ) { 
+          slide: function ( event, ui ) {
             eval(layer).setBrightness(ui.value);
             console.log(ui.value);
             },
           start: function ( event, ui ) { map.dragging.disable(); },
-          stop: function ( event, ui ) { map.dragging.enable(); }, 
+          stop: function ( event, ui ) { map.dragging.enable(); },
         });
       });
     });// sliders -- brightness
     $(function() {
       $( "#slider > .contrast" ).each(function() {
-        var layer = $( this ).text(); 
+        var layer = $( this ).text();
         $( this ).empty().slider({
           min: 0,
           max: 200,
           value: 100,
-          slide: function ( event, ui ) { 
+          slide: function ( event, ui ) {
               eval(layer).setContrast(ui.value);
             },
           start: function ( event, ui ) { map.dragging.disable(); },
-          stop: function ( event, ui ) { map.dragging.enable(); }, 
+          stop: function ( event, ui ) { map.dragging.enable(); },
         });
       });
     });// sliders -- contrast
-    // sliders -- opacity 
+    // sliders -- opacity
     $(function() {
       $( "#slider > .opacity" ).each(function() {
-        var layer = $( this ).text(); 
+        var layer = $( this ).text();
         $( this ).empty().slider({
           min: 0,
           max: 100,
           value: eval(layer).options.opacity*100,
-          slide: function ( event, ui ) { 
+          slide: function ( event, ui ) {
               eval(layer).setOpacity(ui.value/100);
             },
           start: function ( event, ui ) { map.dragging.disable(); },
-          stop: function ( event, ui ) { map.dragging.enable(); }, 
+          stop: function ( event, ui ) { map.dragging.enable(); },
         });
       });
     });// sliders -- opacity
@@ -763,62 +765,62 @@
           {% for layer in layers %}
             console.log({{ "layer_"|add:layer.layer_name|cut:" " }});
             eval({{ "layer_"|add:layer.layer_name|cut:" " }}).setBlendMode(changed.val());
-          {% endfor %}  
+          {% endfor %}
         }
       });
-    }); // blend mode 
-    
+    }); // blend mode
+
     // play delay
     $(function() {
       $('.playdelay-submit').click(function(e) {
         var val = $('.playdelay-input').val();
         playdelay = val;
       });
-    }); // play delay 
+    }); // play delay
 
-    // remove a layer 
+    // remove a layer
     $(function() {
       $( "#opacity-control" ).on( "click", ".remove-layer", function() {
         console.log('click');
         var class_arr = this.className.split(' ');
         var layer_name = $.trim(class_arr[1]);
         console.log('Removing ' + layer_name);
-        // remove layer from the map  
+        // remove layer from the map
         map.removeLayer( eval(layer_name) );
         // remove layer from control panel
-        $( ".controls-" + layer_name ).remove(); 
+        $( ".controls-" + layer_name ).remove();
       });
     });
 
-    // toggle the controls window  
+    // toggle the controls window
     $(function() {
       $( "#togglecontrols" ).click(function() {
         $( ".controls" ).toggle( "slow" )
-      
+
       {% if timeseries == True %}
-        // toggle timeseries controls 
+        // toggle timeseries controls
         $( "#timeseries-control-box" ).toggle( "slow" )
 
       {% endif %}
-        
+
       });
     });
 
-    // close the queryinfo window 
+    // close the queryinfo window
     $(function() {
       $( "#closequerybox" ).click(function() {
         $( ".queryres" ).hide( "slow" );
       });
     });
 
-    // toggle the projinfo window 
+    // toggle the projinfo window
     $(function() {
       $( "#toggleprojinfo" ).click(function() {
         $( ".projinfo" ).toggle( "slow" )
       });
     });
 
-    // timeseries functions  
+    // timeseries functions
     function loadTimeStep(newTime) {
       map.closePopup();
       if (newTime < {{ starttime }}) {
@@ -834,16 +836,16 @@
           {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png'; 
+            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}  
+          {% endif %}
           {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
           {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
         {% endif %}
         {% endfor %}
       }
-    } 
+    }
 
     function timeStepForward() {
       map.closePopup();
@@ -851,24 +853,24 @@
       {% if layer.layertype == "timeseries" %}
         var curTime = parseInt({{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime);
         if (curTime + 1 <= parseInt({{ endtime }})) {
-          $( "#timestep" ).parent().removeClass("has-error"); 
+          $( "#timestep" ).parent().removeClass("has-error");
           var newTime = curTime + 1;
           {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png'; 
+            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}  
+          {% endif %}
           {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
           {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
         }
         else {
-          $( "#timestep" ).parent().addClass("has-error"); 
+          $( "#timestep" ).parent().addClass("has-error");
         }
       {% endif %}
       {% endfor %}
-      // update timestep box 
+      // update timestep box
       $( "#timestep" ).val(newTimeStr);
 		}
 
@@ -878,27 +880,27 @@
       {% if layer.layertype == "timeseries" %}
         var curTime = parseInt({{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime);
         if (curTime - 1 >= parseInt({{ starttime }})) {
-          $( "#timestep" ).parent().removeClass("has-error"); 
+          $( "#timestep" ).parent().removeClass("has-error");
           var newTime = curTime - 1;
           {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png'; 
+            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}  
+          {% endif %}
           {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
           {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
         }
         else {
-          $( "#timestep" ).parent().addClass("has-error"); 
+          $( "#timestep" ).parent().addClass("has-error");
         }
       {% endif %}
       {% endfor %}
-      // update timestep box 
+      // update timestep box
       $( "#timestep" ).val(newTimeStr);
 		}
-    
+
     function timeBeginning() {
       map.closePopup();
       {% for layer in layers %}
@@ -906,18 +908,18 @@
         var newTimeStr = {{ starttime }};
         {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
         {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png'; 
+            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
         {% else %}
         var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-        {% endif %}  
+        {% endif %}
         {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
         {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
       {% endif %}
       {% endfor %}
-      // update timestep box 
+      // update timestep box
       $( "#timestep" ).val(newTimeStr);
     }
-    
+
     function timeEnd() {
       map.closePopup();
       {% for layer in layers %}
@@ -925,22 +927,22 @@
         var newTimeStr = {{ endtime }};
         {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
         {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png'; 
+            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}  
+          {% endif %}
           {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
           {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
       {% endif %}
       {% endfor %}
-      // update timestep box 
+      // update timestep box
       $( "#timestep" ).val(newTimeStr);
 		}
 
-    var play; 
+    var play;
     $(function() {
       $( "#play" ).click(function() {
-        play = setInterval(function() { timeStepForward(); }, 1000*playdelay); // 1 second default 
+        play = setInterval(function() { timeStepForward(); }, 1000*playdelay); // 1 second default
       });
     });
     $(function() {
@@ -968,7 +970,7 @@
         timeStepBack();
       });
     });
-  
+
   </script>
   {% if timeseries == True %}
 
@@ -979,19 +981,19 @@
           <div id="timeseries-control-box">
             <div id="timeseries-control-buttons">
               <a href="#" id="beginning"><i class="fa fa-lg fa-backward fa-border"></i></a>
-            
+
               <a href="#" id="back"><i class="fa fa-lg fa-step-backward fa-border"></i></a>
-            
+
               <a href="#" id="play"><i class="fa fa-lg fa-play fa-border"></i></a>
-            
+
               <a href="#" id="pause"><i class="fa fa-lg fa-pause fa-border"></i></a>
-            
+
               <a href="#" id="forward"><i class="fa fa-lg fa-step-forward fa-border"></i></a>
-            
+
               <a href="#" id="end"><i class="fa fa-lg fa-forward fa-border"></i></a>
             </div>
             <div>
-            <small>Play Delay (sec):</small> 
+            <small>Play Delay (sec):</small>
             <input class="playdelay-input" type="number" step="any" min="0" max="100" value="1" />
               <a class="playdelay-submit" href="#"><i class="fa fa-clone fa-lg"></i></a>
             </div>
@@ -1003,14 +1005,14 @@
   {% endif %}
 
   {# after generating the main UI, open dataview, etc #}
-  {% if dataview %} 
+  {% if dataview %}
     <script>
       $(window).load(function() {
         $( '#displayDataview' ).modal('show');
       });
     </script>
   {% endif %}
-  
+
 </body>
 {# jquery and bootstrap js #}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>

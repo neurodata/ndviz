@@ -6,11 +6,6 @@
         <a class="navbar-brand" href="#"><img src="{% static "ndv/img/ocp_thumb.png" %}" /></a>
         <a class="navbar-brand" href="#">NeuroDataViz</a>
       </div>
-      <!--
-      <ul class="nav navbar-nav">
-        <li><a href="#">Projects</a></li>
-      </ul>
-      --!>
       <form id="navigate" class="navbar-form navbar-left" role="search" action="">
         <div class="form-group">
           <input type="text" id="x" size="5" class="form-control" placeholder="x" aria-describedby="xlabel">
@@ -19,12 +14,12 @@
           <input type="text" id="y" size="5" class="form-control" placeholder="y" aria-describedby="ylabel">
         </div>
         <div class="form-group">
-          <input type="text" id="z" size="5" class="form-control" placeholder="z" aria-describedby="zlabel"> 
+          <input type="text" id="z" size="5" class="form-control" placeholder="z" aria-describedby="zlabel">
         </div>
         {% if timeseries == True %}
         <div class="form-group">
           <label for="timestep"><i class="fa fa-clock-o fa-lg fa-inverse"></i></label>
-          <input type="text" id="timestep" size="5" class="form-control" placeholder="time" aria-describedby="timestep"> 
+          <input type="text" id="timestep" size="5" class="form-control" placeholder="time" aria-describedby="timestep">
         </div>
         {% endif %}
         <button type="submit" class="btn btn-default">Go</button>
@@ -54,7 +49,60 @@
       <ul class="nav navbar-nav navbar-right">
         <li><a href="#" id="toggleprojinfo">Project Info</a></li>
         <li><a href="#" id="togglecontrols">Toggle Controls</a></li>
+        <ul class="nav navbar-nav">
+          <li><a href="#">Data</a></li>
+        </ul>
+        {% if user.is_authenticated %}
+        <ul id="managelink" class="nav navbar-nav">
+        {% else %}
+        <ul id="managelink" class="nav navbar-nav" style="display:none;">
+        {% endif %}
+          <li><a href="#">Manage</a></li>
+        </ul>
+
+        {% if user.is_authenticated %}
+        <ul id="loginlink" class="nav navbar-nav" style="display:none;">
+        {% else %}
+        <ul id="loginlink" class="nav navbar-nav">
+        {% endif %}
+          <li><a href="#" data-toggle="modal" data-target="#login">Login</a></li>
+        </ul>
+
+        {% if user.is_authenticated %}
+        <ul id="logoutlink" class="nav navbar-nav">
+        {% else %}
+        <ul id="logoutlink" class="nav navbar-nav" style="display:none;">
+        {% endif %}
+          <li><a href="#" id="logoutbutton">Logout</a></li>
+        </ul>
+
         <li><a href="#" data-toggle="modal" data-target="#help">Help</a></li>
       </ul>
     </div>
   </nav>
+
+  <script>
+    // process logout form
+    $(function () {
+      $( '#logoutbutton' ).on('click', function () {
+        $.ajax({
+          url: '{% url "logout" %}',
+          success: function(response) {
+
+            $( "#loginlink" ).show()
+            $( "#managelink" ).hide()
+            $( "#logoutlink" ).hide()
+          },
+        })
+      });
+
+    });
+
+
+    function processLogoout() {
+      $.ajax({
+        url: '{% url "logout" %}'
+      })
+    }
+
+  </script>

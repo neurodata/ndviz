@@ -1,11 +1,11 @@
 # Copyright 2015 Open Connectome Project (http://openconnecto.me)
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,17 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound 
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 
-from django.template import RequestContext 
+from django.contrib.auth import authenticate, login, logout
+
+from django.template import RequestContext
 #from django.contrib.sites.models import Site
 
-from django.conf import settings 
+from django.conf import settings
 
-from models import VizProject 
-from models import VizLayer 
+from models import VizProject
+from models import VizLayer
 from models import DataView
 from models import DataViewItem
 
@@ -74,39 +76,39 @@ def default(request):
       }
   return render(request, 'ndv/viewer.html', context)
 
-# View a project dynamically generated based on token (and channel) 
+# View a project dynamically generated based on token (and channel)
 def tokenview(request, webargs):
   """ /<<token>>/<<channel1,channel2,...>>/<<plane>>(opt)/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
-  # res (x,y,z) will center the map at (x,y,z) for a given res  
-  channels_str = None   
-  channels = None 
+  # res (x,y,z) will center the map at (x,y,z) for a given res
+  channels_str = None
+  channels = None
   channel_colors = {}
-  
+
   # initialize these variables, which will be passed to the template
   x = None
   y = None
   z = None
   res = None
-  marker = False 
-  
+  marker = False
+
   options = None
 
-  # process arguments 
+  # process arguments
   try:
-    m = re.match(r"(?P<token>\w+)/?(?!(xy|xz|yz))(?P<channels>[\w,]+)?/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs) 
+    m = re.match(r"(?P<token>\w+)/?(?!(xy|xz|yz))(?P<channels>[\w,]+)?/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
     [token_str, neg, channels_str, orientation, cutoutstr, options_str] = [i for i in m.groups()]
-  
+
     if channels_str is not None:
       channels_str = channels_str.split(',')
-  
+
     if options_str is not None:
       options = {}
       options_raw = options_str.split(',')
       for option in options_raw:
         if len(option.split(':')) > 1:
-          options[ option.split(':')[0] ] = option.split(':')[1] 
+          options[ option.split(':')[0] ] = option.split(':')[1]
         else:
-          options[option] = True 
+          options[option] = True
 
   except Exception, e:
     print e
@@ -115,7 +117,7 @@ def tokenview(request, webargs):
   # process cutoutargs
   if cutoutstr is not None:
     cutoutargs = cutoutstr.split('/')
-    
+
     if len (cutoutstr) >= 4:
       res = int(cutoutargs[0])
       x = int(cutoutargs[1])
@@ -124,11 +126,11 @@ def tokenview(request, webargs):
 
   # get data from ocp running locally
   # make get request to projinfo
-  
+
   if settings.OCP_SERVER is None:
-    addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token_str + '/info/' 
+    addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token_str + '/info/'
   else:
-    addr = 'http://' + settings.OCP_SERVER + '/ocp/ca/' + token_str + '/info/' 
+    addr = 'http://' + settings.OCP_SERVER + '/ocp/ca/' + token_str + '/info/'
 
   try:
     r = urllib2.urlopen(addr)
@@ -142,7 +144,7 @@ def tokenview(request, webargs):
     else:
       r = '[ERROR]: Unknown error. (error code: {})'.format( e.getcode() )
       return HttpResponseBadRequest(r)
-  
+
   jsoninfo = json.loads(r.read())
 
   # get project metadata
@@ -159,23 +161,23 @@ def tokenview(request, webargs):
   zoffset = jsoninfo['dataset']['offset']['0'][2]
 
   scalinglevels = jsoninfo['dataset']['scalinglevels']
-  
+
   starttime = jsoninfo['dataset']['timerange'][0]
   endtime = jsoninfo['dataset']['timerange'][1]
-  
-  # read in all channel info first 
+
+  # read in all channel info first
   channel_info = {}
   for channel in jsoninfo['channels'].keys():
     channel_info[channel] = {}
     channel_info[channel]['channel_name'] = channel
     channel_info[channel]['channel_type'] = jsoninfo['channels'][channel]['channel_type']
 
-  # add channels to dict  
+  # add channels to dict
   channels = []
   if (channels_str is not None) and (len(channels_str[0]) > 0):
     for channel_str in channels_str:
       if len(channel_str) > 0:
-        if len(channel_str.split(':')) > 1: 
+        if len(channel_str.split(':')) > 1:
           if ( channel_str.split(':')[0] not in jsoninfo['channels'].keys() ):
             return HttpResponseNotFound("[Error]: Could not find channel {} for token {}.".format(channel_str, project_name))
           else:
@@ -193,32 +195,32 @@ def tokenview(request, webargs):
 
 
   layers = []
-  timeseries = False # should we display timeseries controls? 
-  # we convert the channels to layers here 
+  timeseries = False # should we display timeseries controls?
+  # we convert the channels to layers here
   """
   # AB Note: I decided it would be better to get all channels than just the default
-  # channel. But it is up for discussion. 
+  # channel. But it is up for discussion.
   if channels is None:
     # assume default channel, single layer called by the token
     # get the default channel and add it to channels
     channel = get_object_or_404(Channel, project=token.project, default=True)
-    channels.append(channel) 
+    channels.append(channel)
   """
-  # convert all channels to layers 
+  # convert all channels to layers
   for channel in channels:
     tmp_layer = VizLayer()
     tmp_layer.layer_name = channel['channel_name']
-    tmp_layer.layer_description = project_description 
+    tmp_layer.layer_description = project_description
     if channel['channel_type'] == 'timeseries':
-      timeseries = True 
+      timeseries = True
     tmp_layer.layertype = channel['channel_type']
     tmp_layer.token = project_name
-    tmp_layer.channel = channel['channel_name'] 
-    if settings.OCP_SERVER is None: 
+    tmp_layer.channel = channel['channel_name']
+    if settings.OCP_SERVER is None:
       tmp_layer.server = request.META['HTTP_HOST'];
     else:
-      tmp_layer.server = settings.OCP_SERVER 
-    tmp_layer.tilecache = False 
+      tmp_layer.server = settings.OCP_SERVER
+    tmp_layer.tilecache = False
     if channel['channel_name'] in channel_colors.keys():
       tmp_layer.color = channel_colors[ channel['channel_name'] ].upper()
     layers.append(tmp_layer)
@@ -226,7 +228,7 @@ def tokenview(request, webargs):
   # package data for the template
   xdownmax = (ximagesize + xoffset - 1)/(2**scalinglevels)
   ydownmax = (yimagesize + yoffset - 1)/(2**scalinglevels)
-  # center the map on the image, if no other coordinate is specified  
+  # center the map on the image, if no other coordinate is specified
   if x is None:
     x = xdownmax/2
   if y is None:
@@ -234,15 +236,15 @@ def tokenview(request, webargs):
   if z is None:
     z = zoffset
   if res is None:
-    res = scalinglevels 
- 
+    res = scalinglevels
+
   # process template options
-  blendmode = 'normal' 
+  blendmode = 'normal'
   if options is not None:
     if 'marker' in options.keys():
-      marker = True 
+      marker = True
     if 'blend' in options.keys():
-      blendmode = options['blend'] # TODO should we validate this?  
+      blendmode = options['blend'] # TODO should we validate this?
 
   context = {
       'layers': layers,
@@ -266,7 +268,7 @@ def tokenview(request, webargs):
       'plane': orientation,
       'marker': marker,
       'timeseries': timeseries,
-      'blendmode': blendmode, 
+      'blendmode': blendmode,
       'version': VERSION,
   }
   return render(request, 'ndv/viewer.html', context)
@@ -275,8 +277,8 @@ def tokenview(request, webargs):
 # View a VizProject (pre-prepared project in the database)
 def projectview(request, webargs):
   # parse web args
-  # we expect /ocp/viz/project/projecttoken/res/x/y/z/ 
-  # webargs starts from the next string after project 
+  # we expect /ocp/viz/project/projecttoken/res/x/y/z/
+  # webargs starts from the next string after project
   [project_name, restargs] = webargs.split('/', 1)
   restsplit = restargs.split('/')
 
@@ -286,23 +288,23 @@ def projectview(request, webargs):
   z = None
   res = None
   marker = False
-  
+
   if len(restsplit) == 5:
-    #  res/x/y/z/ args 
+    #  res/x/y/z/ args
     res = int(restsplit[0])
     x = int(restsplit[1])
     y = int(restsplit[2])
     z = int(restsplit[3])
-    marker = True 
+    marker = True
 
   #else:
-  #  # return error 
+  #  # return error
   #  return HttpResponseBadRequest('Error: Invalid REST arguments.')
-  
+
   # query for the project from the db
-  project = get_object_or_404(VizProject, pk=project_name) 
+  project = get_object_or_404(VizProject, pk=project_name)
   layers = project.layers.select_related()
- 
+
   timeseries = False
   for layer in layers:
     if layer.layertype == 'timeseries':
@@ -312,7 +314,7 @@ def projectview(request, webargs):
   # calculate the lowest resolution xmax and ymax
   xdownmax = (project.ximagesize + project.xoffset - 1)/(2**project.scalinglevels)
   ydownmax = (project.yimagesize + project.yoffset - 1)/(2**project.scalinglevels)
-  
+
   if x is None:
     x = xdownmax/2
   if y is None:
@@ -320,8 +322,8 @@ def projectview(request, webargs):
   if z is None:
     z = project.zoffset
   if res is None:
-    res = project.scalinglevels 
-  
+    res = project.scalinglevels
+
   context = {
       'layers': layers,
       'project_name': project_name,
@@ -334,7 +336,7 @@ def projectview(request, webargs):
       'zoffset': project.zoffset ,
       'maxres': project.scalinglevels,
       'minres':0,
-      'res': res, 
+      'res': res,
       'resstart': project.scalinglevels,
       'xstart': x,
       'ystart': y,
@@ -354,8 +356,8 @@ def getDataview(request, webargs):
 def dataview(request, webargs):
   """ display the given dataview """
   """ /dataview/<<dataview name>> """
- 
-  try: 
+
+  try:
     m = re.match(r"(?P<token>[\w:,-]+)(\/)?$", webargs)
     [token, misc] = [i for i in m.groups()]
     if token is None:
@@ -364,18 +366,18 @@ def dataview(request, webargs):
   except Exception, e:
     print e
     return HttpResponseNotFound("[ERROR]: Incorrect format for web argument. Argument should be of the form '/dataview/token_for_dataview'")
-  
-  # get dataview from database 
+
+  # get dataview from database
   dv = get_object_or_404( DataView, token = token )
 
   # build the URL to this view
   dv_url = "http://{}{}".format(request.META['HTTP_HOST'], request.META['PATH_INFO'])
-  
+
   if (request.META['SCRIPT_NAME'] == ''):
     vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
   else:
     vizprojecturl = "http://{}{}/project/".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'] )
-    
+
   dv_items = dv.items.all()
 
   context = {
@@ -409,16 +411,16 @@ def dataview(request, webargs):
       'dv_items': dv_items,
       'vizprojecturl': vizprojecturl,
       }
-  return render(request, 'ndv/viewer.html', context) 
+  return render(request, 'ndv/viewer.html', context)
 
 def dataviewsPublic(request):
   """ display a list of all public dataviews """
   return redirect('http://google.com')
 
 def query(request, queryargs):
-  # redirects a query to the specified server 
+  # redirects a query to the specified server
   # expected syntax is:
-  # ocp/ocpviz/query/<<server>>/<<query>> 
+  # ocp/ocpviz/query/<<server>>/<<query>>
   # e.g. ocp/ocpviz/query/dsp061/ca/kharris15apical/info/
   [server, oquery] = queryargs.split('/', 1)
   if server not in VALID_SERVERS.keys():
@@ -428,10 +430,10 @@ def query(request, queryargs):
   if server == 'localhost':
     #addr = Site.objects.get_current().domain + '/ocp/' + oquery
     if settings.OCP_SERVER is None:
-      addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/' + oquery 
+      addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/' + oquery
     else:
-      addr = 'http://' + settings.OCP_SERVER + '/ocp/' + oquery 
-  else: 
+      addr = 'http://' + settings.OCP_SERVER + '/ocp/' + oquery
+  else:
     addr = 'http://' + VALID_SERVERS[server] + '/ocp/' + oquery
   try:
     r = urllib2.urlopen(addr)
@@ -455,7 +457,7 @@ def ramoninfo(request, webargs):
       addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( request.META['HTTP_HOST'], token, channel, objids )
     else:
       addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( settings.OCP_SERVER, token, channel, objids )
-  else: 
+  else:
     addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( VALID_SERVERS[server], token, channel, objids )
   try:
     r = urllib2.urlopen(addr)
@@ -464,12 +466,12 @@ def ramoninfo(request, webargs):
       return HttpResponse('No RAMON Object for annotation.')
     else:
       r = '[ERROR]: ' + str(e.getcode())
-      return HttpResponse(r) 
+      return HttpResponse(r)
 
   html = ''
 
   ramonjson = json.loads(r.read())
-  
+
   for obj in objids.split(','):
     if obj not in ramonjson.keys():
       continue
@@ -480,15 +482,15 @@ def ramoninfo(request, webargs):
   return HttpResponse(html)
 
 def projinfo(request, queryargs):
-  # gets the projinfo from ocp 
+  # gets the projinfo from ocp
   # expected syntax is:
-  # ocp/viz/projinfo/<<server>>/<<token>>/ 
+  # ocp/viz/projinfo/<<server>>/<<token>>/
   # e.g. ocp/ocpviz/projinfo/dsp061/projinfo/kharris15apical/
   [server, token_raw] = queryargs.split('/', 1)
   token = token_raw.split('/')[0]
   if server not in VALID_SERVERS.keys():
     return HttpResponse("Error: Server not valid.")
-  
+
   # make get request
 
   if server == 'localhost':
@@ -497,13 +499,13 @@ def projinfo(request, queryargs):
       addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token + '/info/'
     else:
       addr = 'http://' + settings.OCP_SERVER + '/ocp/ca/' + token + '/info/'
-  else: 
+  else:
     addr = 'http://' + VALID_SERVERS[server] + '/ocp/ca/' + token + '/info/'
   try:
     r = urllib2.urlopen(addr)
   except urllib2.HTTPError, e:
     r = '[ERROR]: ' + str(e.getcode())
-    return HttpResponse(r) 
+    return HttpResponse(r)
 
   jsoninfo = json.loads(r.read())
 
@@ -514,16 +516,16 @@ def projinfo(request, queryargs):
   html += '<strong>Channels</strong><br />'
   for channel in jsoninfo['channels']:
     tmphtml = '{}<br /><ul><li>{} ({})</li>'.format( channel, jsoninfo['channels'][channel]['channel_type'], jsoninfo['channels'][channel]['datatype'] )
-    
-    if jsoninfo['channels'][channel]['windowrange'][1] > 0: 
+
+    if jsoninfo['channels'][channel]['windowrange'][1] > 0:
       tmphtml += '<li>Window (Intensity) Range: {}, {}</li><li>'.format( jsoninfo['channels'][channel]['windowrange'][0], jsoninfo['channels'][channel]['windowrange'][1])
-    
+
     tmphtml += '<li>Default Resolution: {}</li>'.format(jsoninfo['channels'][channel]['resolution'])
-    
+
     tmphtml += '</ul>'
 
     html += tmphtml;
-  
+
   # metadata
   if len(jsoninfo['metadata'].keys()) == 0:
     html += '<p>No metadata for this project.</p>'
@@ -533,14 +535,14 @@ def projinfo(request, queryargs):
   # dataset
   html += '<strong>Dataset Parameters</strong><br />'
 
-  # x,y,z coords at res 0 
+  # x,y,z coords at res 0
   html += '<em>Base Imagesize</em><ul>'
   html += '<li><strong>x: </strong> {}, {}</li>'.format( jsoninfo['dataset']['offset']['0'][0], jsoninfo['dataset']['imagesize']['0'][0] )
   html += '<li><strong>y: </strong> {}, {}</li>'.format( jsoninfo['dataset']['offset']['0'][1], jsoninfo['dataset']['imagesize']['0'][1] )
   html += '<li><strong>z: </strong> {}, {}</li>'.format( jsoninfo['dataset']['offset']['0'][2], jsoninfo['dataset']['imagesize']['0'][2] )
   html += '</ul>'
 
-  # number of resolutions 
+  # number of resolutions
   html += '<em>Resolutions:</em> '
   for resolution in jsoninfo['dataset']['resolutions']:
     html += '{} '.format(resolution)
@@ -553,24 +555,24 @@ def projinfo(request, queryargs):
   return HttpResponse(html)
 
 def validate(request, webargs):
-  # redirects a query to the specified server 
+  # redirects a query to the specified server
   # expected syntax is:
-  # ocp/ocpviz/query/<<server>>/<<query>> 
+  # ocp/ocpviz/query/<<server>>/<<query>>
   # e.g. ocp/ocpviz/query/dsp061/ca/kharris15apical/info/
   [token, channel, server] = webargs.split('/', 2)
- 
+
   if (token == ''):
     return HttpResponseBadRequest('Missing Token Value')
   if (channel == ''):
     return HttpResponseBadRequest('Missing Channel Value')
 
-  # strip the trailing / from the server name 
-  server = server.strip('/') 
+  # strip the trailing / from the server name
+  server = server.strip('/')
 
-  # get the proj info for this token 
-  addr = 'http://{}/ocp/ca/{}/info/'.format(server, token) 
+  # get the proj info for this token
+  addr = 'http://{}/ocp/ca/{}/info/'.format(server, token)
 
-  try: 
+  try:
     r = urllib2.urlopen(addr)
   except urllib2.HTTPError, e:
     return HttpResponseBadRequest(str(e.getcode()))
@@ -579,13 +581,33 @@ def validate(request, webargs):
 
   rjson = json.loads(r.read())
   for proj_channel in rjson['channels']:
-    print proj_channel 
+    print proj_channel
     if channel == proj_channel:
       return HttpResponse('Valid')
 
 
   return HttpResponseBadRequest('Channel not found for project {} on server {}'.format(token, server))
- 
+
 def tileloader(request, webargs):
-  # Forward a tile loading request to the appropriate server 
+  # Forward a tile loading request to the appropriate server
   return HttpResponse('Tile Loaded')
+
+def processLogin(request):
+    username = request.POST['username']
+    password = request.POST['password']
+    user = authenticate(username=username, password=password)
+    #import pdb; pdb.set_trace()
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            return HttpResponse('Success')
+        else:
+            # Return a 'disabled account' error message
+            return HttpResponseBadRequest('Login Failed')
+    else:
+        # Return an 'invalid login' error message.
+        return HttpResponseBadRequest('Login Failed')
+
+def processLogout(request):
+    logout(request)
+    return HttpResponse('Success')

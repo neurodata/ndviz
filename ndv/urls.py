@@ -1,11 +1,11 @@
 # Copyright 2015 Open Connectome Project (http://openconnecto.me)
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,10 @@ base_urlpatterns = patterns('ndv.views',
     url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
     url(r'^$', 'default'),
     url(r'^manage/$', 'default'),
-    url(r'^admin/', include(admin.site.urls)),
-    # for displaying ocpviz projects 
+    url(r'^admin/$', include(admin.site.urls)),
+    url(r'^login/$', 'processLogin', name='login'),
+    url(r'^logout/$', 'processLogout', name='logout'),
+    # for displaying ocpviz projects
     # NOTE: this must be last (because of the tokenview view)
     url(r'^project/(?P<webargs>[\w:,/-]+)', 'projectview'),
     url(r'(?P<webargs>[\w:,/-]+)$', 'tokenview'),
