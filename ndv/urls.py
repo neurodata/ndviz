@@ -15,7 +15,6 @@
 from django.conf.urls import *
 from django.contrib import admin
 import django.contrib.auth
-  # ocp/viz/ramoninfo/<<server>>/<<token>>/<<channel>>/<<id>>/
 
 base_urlpatterns = patterns('ndv.views',
     # data views
@@ -29,18 +28,18 @@ base_urlpatterns = patterns('ndv.views',
     url(r'^ramoninfo/(?P<webargs>[\w,/-]+)', 'ramoninfo'),
     # validate token/channel/server
     url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
-    url(r'^$', 'default'),
-    url(r'^manage/$', 'default'),
-    url(r'^admin/$', include(admin.site.urls)),
+    url(r'^manage/$', 'viewProjects', name='viewProjects'),
     url(r'^login/$', 'processLogin', name='login'),
     url(r'^logout/$', 'processLogout', name='logout'),
+    url(r'^$', 'default'),
     # for displaying ocpviz projects
     # NOTE: this must be last (because of the tokenview view)
-    url(r'^project/(?P<webargs>[\w:,/-]+)', 'projectview'),
-    url(r'(?P<webargs>[\w:,/-]+)$', 'tokenview'),
+    url(r'^project/(?P<webargs>[\w:,/-]+)$', 'projectview', name='projectview'),
+    url(r'(?P<webargs>[\w:,/-]+)$', 'tokenview', name='tokenview'),
 )
 
 urlpatterns = patterns('',
+  url(r'^admin', include(admin.site.urls)),
   url('^ndv/', include(base_urlpatterns)),
   url('^', include(base_urlpatterns)), # maintain unprefixed URLs
 )

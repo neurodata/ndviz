@@ -57,7 +57,7 @@
         {% else %}
         <ul id="managelink" class="nav navbar-nav" style="display:none;">
         {% endif %}
-          <li><a href="#">Manage</a></li>
+          <li><a href="#" id="managebutton">Manage</a></li>
         </ul>
 
         {% if user.is_authenticated %}
@@ -88,21 +88,28 @@
         $.ajax({
           url: '{% url "logout" %}',
           success: function(response) {
-
             $( "#loginlink" ).show()
             $( "#managelink" ).hide()
             $( "#logoutlink" ).hide()
           },
         })
       });
-
     });
 
-
-    function processLogoout() {
-      $.ajax({
-        url: '{% url "logout" %}'
-      })
-    }
-
   </script>
+
+  {# remote modal #}
+  <div class="modal fade" id="remoteModal" tabindex="-1" role="dialog" aria-labelledby="remoteModal" aria-hidden="true">
+  </div>
+  <script>
+    $(function () {
+      $( '#managebutton' ).on('click', function () {
+        $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+        $( "#remoteModal" ).modal('show');
+        console.log("running");
+      });
+    });
+    function loadManageModal() {
+    };
+  </script>
+  {# end remote modal #}

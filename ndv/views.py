@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 from django.template import RequestContext
 #from django.contrib.sites.models import Site
@@ -279,6 +280,8 @@ def projectview(request, webargs):
   # parse web args
   # we expect /ocp/viz/project/projecttoken/res/x/y/z/
   # webargs starts from the next string after project
+
+  # AB TODO needs to be regex-ified to make links work in manage page
   [project_name, restargs] = webargs.split('/', 1)
   restsplit = restargs.split('/')
 
@@ -592,6 +595,19 @@ def tileloader(request, webargs):
   # Forward a tile loading request to the appropriate server
   return HttpResponse('Tile Loaded')
 
+# Manage
+@login_required
+def viewProjects(request):
+    # get all projects for the currently logged in user
+    projects = VizProject.objects.filter( user = request.user )
+    dataviews = DataView.objects.filter( user = request.user )
+    context = {
+        'projects':projects,
+        'dataviews':dataviews
+    }
+    return render(request, 'manage/viewprojects.html', context)
+
+# Login / Logout
 def processLogin(request):
     username = request.POST['username']
     password = request.POST['password']
