@@ -418,7 +418,13 @@ def dataview(request, webargs):
 
 def dataviewsPublic(request):
   """ display a list of all public dataviews """
-  return redirect('http://google.com')
+  dataviews = DataView.objects.filter(public = True)
+
+  context = {
+    'dataviews': dataviews
+  }
+
+  return render(request, 'ndv/publicdata.html', context)
 
 def query(request, queryargs):
   # redirects a query to the specified server

@@ -19,7 +19,7 @@ import django.contrib.auth
 base_urlpatterns = patterns('ndv.views',
     # data views
     url(r'^dataview/(?P<webargs>[\w:,/-]+)', 'dataview'),
-    url(r'^public/$', 'dataviewsPublic'),
+    url(r'^public/$', 'dataviewsPublic', name='dataviewsPublic'),
     # for redirecting queries (reqd because of same origin policy)
     url(r'^query/(?P<queryargs>[\w,/-]+)', 'query'),
     # for getting the projinfo json information from ocp
