@@ -23,7 +23,16 @@ html, body, #map {
     margin: 0;
   }
 }
-.controls, .queryres, .projinfo {
+#controlpanelheader {
+  /*font-size: 16px !important;*/
+  overflow: auto;
+}
+.headertext {
+  font-size: 20px !important;
+  font-weight: bold;
+  padding-top:10px;
+}
+#imagecontrolshide, #projinfobox {
   padding: 8px 8px;
   width: 300px;
   /*font: 14px/16px Arial, Helvetica, sans-serif;*/
@@ -33,7 +42,17 @@ html, body, #map {
   box-shadow: 0 0 15px rbga(0,0,0,0.2);
   border-radius: 2px;
 }
-.projinfo, .queryres {
+.controls, .queryres {
+  padding: 8px 8px;
+  width: 300px;
+  /*font: 14px/16px Arial, Helvetica, sans-serif;*/
+  font-size: 13px !important;
+  background: white;
+  background: rbga(255,255,255,0.8);
+  box-shadow: 0 0 15px rbga(0,0,0,0.2);
+  border-radius: 2px;
+}
+.queryres {
   display: none;
 }
 .controls-layer-name {
@@ -62,32 +81,32 @@ html, body, #map {
   width: 60%;
   margin: 5px;
 }
-#resolution { 
+#resolution {
   /* float: left; */
-  padding-top: 5px;
-  padding-bottom: 5px;
+/*  padding-top: 5px;
+  padding-bottom: 5px; */
 }
-#blendmode { 
+#blendmode {
+  /*float: left;*/
+  padding-top: 5px;
+  /* padding-bottom: 5px;*/
+}
+#playdelay {
   float: left;
   padding-top: 5px;
   padding-bottom: 5px;
 }
-#playdelay { 
-  float: left;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-#add_data_link { 
-  float: left;
-  padding-top: 5px;
+#add_data_link {
+  /*float: left;*/
+/*  padding-top: 5px; */
   padding-bottom: 5px;
 }
 .remove-layer {
   padding-right: 5px;
   padding-top: 3px;
 }
-.controls, .projinfo, .queryres h4 {
-  margin: 0 0 5px; 
+.controls, .queryres h4 {
+  margin: 0 0 5px;
   color: #777;
 }
 .keyhelp {
@@ -106,7 +125,7 @@ html, body, #map {
 .footer {
   position: absolute;
   bottom: 0;
-  width: 100%; 
+  width: 100%;
   margin-bottom: 40px;
   padding: 10px;
 /*  height: 55px;*/
@@ -136,4 +155,3 @@ html, body, #map {
   color: #555;
   border-radius: 4px;
 }
-

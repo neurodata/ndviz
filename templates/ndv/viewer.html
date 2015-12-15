@@ -40,7 +40,6 @@
   {% include "ndv/dataview.html" %}
 
   {% include "ndv/login.html" %}
-
   {# End Modal Code Includes #}
 
   <div id="map"></div>
@@ -215,17 +214,31 @@
       map.on('click', onMapClick);
     });
 
-    // display project info
+    // BEGIN project info palette
     var projinfo = L.control();
     projinfo.options.position = 'topright';
     projinfo.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'projinfo');
-      var header = '<h4>Current Project Info</h4>';
-      this._div.innerHTML = header + getProjInfo();
+      var showicon = '<div id="projinfoicon" style="float:left;"><a id="showprojinfo" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-info fa-stack-1x"></i></span></a></div>';
+
+      var hiddendivstart = '<div id="projinfobox" style="display:none;">';
+      var title = '<div style="float:right;"><a id="hideprojinfo" href="#"><i class="fa fa-times fa-lg"></a></i></div><div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-info fa-stack-1x"></i></span></div><div class="headertext">Project Info</div></div>';
+
+      var hiddendivend = '</div>'
+      this._div.innerHTML = showicon + hiddendivstart + title + getProjInfo() + hiddendivend;
 			return this._div;
     };
 		projinfo.addTo(map);
-
+    $( "#showprojinfo" ).on('click', function () {
+      $( "#projinfobox" ).toggle( "slow", function () {
+        $( "#projinfoicon" ).toggle( );
+      });
+    });
+    $( "#hideprojinfo" ).on('click', function () {
+      $( "#projinfobox" ).toggle( "slow" , function () {
+        $( "#projinfoicon" ).toggle( );
+      });
+    });
     // disable (and then re-enable) clicking on mouseover
     projinfo.getContainer().addEventListener('mouseover', function() {
       map.off('click', onMapClick);
@@ -234,52 +247,51 @@
     projinfo.getContainer().addEventListener('mouseout', function() {
       map.on('click', onMapClick);
     });
+    // END project info palette
 
-		// display some map controls
-		var controls = L.control();
-    controls.options.position = 'topright';
-    controls.onAdd = function (map) {
-			this._div = L.DomUtil.create('div', 'controls');
-      var header = '<h4>Control Panel</h4>';
-      var datainfo = '<div id="opacity-control">{% spaceless %}
-        {% for layer in layers %}
-        <div class="controls-{{ "layer_"|add:layer.layer_name|cut:" " }}">
-        <div class="controls-layer-name"><a href="#" class="remove-layer {{ "layer_"|add:layer.layer_name|cut:" " }}" ><i class="fa fa-times-circle"></i></a><a href="#">{{ layer.layer_name|cut:" " }}</a></div>
-        <div class="controls-opacity-control-name">Opacity</div>
-        <div id="slider">
-        <span class="opacity">{{ "layer_"|add:layer.layer_name|cut:" " }}</span>
-        </div><br />
+    // BEGIN image control palette
+    var imagecontrols = L.control();
+    imagecontrols.options.position = 'topright';
+    imagecontrols.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'imagecontrols');
+      var showicon = '<div id="imagecontrolsshow" style="float:left;"><a id="showimagecontrols" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-picture-o fa-stack-1x"></i></span></a></div>';
 
-        <div class="controls-opacity-control-name">Brightness</div>
-        <div id="slider">
-          <span class="brightness">{{ "layer_"|add:layer.layer_name|cut:" " }}</span>
-        </div><br />
+      var hiddendivstart = '<div id="imagecontrolshide" style="display:none;">';
+      var title = '<div style="float:right;"><a id="hideimagecontrols" href="#"><i class="fa fa-times fa-lg"></a></i></div><div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-picture-o fa-stack-1x"></i></span></div><div class="headertext">Image Controls</div></div>';
 
-        <div class="controls-opacity-control-name">Contrast</div>
-        <div id="slider">
-          <span class="contrast">{{ "layer_"|add:layer.layer_name|cut:" " }}</span>
-        </div><br />
-        </div>
-        {% endfor %}
-        {% endspaceless %}</div>';
-      var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="Screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select></div><span style="float: right; padding-top: 5px;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span>'
-      var rescontrol = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (minres - upsample_num) + '" max="' + maxres + '" value="' + res + '" /></div>';
-      var add_data = '<br /><div id="add_data_link"><a href="#" data-toggle="modal" data-target="#add_data">Add Data to Current View</a></div>'
-      this._div.innerHTML = header + rescontrol + datainfo + blendmode + add_data;
-			return this._div;
-		};
+      var layersliders = '<div id="opacity-control">{% spaceless %}{% for layer in layers %}<div class="controls-{{ "layer_"|add:layer.layer_name|cut:" " }}"><div class="controls-layer-name"><a href="#" class="remove-layer {{ "layer_"|add:layer.layer_name|cut:" " }}" ><i class="fa fa-times-circle"></i></a><a href="#">{{ layer.layer_name|cut:" " }}</a></div><div class="controls-opacity-control-name">Opacity</div><div id="slider"><span class="opacity">{{ "layer_"|add:layer.layer_name|cut:" " }}</span></div><br /><div class="controls-opacity-control-name">Brightness</div><div id="slider"><span class="brightness">{{ "layer_"|add:layer.layer_name|cut:" " }}</span></div><br /><div class="controls-opacity-control-name">Contrast</div><div id="slider"><span class="contrast">{{ "layer_"|add:layer.layer_name|cut:" " }}</span></div><br /></div>{% endfor %}{% endspaceless %}</div>';
 
-		controls.addTo(map);
+      var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="Screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select><span style="float: right;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
 
+      var resolution = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (minres - upsample_num) + '" max="' + maxres + '" value="' + res + '" /></div>';
+
+      var adddata = '<br /><div id="add_data_link"><a href="#" data-toggle="modal" data-target="#add_data">Add Data to Current View</a></div>';
+
+      var hiddendivend = '</div>';
+
+      this._div.innerHTML = showicon + hiddendivstart + title + layersliders + blendmode + resolution + adddata + hiddendivend;
+      return this._div;
+    };
+    imagecontrols.addTo(map);
+    // toggle image controls
+    $( "#showimagecontrols" ).on('click', function () {
+      $( "#imagecontrolshide" ).toggle( "slow" );
+      $( "#imagecontrolsshow" ).toggle();
+    });
+    $( "#hideimagecontrols" ).on('click', function () {
+      $( "#imagecontrolshide" ).toggle( "slow", function () {
+        $( "#imagecontrolsshow" ).toggle( );
+      });
+    });
     // disable (and then re-enable) clicking on mouseover
-    controls.getContainer().addEventListener('mouseover', function() {
+    imagecontrols.getContainer().addEventListener('mouseover', function() {
       map.off('click', onMapClick);
     });
 
-    controls.getContainer().addEventListener('mouseout', function() {
+    imagecontrols.getContainer().addEventListener('mouseout', function() {
       map.on('click', onMapClick);
     });
-
+    // END image control palette
 
     // update current coordinates in nav box
 
@@ -793,20 +805,6 @@
       });
     });
 
-    // toggle the controls window
-    $(function() {
-      $( "#togglecontrols" ).click(function() {
-        $( ".controls" ).toggle( "slow" )
-
-      {% if timeseries == True %}
-        // toggle timeseries controls
-        $( "#timeseries-control-box" ).toggle( "slow" )
-
-      {% endif %}
-
-      });
-    });
-
     // close the queryinfo window
     $(function() {
       $( "#closequerybox" ).click(function() {
@@ -814,12 +812,6 @@
       });
     });
 
-    // toggle the projinfo window
-    $(function() {
-      $( "#toggleprojinfo" ).click(function() {
-        $( ".projinfo" ).toggle( "slow" )
-      });
-    });
 
     // timeseries functions
     function loadTimeStep(newTime) {
