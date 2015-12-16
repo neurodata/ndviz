@@ -96,7 +96,7 @@ def tokenview(request, webargs):
 
   # process arguments
   try:
-    m = re.match(r"(?P<token>\w+)/?(?!(xy|xz|yz))(?P<channels>[\w,]+)?/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
+    m = re.match(r"(?P<token>\w+)/?(?!(xy|xz|yz))(?P<channels>[\w+,:-]+)?/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
     [token_str, neg, channels_str, orientation, cutoutstr, options_str] = [i for i in m.groups()]
 
     if channels_str is not None:
