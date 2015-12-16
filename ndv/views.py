@@ -31,7 +31,7 @@ import urllib2
 import json
 import re
 
-VERSION = 'v0.3.2'
+VERSION = 'v0.3.3'
 
 VALID_SERVERS = {
     'localhost':'localhost',
@@ -94,7 +94,7 @@ def tokenview(request, webargs):
 
   # process arguments 
   try:
-    m = re.match(r"(\w+)/?(?P<channels>[\w+,-]+)?/?(xy|xz|yz)?/([\w,/-]+)?$", webargs) 
+    m = re.match(r"(\w+)/?(?P<channels>[\w+,:-]+)?/?(xy|xz|yz)?/([\w,/-]+)?$", webargs) 
     [token_str, channels_str, orientation, cutoutstr] = [i for i in m.groups()]
   
     if channels_str is not None:
