@@ -38,16 +38,9 @@
       // clear previous info / errors
       $( '.login_info' ).empty();
 
-      var script_name = '{{ request.META.SCRIPT_NAME }}';
-      if (script_name == '') {
-        var loginUrl = "http://{{ request.get_host }}/login/";
-      }
-      else {
-        var loginUrl = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/login/";
-      }
       // make request (using jquery)
       var jqxhr = $.ajax({
-        url: {% url "login" %},
+        url: 'http://{{request.get_host}}{% url "login" %}',
         type: 'POST',
         data: { csrfmiddlewaretoken: "{{ csrf_token }}",
                 username: $( "#username" ).val(),

@@ -615,8 +615,9 @@ def viewProjects(request):
 
 # Login / Logout
 def processLogin(request):
-    username = request.POST['username']
-    password = request.POST['password']
+  if request.method == 'POST':
+    username = request.POST.get('username')
+    password = request.POST.get('password')
     user = authenticate(username=username, password=password)
     #import pdb; pdb.set_trace()
     if user is not None:
@@ -629,6 +630,8 @@ def processLogin(request):
     else:
         # Return an 'invalid login' error message.
         return HttpResponseBadRequest('Login Failed')
+  else:
+    return redirect(default)
 
 def processLogout(request):
     logout(request)
