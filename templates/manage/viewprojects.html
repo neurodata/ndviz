@@ -4,14 +4,15 @@
   <div class="modal-content">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      <h3 class="modal-title" id="dataviewTitle">Manage Projects and Dataviews</h4>
+      <a name="top"></a>
+      <h3 class="modal-title" id="dataviewTitle">Manage Projects and Dataviews</h3>
       <p class="bg-info"><a href="#listprojects">List Projects</a> | <a href="#">Create Project</a> | <a href="#listdataviews">List Dataviews</a> | <a href="#">Create Dataview</a></p>
     </div>
     <div class="modal-body">
       <a name="listprojects"></a>
       {% if projects %}
       <table class="table table-hover">
-        <caption>All viz projects for user <strong>{{ user.get_username }}</strong> are listed below.</caption>
+        <caption>All viz projects for user <strong>{{ user.get_username }}</strong> are listed below. (<a href="#top">back to top</a>)</caption>
         <tbody>
         {% for project in projects %}
         <tr>
@@ -20,7 +21,7 @@
           <td>{{ project.public }}</td>
           <td><a href="#">Popup Dataset Metadata</a></td>
           <td><a href="#">Layers</a></td>
-          <td><a href="{% url 'projectview' project.project_name %}">View</a></td>
+          <td><a href="{% url 'projectview' webargs=project.project_name %}">View</a></td>
           <td><a href="#">Edit</a></td>
         </tr>
         {% endfor %}
@@ -32,7 +33,7 @@
       <a name="listdataviews"></a>
       {% if dataviews %}
       <table class="table table-hover">
-        <caption>All dataviews for user <strong>{{ user.get_username }}</strong> are listed below.</caption>
+        <caption>All dataviews for user <strong>{{ user.get_username }}</strong> are listed below. (<a href="#top">back to top</a>)</caption>
         <tbody>
         {% for dv in dataviews %}
         <tr>
@@ -40,7 +41,7 @@
           <td>{{ dv.desc }}</td>
           <td>{{ dv.public }}</td>
           <td><a href="#">Items</a></td>
-          <td><a href="{% url 'projectview' project.project_name %}">View</a></td>
+          <td><a href="{% url 'dataview' webargs=dv.token %}">View</a></td>
           <td><a href="#">Edit</a></td>
         </tr>
         {% endfor %}
