@@ -106,7 +106,8 @@
         $( "#remoteModal" ).load("{% url 'viewProjects' %}");
         $( "#remoteModal" ).modal('show');
       });
-
+    });
+    $(function () {
       // load data modal
       $( '#databutton' ).on('click', function () {
         $( "#remoteModal" ).load("{% url 'dataviewsPublic' %}");
