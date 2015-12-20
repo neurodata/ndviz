@@ -101,53 +101,17 @@
           success: function(response) {
             var url = 'http://' + server + '/ocp/catmaid/' + token + '/' + channel + '/xy/{zindex}/{y}_{x}_{z}.png';
             
-            window['layer_' + token + '_' + channel] = L.tileLayer.OCPLayer(
+            layers[token + '_' + channel] = L.tileLayer.OCPLayer(
               url,
             {
-              zindex: zindex,
+              zindex: ndv.zindex,
               zoomReverse: true,
-              minZoom: maxres,
-              maxZoom: maxres + maxres,
+              minZoom: ndv.maxres,
+              maxZoom: ndv.maxres + ndv.maxres,
               tileSize: 512,
-              //noWrap: true,
               continuousWorld: true,
             }).addTo(map);
-            var control_html = '<div class="controls-' + 'layer_' + token + '_' + channel + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + 'layer_' + token + '_' + channel + '"><i class="fa fa-times-circle"></i></a><a href="#">' + token + '_' + channel + '</a></div><div class="controls-opacity-control-name">Opacity</div><div id="slider"><span class="opacity">'+ 'layer_' + token + '_' + channel + '</span></div><br /><div class="controls-opacity-control-name">Brightness</div><div id="slider"><span class="brightness">' + 'layer_' + token + '_' + channel + '</span></div><br /><div class="controls-opacity-control-name">Contrast</div><div id="slider"><span class="contrast">' + 'layer_' + token + '_' + channel + '</span></div><br /></div>';
-            $( '#opacity-control' ).append(control_html);
-
-
-            $( ".controls-layer_" + token + "_" + channel  ).children( "#slider" ).children( ".opacity" ).empty().slider({
-              min: 0,
-              max: 100,
-              value: eval(window['layer_' + token + '_' + channel]).options.opacity*100,
-              slide: function ( event, ui ) { 
-                  eval(window['layer_' + token + '_' + channel]).setOpacity(ui.value/100);
-                },
-              start: function ( event, ui ) { map.dragging.disable(); },
-              stop: function ( event, ui ) { map.dragging.enable(); }, 
-            });
-            $( ".controls-layer_" + token + "_" + channel  ).children( "#slider" ).children( ".contrast" ).empty().slider({
-              min: 0,
-              max: 200,
-              value: 100,
-              slide: function ( event, ui ) { 
-                  eval(window['layer_' + token + '_' + channel]).setContrast(ui.value);
-                },
-              start: function ( event, ui ) { map.dragging.disable(); },
-              stop: function ( event, ui ) { map.dragging.enable(); }, 
-            });
-            $( ".controls-layer_" + token + "_" + channel  ).children( "#slider" ).children( ".brightness" ).empty().slider({
-              min: 0,
-              max: 200,
-              value: 100,
-              slide: function ( event, ui ) { 
-                eval(window['layer_' + token + '_' + channel]).setBrightness(ui.value);
-                console.log(ui.value);
-                },
-              start: function ( event, ui ) { map.dragging.disable(); },
-              stop: function ( event, ui ) { map.dragging.enable(); }, 
-            });
-
+            updateImageControlSliders();
             var html = '<div class="bg-info"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="sr-only">Success:</span> Added new layer for channel ' + channel + '.';
             $( '.add_data_info' ).append(html);
           },
