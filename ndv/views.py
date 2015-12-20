@@ -493,8 +493,8 @@ def ramoninfo(request, webargs):
 def projinfo(request, queryargs):
   # gets the projinfo from ocp
   # expected syntax is:
-  # ocp/viz/projinfo/<<server>>/<<token>>/
-  # e.g. ocp/ocpviz/projinfo/dsp061/projinfo/kharris15apical/
+  # ndv/projinfo/<<server>>/<<token>>/
+  # e.g. ndv/projinfo/dsp061/kharris15apical/
   [server, token_raw] = queryargs.split('/', 1)
   token = token_raw.split('/')[0]
   if server not in VALID_SERVERS.keys():
@@ -517,51 +517,25 @@ def projinfo(request, queryargs):
     return HttpResponse(r)
 
   jsoninfo = json.loads(r.read())
-
-  # name, description
-  html = '<strong>{}</strong><p>{}</p>'.format( jsoninfo['project']['name'], jsoninfo['project']['description'] )
-
-  # channel info
-  html += '<strong>Channels</strong><br />'
-  for channel in jsoninfo['channels']:
-    tmphtml = '{}<br /><ul><li>{} ({})</li>'.format( channel, jsoninfo['channels'][channel]['channel_type'], jsoninfo['channels'][channel]['datatype'] )
-
-    if jsoninfo['channels'][channel]['windowrange'][1] > 0:
-      tmphtml += '<li>Window (Intensity) Range: {}, {}</li><li>'.format( jsoninfo['channels'][channel]['windowrange'][0], jsoninfo['channels'][channel]['windowrange'][1])
-
-    tmphtml += '<li>Default Resolution: {}</li>'.format(jsoninfo['channels'][channel]['resolution'])
-
-    tmphtml += '</ul>'
-
-    html += tmphtml;
-
+  
   # metadata
   if len(jsoninfo['metadata'].keys()) == 0:
-    html += '<p>No metadata for this project.</p>'
+    metadatahtml = '<p>No LIMS metadata for this project.</p>'
   else:
-    html += '<p>Metadata support coming soon</p>'
+    metadatahtml = '<p>LIMS Metadata support coming soon</p>'
+  
+  context = {
+    'projectname': jsoninfo['project']['name'],
+    'projectdesc': jsoninfo['project']['description'],
+    'channels': jsoninfo['channels'],
+    'metadata': metadatahtml,
+    'offset': jsoninfo['dataset']['offset']['0'],
+    'imagesize': jsoninfo['dataset']['imagesize']['0'],
+    'resolutions': jsoninfo['dataset']['resolutions'],
+    'timerange': jsoninfo['dataset']['timerange'],
+  }
 
-  # dataset
-  html += '<strong>Dataset Parameters</strong><br />'
-
-  # x,y,z coords at res 0
-  html += '<em>Base Imagesize</em><ul>'
-  html += '<li><strong>x: </strong> {}, {}</li>'.format( jsoninfo['dataset']['offset']['0'][0], jsoninfo['dataset']['imagesize']['0'][0] )
-  html += '<li><strong>y: </strong> {}, {}</li>'.format( jsoninfo['dataset']['offset']['0'][1], jsoninfo['dataset']['imagesize']['0'][1] )
-  html += '<li><strong>z: </strong> {}, {}</li>'.format( jsoninfo['dataset']['offset']['0'][2], jsoninfo['dataset']['imagesize']['0'][2] )
-  html += '</ul>'
-
-  # number of resolutions
-  html += '<em>Resolutions:</em> '
-  for resolution in jsoninfo['dataset']['resolutions']:
-    html += '{} '.format(resolution)
-
-  # timerange
-  if (jsoninfo['dataset']['timerange'][1] > 0):
-    html += '<em>Timerange: </em>{}, {}'.format( jsoninfo['dataset']['timerange'][0], jsoninfo['dataset']['timerange'][1] )
-
-
-  return HttpResponse(html)
+  return render(request, 'ndv/projinfo.html', context)
 
 def validate(request, webargs):
   # redirects a query to the specified server

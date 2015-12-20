@@ -231,9 +231,9 @@
 
       var hiddendivstart = '<div id="projinfobox" style="display:none;">';
       var title = '<div style="float:right;"><a id="hideprojinfo" href="#"><i class="fa fa-times fa-lg"></a></i></div><div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-info fa-stack-1x"></i></span></div><div class="headertext">Project Info</div></div>';
-
+      var projinfodiv = '<div id="projinfotxt"></div>'
       var hiddendivend = '</div>'
-      this._div.innerHTML = showicon + hiddendivstart + title + getProjInfo() + hiddendivend;
+      this._div.innerHTML = showicon + hiddendivstart + title  + projinfodiv + hiddendivend;
 			return this._div;
     };
 		projinfo.addTo(map);
@@ -255,6 +255,16 @@
     projinfo.getContainer().addEventListener('mouseout', function() {
       map.on('click', onMapClick);
     });
+    function getProjInfo() {
+      // we use the token from the first layer (for now)
+      var infoToken = "{{ layers.0.token }}";
+      var infoUrl = "http://{{ request.get_host }}{% url 'projinfo' queryargs='placeholder' %}";
+      infoUrl = infoUrl.replace('placeholder', 'localhost/' + infoToken + '/')
+      
+      $( "#projinfotxt" ).load(infoUrl);
+		}
+    getProjInfo();
+
     // END project info palette
 
     // BEGIN image control palette
@@ -654,28 +664,6 @@
 
     }
 
-    function getProjInfo() {
-      // we use the token from the first layer (for now)
-      var infoToken = "{{ layers.0.token }}";
-      var script_name = '{{ request.META.SCRIPT_NAME }}';
-      if (script_name == '') {
-        var infoUrl = "http://{{ request.get_host }}/projinfo/localhost/" + infoToken + "/";
-      }
-      else {
-        var infoUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/projinfo/localhost/" + infoToken + "/";
-      }
-      // store the return data
-			var data = null;
-
-			// make request
-			var xmlHttp = new XMLHttpRequest();
-			xmlHttp.open( "GET", infoUrl, false );
-			xmlHttp.send( null );
-
-			return xmlHttp.responseText;
-
-		}
-
 		// popup on click (querytool)
 		var popup = L.popup();
 		function onMapClick(e) {
@@ -841,15 +829,15 @@
         $( "#timestep" ).parent().removeClass("has-error");
         {% for layer in layers %}
         {% if layer.layertype == "timeseries" %}
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTime;
+          layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
         {% endif %}
         {% endfor %}
       }
@@ -859,19 +847,19 @@
       map.closePopup();
       {% for layer in layers %}
       {% if layer.layertype == "timeseries" %}
-        var curTime = parseInt({{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime);
+        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.options.curtime);
         if (curTime + 1 <= parseInt({{ endtime }})) {
           $( "#timestep" ).parent().removeClass("has-error");
           var newTime = curTime + 1;
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTime;
+          layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
         }
         else {
           $( "#timestep" ).parent().addClass("has-error");
@@ -886,19 +874,19 @@
       map.closePopup();
       {% for layer in layers %}
       {% if layer.layertype == "timeseries" %}
-        var curTime = parseInt({{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime);
+        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.options.curtime);
         if (curTime - 1 >= parseInt({{ starttime }})) {
           $( "#timestep" ).parent().removeClass("has-error");
           var newTime = curTime - 1;
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTime;
+          layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
         }
         else {
           $( "#timestep" ).parent().addClass("has-error");
@@ -914,14 +902,14 @@
       {% for layer in layers %}
       {% if layer.layertype == "timeseries" %}
         var newTimeStr = {{ starttime }};
-        {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
+        layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
         {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
         {% else %}
         var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
         {% endif %}
-        {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-        {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
+        layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
+        layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
       {% endif %}
       {% endfor %}
       // update timestep box
@@ -933,14 +921,14 @@
       {% for layer in layers %}
       {% if layer.layertype == "timeseries" %}
         var newTimeStr = {{ endtime }};
-        {{ "layer_"|add:layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
+        layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
         {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          {{ "layer_"|add:layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
       {% endif %}
       {% endfor %}
       // update timestep box
