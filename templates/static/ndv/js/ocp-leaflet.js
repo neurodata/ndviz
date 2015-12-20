@@ -40,7 +40,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
       // mark classes by index
-      L.DomUtil.addClass(this, 'index-' + zindex);
+      L.DomUtil.addClass(this, 'index-' + ndv.zindex);
 
       layer.fire('tileload', {
         tile: this,

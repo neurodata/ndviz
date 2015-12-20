@@ -44,40 +44,44 @@
 
   <div id="map"></div>
   <script>
-    // tool variables
-    var querytool = false; // disabled by default
-    var querylayer = 'none';
-    var querytoken = 'none';
-    var querychannel = 'none';
 
+    // global variables
+    var ndv = {};
+    ndv.querytool = 'false'; 
+    ndv.querylayer = 'none';
+    ndv.querytoken = 'none';
+    ndv.querychannel = 'none';
+   
     // timeseries globals
-    var playdelay = 1;
+    ndv.playdelay = 1;
 
     // marker array
-    var markers = [];
+    ndv.markers = [];
+    
+    // upsample settings
+    ndv.upsample_num = 2;
 
     // dataset info
-    var xmin = {{ xoffset }};
-    var xmax = {{ xsize }} + {{ xoffset }} - 1;
-    var ymin = {{ yoffset }};
-    var ymax = {{ ysize }} + {{ yoffset }} - 1;
+    ndv.xmin = {{ xoffset }};
+    ndv.xmax = {{ xsize }} + {{ xoffset }} - 1;
+    ndv.ymin = {{ yoffset }};
+    ndv.ymax = {{ ysize }} + {{ yoffset }} - 1;
 
-    var minres = {{ minres }};
-    var maxres = {{ maxres }};
-    var res = {{ res }};
-    var zmin = {{ zoffset }};
-    var zmax = {{ zsize }} + {{ zoffset }} - 1;
+    ndv.minres = {{ minres }};
+    ndv.maxres = {{ maxres }};
+    ndv.res = {{ res }};
+    ndv.zmin = {{ zoffset }};
+    ndv.zmax = {{ zsize }} + {{ zoffset }} - 1;
     // set zindex to some default (we pick the lowest slice)
-    var zindex = {{ zstart }};
+    ndv.zindex = {{ zstart }};
 
      // create the map first
 		var map = L.map('map', {
 			doubleClickZoom: false,
     });
 
-    var upsample_num = 2;
-
-    // define layers
+    // define layers (namespaced with a layers. prefix) 
+    var layers = {}; 
 
     // load image layers first
     {% for layer in layers %}
@@ -116,11 +120,11 @@
         var {{ "layer_"|add:layer.layer_name|cut:" " }} = L.tileLayer.OCPLayer(
           url,
           {
-            zindex: zindex,
+            zindex: ndv.zindex,
             zoomReverse: true,
-            minZoom: maxres,
-            maxZoom: maxres + maxres + upsample_num,
-            maxNativeZoom: maxres + maxres,
+            minZoom: ndv.maxres,
+            maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+            maxNativeZoom: ndv.maxres + ndv.maxres,
             tileSize: 512,
             {% if layer.layertype == 'annotation' %}
             opacity: 0.4,
@@ -171,11 +175,11 @@
         var {{ "layer_"|add:layer.layer_name|cut:" " }} = L.tileLayer.OCPLayer(
           url,
           {
-            zindex: zindex,
+            zindex: ndv.zindex,
             zoomReverse: true,
-            minZoom: maxres,
-            maxZoom: maxres + maxres + upsample_num,
-            maxNativeZoom: maxres + maxres,
+            minZoom: ndv.maxres,
+            maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+            maxNativeZoom: ndv.maxres + ndv.maxres,
             tileSize: 512,
             {% if layer.layertype == 'annotation' %}
             opacity: 0.4,
@@ -190,8 +194,8 @@
     {% endfor %}
 
     // set the initial view
-    var center = map.unproject(L.point({{ xstart }}, {{ ystart }}), maxres + maxres - res);
-		map.setView(center, maxres + maxres - res);
+    var center = map.unproject(L.point({{ xstart }}, {{ ystart }}), ndv.maxres + ndv.maxres - ndv.res);
+		map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
 
     // display query result
     var queryres = L.control();
@@ -263,7 +267,7 @@
 
       var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="Screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select><span style="float: right;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
 
-      var resolution = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (minres - upsample_num) + '" max="' + maxres + '" value="' + res + '" /></div>';
+      var resolution = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (ndv.minres - ndv.upsample_num) + '" max="' + ndv.maxres + '" value="' + ndv.res + '" /></div>';
 
       var adddata = '<br /><div id="add_data_link"><a href="#" data-toggle="modal" data-target="#add_data">Add Data to Current View</a></div>';
 
@@ -300,12 +304,12 @@
       $( "#y" ).parent().removeClass("has-error");
       $( "#z" ).parent().removeClass("has-error");
       var center = map.getCenter();
-      var res = map.getMaxZoom() - upsample_num - map.getZoom();
+      var res = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
       var coordinates = map.project(center);
 
       $( "#x" ).val(Math.round(coordinates.x));
       $( "#y" ).val(Math.round(coordinates.y));
-      $( "#z" ).val(zindex);
+      $( "#z" ).val(ndv.zindex);
     };
     coordinatesUpdate();
     // update coordinates on pan, zoom, and load
@@ -313,14 +317,14 @@
     map.on('zoomend', coordinatesUpdate);
 
     function resolutionUpdate() {
-      $( "#res-input" ).val( map.getMaxZoom() - upsample_num - map.getZoom() );
+      $( "#res-input" ).val( map.getMaxZoom() - ndv.upsample_num - map.getZoom() );
     }
 
     map.on('zoomend', resolutionUpdate);
 
     $( "#res-input" ).on('input', function() {
       var val = $( "#res-input" ).val();
-      map.setZoom( map.getMaxZoom() - upsample_num - val );
+      map.setZoom( map.getMaxZoom() - ndv.upsample_num - val );
     });
 
     // navigation
@@ -339,16 +343,16 @@
         var y = $( "#y" ).val();
 
         // validate
-        if ( x > xmax || x < xmin ) {
+        if ( x > ndv.xmax || x < ndv.xmin ) {
           $( "#x" ).parent().addClass("has-error");
         }
-        else if ( y > ymax || y < ymin ) {
+        else if ( y > ndv.ymax || y < ndv.ymin ) {
           $( "#y" ).parent().addClass("has-error");
         }
         else {
           // pan the map to center on these coordinates
           var point = L.point(x, y);
-          var projpoint = map.unproject(point); //, 2*maxres - map.getZoom());
+          var projpoint = map.unproject(point);
 
           map.panTo(projpoint);
           // place a marker
@@ -366,7 +370,7 @@
       // if a zindex was entered, navigate to that slice
       if ( $( "#z" ).val() ) {
         var z = $( "#z" ).val();
-        if (z <= zmax && z >= zmin) {
+        if (z <= ndv.zmax && z >= ndv.zmin) {
           chgZIndex(z);
         }
         else {
@@ -385,11 +389,11 @@
       var center = map.getCenter();
       var point = map.project(center);
       var marker_options = {
-        title: point.x + " " + point.y + " " + zindex,
+        title: point.x + " " + point.y + " " + ndv.zindex,
       }
 
       // keep track of markers by storing in an array
-      markers.push(L.marker(center, marker_options).addTo(map));
+      ndv.markers.push(L.marker(center, marker_options).addTo(map));
 
       // get current url
       var markerUrl = getCurrentURL(point);
@@ -398,7 +402,7 @@
         maxWidth: 750,
       }
 
-      markers[markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
+      ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
     });
 
     {% if marker == True %}
@@ -412,11 +416,11 @@
 
       var point = map.project(event.latlng);
       var marker_options = {
-        title: point.x + " " + point.y + " " + zindex,
+        title: point.x + " " + point.y + " " + ndv.zindex,
       }
 
       // keep track of markers by storing in an array
-      markers.push(L.marker(event.latlng, marker_options).addTo(map));
+      ndv.markers.push(L.marker(event.latlng, marker_options).addTo(map));
 
       // get current url
       var markerUrl = getCurrentURL(point);
@@ -424,7 +428,7 @@
         maxWidth: 750,
       }
 
-      markers[markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
+      ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
       map.off('click', markerOnClick);
       // turn query tool back on
       map.on('click', onMapClick);
@@ -434,12 +438,12 @@
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
       var markerUrlArr = markerUrlRaw.split("/", 8);
-      var curZoom = map.getMaxZoom() - upsample_num - map.getZoom();
+      var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
       if (script_name == '') {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
       }
       else {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
       }
       return markerUrl;
     };
@@ -452,8 +456,8 @@
 
     $( "#clearmarkers" ).click(function( event ) {
       var index;
-      for (index = 0; index < markers.length; index++) {
-        map.removeLayer(markers[index]);
+      for (index = 0; index < ndv.markers.length; index++) {
+        map.removeLayer(ndv.markers[index]);
 
       }
     });
@@ -470,33 +474,33 @@
 
     function chgZIndex(newz) {
       map.closePopup();
-      var oldzindex = zindex;
-			zindex = parseInt(newz);
+      var oldzindex = ndv.zindex;
+			ndv.zindex = parseInt(newz);
 			reloadLayers(oldzindex);
     }
 
 		function incZIndex() {
       map.closePopup();
-      var oldzindex = zindex;
-      if ((zindex + 1) > zmax) {
+      var oldzindex = ndv.zindex;
+      if ((ndv.zindex + 1) > ndv.zmax) {
         $( "#z" ).parent().addClass("has-error");
       }
       else {
         $( "#z" ).parent().removeClass("has-error");
-        zindex = zindex + 1;
+        ndv.zindex = ndv.zindex + 1;
         reloadLayers(oldzindex);
       }
 		}
 
 		function decZIndex() {
       map.closePopup();
-      var oldzindex = zindex;
-      if ((zindex - 1) < zmin) {
+      var oldzindex = ndv.zindex;
+      if ((ndv.zindex - 1) < ndv.zmin) {
         $( "#z" ).parent().addClass("has-error");
       }
       else {
         $( "#z" ).parent().removeClass("has-error");
-        zindex = zindex - 1;
+        ndv.zindex = ndv.zindex - 1;
         reloadLayers(oldzindex);
       }
     }
@@ -505,7 +509,7 @@
 			map.options.fadeAnimation = false;
       map.eachLayer( function (layer) {
         if ( layer.hasOwnProperty('_url') ) {
-          layer.options.zindex = zindex;
+          layer.options.zindex = ndv.zindex;
 					layer.smoothRedraw();
         }
       });
@@ -519,12 +523,12 @@
 		function getAnnoId(point, zoom) {
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       if (script_name == '') {
-        var ocpUrlBase = "http://{{ request.get_host }}/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
+        var ocpUrlBase = "http://{{ request.get_host }}/query/localhost/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
       }
       else {
-        var ocpUrlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/query/localhost/ca/" + querytoken + "/" + querychannel + "/id/" + zoom + "/";
+        var ocpUrlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/query/localhost/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
       }
-			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + zindex + "/";
+			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
 			var ocpUrl = ocpUrlBase.concat(cutout);
 
       // make request
@@ -562,10 +566,10 @@
 
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       if (script_name == '') {
-        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
+        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
       }
       else {
-        var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + queryserver + "/" + querytoken + "/" + querychannel + "/" + objid + "/";
+        var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
       }
 
       // make request (using jquery)
@@ -613,11 +617,11 @@
 		// popup on click (querytool)
 		var popup = L.popup();
 		function onMapClick(e) {
-      if (querytool) {
+      if (ndv.querytool) {
         var reqPoint = map.project(e.latlng);
         popup
           .setLatLng(e.latlng)
-          .setContent( getRamonInfo(reqPoint, map.getMaxZoom() - upsample_num - map.getZoom()) )
+          .setContent( getRamonInfo(reqPoint, map.getMaxZoom() - ndv.upsample_num - map.getZoom()) )
           .openOn(map);
       }
 		}
@@ -631,10 +635,10 @@
           case 104: // h -- help
             toggleKeyboardHelp();
             break;
-          case 119: // w -- zindex++
+          case 119: // w -- ndv.zindex++
             incZIndex();
             break;
-          case 115: // s -- zindex--
+          case 115: // s -- ndv.zindex--
             decZIndex();
             break;
           case 97: // a -- zoom out
@@ -667,13 +671,13 @@
 
     // disable querying
     $( '#query_none' ).click(function(event) {
-      if (querytool) {
-        $( '#query_' + querylayer + '_check' ).css("visibility","hidden");
+      if (ndv.querytool) {
+        $( '#query_' + ndv.querylayer + '_check' ).css("visibility","hidden");
         $( '#query_none_check' ).css("visibility","");
-        querytool = false;
-        querylayer = 'none';
-        querytoken = 'none';
-        querychannel = 'none';
+        ndv.querytool = false;
+        ndv.querylayer = 'none';
+        ndv.querytoken = 'none';
+        ndv.querychannel = 'none';
       }
     });
 
@@ -682,14 +686,14 @@
     $( '#query_{{ layer.token }}_{{ layer.channel }}' ).click(function(event) {
     //$( '#querybutton' ).toggleClass('active');
       var curlayer = "{{ layer.token }}_{{ layer.channel }}";
-      if (querylayer != curlayer) {
-        console.log('Updating ' + querylayer + ' to ' + curlayer);
-        $( '#query_' + querylayer + '_check' ).css("visibility","hidden");
+      if (ndv.querylayer != curlayer) {
+        console.log('Updating ' + ndv.querylayer + ' to ' + curlayer);
+        $( '#query_' + ndv.querylayer + '_check' ).css("visibility","hidden");
         $( '#query_{{ layer.token }}_{{ layer.channel }}_check' ).css("visibility","");
-        querylayer = curlayer;
-        querytoken = '{{ layer.token }}';
-        querychannel = '{{ layer.channel }}';
-        querytool = true;
+        ndv.querylayer = curlayer;
+        ndv.querytoken = '{{ layer.token }}';
+        ndv.querychannel = '{{ layer.channel }}';
+        ndv.querytool = true;
       }
     });
     {% endif %}
@@ -787,7 +791,7 @@
     $(function() {
       $('.playdelay-submit').click(function(e) {
         var val = $('.playdelay-input').val();
-        playdelay = val;
+        ndv.playdelay = val;
       });
     }); // play delay
 
@@ -935,7 +939,7 @@
     var play;
     $(function() {
       $( "#play" ).click(function() {
-        play = setInterval(function() { timeStepForward(); }, 1000*playdelay); // 1 second default
+        play = setInterval(function() { timeStepForward(); }, 1000*ndv.playdelay); // 1 second default
       });
     });
     $(function() {
