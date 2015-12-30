@@ -507,15 +507,34 @@
     };
 
     function getCurrentURL(point) {
+      console.log('{{request.get_host}}');
+      console.log('{{request.path}}');
+      console.log('{{request.META.SCRIPT_NAME}}');
+      
       var script_name = '{{ request.META.SCRIPT_NAME }}';
-      var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
-      var markerUrlArr = markerUrlRaw.split("/", 8);
-      var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
-      if (script_name == '') {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+      var pathRaw = '{{ request.path }}';
+      var pathArr = pathRaw.split('/');
+      console.log(pathArr);
+      
+      var tokenChanString = ''
+      if (pathArr.length == 4) {
+        // has channels
+        tokenChanString = pathArr[1] + "/" + pathArr[2];
       }
       else {
-        var markerUrl = 'http://' + markerUrlArr[2] + "/" + markerUrlArr[3] + "/" + markerUrlArr[4] + "/" + markerUrlArr[5] + "/xy/" + curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        // no channels 
+        tokenChanString = pathArr[2];
+      }
+
+      //var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
+      //var markerUrlArr = markerUrlRaw.split("/", 8);
+      var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+      
+      if (script_name == '') {
+        var markerUrl = "http://{{ request.get_host }}/" + tokenChanString + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+      }
+      else {
+        var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + tokenChanString + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
       }
       return markerUrl;
     };
