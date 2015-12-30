@@ -507,34 +507,52 @@
     };
 
     function getCurrentURL(point) {
-      console.log('{{request.get_host}}');
-      console.log('{{request.path}}');
-      console.log('{{request.META.SCRIPT_NAME}}');
-      
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       var pathRaw = '{{ request.path }}';
       var pathArr = pathRaw.split('/');
-      console.log(pathArr);
-      
-      var tokenChanString = ''
-      if (pathArr.length == 4) {
-        // has channels
-        tokenChanString = pathArr[1] + "/" + pathArr[2];
-      }
-      else {
-        // no channels 
-        tokenChanString = pathArr[2];
-      }
-
-      //var markerUrlRaw = 'http://{{ request.get_host }}{{ request.path }}';
-      //var markerUrlArr = markerUrlRaw.split("/", 8);
       var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
       
       if (script_name == '') {
-        var markerUrl = "http://{{ request.get_host }}/" + tokenChanString + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        var token = pathArr[1];
+        var channels = '';
+        // handle the case where we are in project view mode 
+        if (token == 'project') {
+          token = 'project/' + pathArr[2];
+          channels = '';
+        }
+        else {
+          if (pathArr.length > 3 && !(pathArr[2] == 'xy' || pathArr[2] == 'yz' || pathRaw[2] == 'xz')) {
+            channels = pathArr[2]; 
+          }
+        }
+        
+        if (channels == '') {
+          var markerUrl = "http://{{ request.get_host }}/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
+        else {
+          var markerUrl = "http://{{ request.get_host }}/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
       }
       else {
-        var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + tokenChanString + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        var token = pathArr[2];
+        var channels = '';
+        // handle the case where we are in project view mode 
+        if (token == 'project') {
+          token = 'project/' + pathArr[3];
+          channels = '';
+        }
+        else {
+          if (pathArr.length > 3 && !(pathArr[3] == 'xy' || pathArr[3] == 'yz' || pathRaw[3] == 'xz')) {
+            channels = pathArr[3]; 
+          }
+        }
+        
+        if (channels == '') {
+          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
+        else {
+          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
       }
       return markerUrl;
     };
