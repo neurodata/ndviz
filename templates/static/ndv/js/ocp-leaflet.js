@@ -17,6 +17,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     brightness: 100,
     contrast: 100,
     curtime: 0,
+    propagate: 0,
     /* end ocpviz added */
 		/*
 		maxNativeZoom: null,

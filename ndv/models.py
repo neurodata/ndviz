@@ -43,10 +43,12 @@ class VizLayer ( models.Model ):
     ('timeseries','TIMESERIES'),
   )
   layertype = models.CharField(max_length=255, choices=LAYER_CHOICES)
+  
   token = models.CharField(max_length=255)
   channel = models.CharField(max_length=255)
   # do we want to use the tilecache or ocpcatmaid? (default ocpcatmaid)  
   tilecache = models.BooleanField(default=False) 
+  
   # for mcfc cutout 
   COLOR_CHOICES = (
       ('C', 'cyan'),
@@ -57,6 +59,8 @@ class VizLayer ( models.Model ):
       ('B', 'blue'), 
   )
   color = models.CharField(max_length=255, choices=COLOR_CHOICES, blank=True)
+
+  propagate = models.IntegerField(default=0) # assume channels are not propagated
 
   def __unicode__(self):
     return self.layer_name 

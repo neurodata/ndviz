@@ -114,6 +114,8 @@
             updateImageControlSliders();
             var html = '<div class="bg-info"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="sr-only">Success:</span> Added new layer for channel ' + channel + '.';
             $( '.add_data_info' ).append(html);
+            // re-run check propagate
+            checkPropagate();
           },
         })
         .fail(function(response) {

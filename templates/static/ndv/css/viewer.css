@@ -32,6 +32,9 @@ html, body, #map {
   font-weight: bold;
   padding-top:10px;
 }
+.propwarnbox {
+  font-size: 13px !important;
+}
 #imagecontrolshide, #projinfobox {
   padding: 8px 8px;
   width: 300px;

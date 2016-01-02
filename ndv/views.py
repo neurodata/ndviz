@@ -172,6 +172,7 @@ def tokenview(request, webargs):
     channel_info[channel] = {}
     channel_info[channel]['channel_name'] = channel
     channel_info[channel]['channel_type'] = jsoninfo['channels'][channel]['channel_type']
+    channel_info[channel]['propagate'] = jsoninfo['channels'][channel]['propagate'] 
 
   # add channels to dict
   channels = []
@@ -224,6 +225,7 @@ def tokenview(request, webargs):
     tmp_layer.tilecache = False
     if channel['channel_name'] in channel_colors.keys():
       tmp_layer.color = channel_colors[ channel['channel_name'] ].upper()
+    tmp_layer.propagate = channel['propagate'] 
     layers.append(tmp_layer)
 
   # package data for the template

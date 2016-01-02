@@ -132,6 +132,9 @@
             tileSize: 512,
             {% if layer.layertype == 'annotation' %}
             opacity: 0.4,
+            propagate: 2, 
+            {% else %}
+            propagate: {{ layer.propagate }},
             {% endif %}
             {% if layer.layertype == 'timeseries' %}
             curtime: {{ starttime }},
@@ -187,6 +190,9 @@
             tileSize: 512,
             {% if layer.layertype == 'annotation' %}
             opacity: 0.4,
+            propagate: 2, 
+            {% else %}
+            propagate: {{ layer.propagate }},
             {% endif %}
             {% if layer.layertype == 'timeseries' %}
             curtime: {{ starttime }},
@@ -200,8 +206,35 @@
     // set the initial view
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
 		map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
+    
+    // BEGIN propagate warning box 
+    var propwarn = L.control();
+    propwarn.options.position = 'topright';
+    propwarn.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'propwarnbox');
+      this._div.innerHTML = '<div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-alert" aria-hidden="true"></span><span class="sr-only">Warning:</span> The following layers are not propagated: <strong><span class="notpropchanlist"></span></strong>.<br />Image data may be missing at some resolutions!';
+      return this._div;
+    };
+    propwarn.addTo(map);
 
-    // display query result
+    function checkPropagate() {
+      $( ".propwarnbox" ).hide();
+      for (layer in layers) {
+        if (layers[layer].options.propagate != 2) {
+          $( ".propwarnbox" ).show();
+          if ($( ".notpropchanlist" ).text().length > 0)  {
+            $( ".notpropchanlist" ).append(", ");
+          }
+          $( ".notpropchanlist" ).append(layer);
+          console.log(layers[layer].options.propagate);
+        }
+      }
+    }
+    checkPropagate();
+
+    // END propagate warning box 
+
+    // BEGIN query result palette
     var queryres = L.control();
     queryres.options.position = 'topright';
     queryres.onAdd = function (map) {
@@ -221,6 +254,7 @@
     queryres.getContainer().addEventListener('mouseout', function() {
       map.on('click', onMapClick);
     });
+    // END query result palette
 
     // BEGIN project info palette
     var projinfo = L.control();
