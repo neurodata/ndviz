@@ -329,7 +329,7 @@
     function updateImageControlSliders() {
       $( "#image-sliders" ).empty();
       for (layer in layers) {
-        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div id="controls-slider-name">Brightness</div><div id="slider"><span class="brightness">' + layer + '</span></div><br /><div class="controls-slider-name">Contrast</div><div id="slider"><span class="contrast">' + layer + '</span></div><br /></div>';
+        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div class="controls-slider-name">Brightness</div><div id="slider"><span class="brightness">' + layer + '</span></div><br /><div class="controls-slider-name">Contrast</div><div id="slider"><span class="contrast">' + layer + '</span></div><br /></div>';
         $( "#image-sliders" ).append(tmphtml);
       }
       // brightness controls
