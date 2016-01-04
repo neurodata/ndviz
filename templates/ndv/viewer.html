@@ -8,9 +8,10 @@
 
   {# jquery UI #}
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
-
+  
   {# leaflet files #}
   <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" />
+  <link rel="stylesheet" href="{% static 'ndv/css/Control.Loading.css' %}" />
 
   {# buttons, buttons, buttons #}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
@@ -23,9 +24,11 @@
   {% endif %}
 
   <script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'ndv/js/Control.Loading.js' %}"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-  <script src="{% static "ndv/js/easy-button.js" %}"></script>
-  <script src="{% static "ndv/js/ocp-leaflet.js" %}"></script>
+  <script src="{% static 'ndv/js/spin.min.js' %}"></script>
+  <script src="{% static 'ndv/js/easy-button.js' %}"></script>
+  <script src="{% static 'ndv/js/ocp-leaflet.js' %}"></script>
 	</head>
 <body>
 
@@ -83,6 +86,22 @@
 		var map = L.map('map', {
 			doubleClickZoom: false,
     });
+
+    // add loading symbol
+    var spinOpts = {
+      lines: 13,
+      length: 3,
+      width: 3,
+      radius: 5,
+      rotate: 13,
+      speed: 1.7,
+      top: "83%",
+    };
+    var loadingControl = L.Control.loading({
+      spinjs: true,
+      spin: spinOpts
+    });
+    map.addControl(loadingControl);
 
     // define layers (namespaced with a layers. prefix) 
     var layers = {}; 
