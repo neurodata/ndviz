@@ -279,32 +279,44 @@ def tokenview(request, webargs):
 
 # View a VizProject (pre-prepared project in the database)
 def projectview(request, webargs):
-  # parse web args
-  # we expect /ocp/viz/project/projecttoken/res/x/y/z/
-  # webargs starts from the next string after project
-
-  # AB TODO needs to be regex-ified to make links work in manage page
-  [project_name, restargs] = webargs.split('/', 1)
-  restsplit = restargs.split('/')
-
-  # initialize x,y,z,res and marker vars
+  """ /<<project>>/<<plane>>(opt)/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
+  
+  # initialize these variables, which will be passed to the template
   x = None
   y = None
   z = None
   res = None
   marker = False
 
-  if len(restsplit) == 5:
-    #  res/x/y/z/ args
-    res = int(restsplit[0])
-    x = int(restsplit[1])
-    y = int(restsplit[2])
-    z = int(restsplit[3])
-    marker = True
+  options = None
 
-  #else:
-  #  # return error
-  #  return HttpResponseBadRequest('Error: Invalid REST arguments.')
+  # process arguments
+  try:
+    m = re.match(r"(?P<token>\w+)/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
+    [project_name, orientation, cutoutstr, options_str] = [i for i in m.groups()]
+
+    if options_str is not None:
+      options = {}
+      options_raw = options_str.split(',')
+      for option in options_raw:
+        if len(option.split(':')) > 1:
+          options[ option.split(':')[0] ] = option.split(':')[1]
+        else:
+          options[option] = True
+
+  except Exception, e:
+    print e
+    return HttpResponseBadRequest("[ERROR]: Invalid RESTful argument.")
+
+  # process cutoutargs
+  if cutoutstr is not None:
+    cutoutargs = cutoutstr.split('/')
+
+    if len (cutoutstr) >= 4:
+      res = int(cutoutargs[0])
+      x = int(cutoutargs[1])
+      y = int(cutoutargs[2])
+      z = int(cutoutargs[3])
 
   # query for the project from the db
   project = get_object_or_404(VizProject, pk=project_name)
