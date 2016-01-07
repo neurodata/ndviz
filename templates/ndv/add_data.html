@@ -98,7 +98,7 @@
           var urlBase = "http://{{ request.get_host }}/validate/";
         }
         else {
-          var urlBase = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/validate/";
+          var urlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/validate/";
         }
         // for each checkbox, add layer 
         $('#add_channels_form :input:checked').each(function() {
@@ -112,7 +112,7 @@
             type: 'GET',
             success: function(response) {
               var url = 'http://' + server + '/ocp/catmaid/' + token + '/' + channel + '/xy/{zindex}/{y}_{x}_{z}.png';
-            
+              console.log(url); 
               layers[token + '_' + channel] = L.tileLayer.OCPLayer(
                 url,
               {
@@ -150,7 +150,7 @@
           var urlBase = "http://{{ request.get_host }}/validate/";
         }
         else {
-          var urlBase = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/validate/";
+          var urlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/validate/";
         }
         var $inputs = $('#add_data_form :input');
         var values = {};
