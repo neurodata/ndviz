@@ -4,9 +4,30 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="add_dataLabel">Add Data to Current View</h4>
+          <h3 class="modal-title" id="add_dataLabel">Add Data to Current View</h3>
         </div>
         <div class="modal-body">
+          {% if viewtype == 'tokenview' %}
+          <div>
+          <h4>Add More Channels for {{ project_name }}</h4>
+          <form id="add_channels_form">
+            {% for channel in allchannels %}
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" id="addCheckbox {{channel}}" value="{{ channel }}">{{ channel }}
+              </label>
+            </div>
+            {% endfor %} 
+            <button type="submit" class="btn btn-primary">Add Channels</button>
+          </form>
+          <div class="add_channels_info">
+
+          </div>
+          </div>
+          {% endif %}
+          <div>
+          <br />
+          <h4>Add Data from Remote Server</h4>
           <p>Use the form below to add a additional layer to the current view. Layers can be removed by using the <i class="fa fa-times-circle"></i> next to the layer name in the <em>Image Controls</em> palette.</p>
           <div class="alert alert-danger" role="alert">
             <p><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> 
@@ -40,6 +61,7 @@
 
           </div>
           </div>
+          </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         </div>
@@ -63,6 +85,59 @@
   </script>
 
   <script>
+    $(function() {
+      $( '#add_channels_form' ).submit(function(e) {
+        e.preventDefault();
+        // clear previous info / errors 
+        $( '.add_channels_info' ).empty();
+        
+        var token = '{{ project_name }}';
+        var server = '{{ tokenserver }}';
+        var script_name = '{{ request.META.SCRIPT_NAME }}';
+        if (script_name == '') {
+          var urlBase = "http://{{ request.get_host }}/validate/";
+        }
+        else {
+          var urlBase = "http://{{ request.get_host }}/{{ request.SCRIPT_NAME }}/validate/";
+        }
+        // for each checkbox, add layer 
+        $('#add_channels_form :input:checked').each(function() {
+          
+          var channel = $(this).val();
+          var args = token + "/" + channel + "/" + server + "/";
+          var url = urlBase.concat(args);
+          // make request (using jquery)
+          var jqxhr = $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(response) {
+              var url = 'http://' + server + '/ocp/catmaid/' + token + '/' + channel + '/xy/{zindex}/{y}_{x}_{z}.png';
+            
+              layers[token + '_' + channel] = L.tileLayer.OCPLayer(
+                url,
+              {
+                zindex: ndv.zindex,
+                zoomReverse: true,
+                minZoom: ndv.maxres,
+                maxZoom: ndv.maxres + ndv.maxres,
+                tileSize: 512,
+                continuousWorld: true,
+              }).addTo(map);
+              updateImageControlSliders();
+              var html = '<div class="bg-info"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="sr-only">Success:</span> Added new layer for channel ' + channel + '.';
+              $( '.add_channels_info' ).append(html);
+              // re-run check propagate
+              checkPropagate();
+            },
+          })
+          .fail(function(response) {
+            var html = '<div class="alert alert-success" role="alert"><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span><span class="sr-only">Error:</span> Failed to add channel. Server Error Code: ' + response.status + '</div>';
+            $( '.add_channels_info' ).append(html);
+          });
+        });
+      });
+    });
+    
     // intercept form submission, validate url, and add to map 
     $(function() {
       $( '#add_data_form' ).submit(function(e) {

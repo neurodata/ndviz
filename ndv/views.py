@@ -74,6 +74,7 @@ def default(request):
       'marker': 0,
       'timeseries': False,
       'version': VERSION,
+      'viewtype': 'default',
       }
   return render(request, 'ndv/viewer.html', context)
 
@@ -252,6 +253,8 @@ def tokenview(request, webargs):
   context = {
       'layers': layers,
       'project_name': project_name,
+      'allchannels': channel_info,
+      'tokenserver': layers[0].server, # TODO could we pull this info from somewhere else?
       'xsize': ximagesize,
       'ysize': yimagesize,
       'zsize': zimagesize,
@@ -273,6 +276,7 @@ def tokenview(request, webargs):
       'timeseries': timeseries,
       'blendmode': blendmode,
       'version': VERSION,
+      'viewtype': 'tokenview',
   }
   return render(request, 'ndv/viewer.html', context)
 
@@ -364,6 +368,7 @@ def projectview(request, webargs):
       'marker': marker,
       'timeseries': timeseries,
       'version': VERSION,
+      'viewtype': 'projectview',
   }
   return render(request, 'ndv/viewer.html', context)
 
@@ -421,6 +426,7 @@ def dataview(request, webargs):
       'timeseries': False,
       'dataview': 'test',
       'version': VERSION,
+      'viewtype': 'dataview',
       'dv_token': dv.token,
       'dv_desc': dv.desc,
       'dv_name': dv.name,

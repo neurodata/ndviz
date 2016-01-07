@@ -238,6 +238,7 @@
 
     function checkPropagate() {
       $( ".propwarnbox" ).hide();
+      $( ".notpropchanlist" ).empty();
       for (layer in layers) {
         if (layers[layer].options.propagate != 2) {
           $( ".propwarnbox" ).show();
@@ -336,11 +337,9 @@
 
       var resolution = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (ndv.minres - ndv.upsample_num) + '" max="' + ndv.maxres + '" value="' + ndv.res + '" /></div>';
 
-      var adddata = '<br /><div id="add_data_link"><a href="#" data-toggle="modal" data-target="#add_data">Add Data to Current View</a></div>';
-
       var hiddendivend = '</div>';
 
-      this._div.innerHTML = showicon + hiddendivstart + title + imgsliderdiv + blendmode + resolution + adddata + hiddendivend;
+      this._div.innerHTML = showicon + hiddendivstart + title + imgsliderdiv + blendmode + resolution + hiddendivend;
       return this._div;
     };
     imagecontrols.addTo(map);
@@ -421,6 +420,28 @@
       map.on('click', onMapClick);
     });
     // END image control palette
+    
+    // BEGIN add data button
+    var addDataButton = L.control();
+    addDataButton.options.position = 'topright';
+    addDataButton.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'addDataButton');
+      var button = '<a id="add_data_link" href="#" data-toggle="modal" data-target="#add_data"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-plus fa-stack-1x"></i></span></a>';
+      this._div.innerHTML = button;
+      return this._div;
+    };
+		addDataButton.addTo(map);
+
+    // disable (and then re-enable) clicking on mouseover
+    addDataButton.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+    });
+
+    addDataButton.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+    });
+
+    // END add data button palette
 
     // update current coordinates in nav box
 
