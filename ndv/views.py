@@ -34,7 +34,7 @@ import urllib2
 import json
 import re
 
-VERSION = 'v0.4.0'
+VERSION = 'v0.4.0.1'
 
 VALID_SERVERS = {
     'localhost':'localhost',
@@ -298,7 +298,7 @@ def projectview(request, webargs):
 
   # process arguments
   try:
-    m = re.match(r"(?P<token>\w+)/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
+    m = re.match(r"(?P<token>\w+)?/?(?P<plane>xy|xz|yz)?/?(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
     [project_name, orientation, cutoutstr, options_str] = [i for i in m.groups()]
 
     if options_str is not None:
