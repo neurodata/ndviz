@@ -217,7 +217,8 @@ def tokenview(request, webargs):
     if channel['channel_type'] == 'timeseries':
       timeseries = True
     tmp_layer.layertype = channel['channel_type']
-    tmp_layer.token = project_name
+    #tmp_layer.token = project_name
+    tmp_layer.token = token_str 
     tmp_layer.channel = channel['channel_name']
     if settings.OCP_SERVER is None:
       tmp_layer.server = request.META['HTTP_HOST'];
@@ -253,6 +254,7 @@ def tokenview(request, webargs):
   context = {
       'layers': layers,
       'project_name': project_name,
+      'token': token_str, 
       'allchannels': channel_info,
       'tokenserver': layers[0].server, # TODO could we pull this info from somewhere else?
       'xsize': ximagesize,
