@@ -13,16 +13,32 @@
       {% if projects %}
       <table class="table table-hover">
         <caption>All viz projects for user <strong>{{ user.get_username }}</strong> are listed below. (<a href="#top">back to top</a>)</caption>
+        <thead>
+          <tr>
+            <th>Project Name</ht>
+            <th>Description</th>
+            <th>Public?</th>
+            <th colspan="4"></th>
+          </tr>
+        </thead>
         <tbody>
         {% for project in projects %}
-        <tr>
+        <tr id="{{ project.project_name }}">
           <td>{{ project.project_name }}</td>
           <td>{{ project.project_description }}</td>
-          <td>{{ project.public }}</td>
-          <td><a href="#">Popup Dataset Metadata</a></td>
-          <td><a href="#">Layers</a></td>
-          <td><a href="{% url 'projectview' webargs=project.project_name %}">View</a></td>
-          <td><a href="#">Edit</a></td>
+          <td>{% if project.public %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
+          <td><button type="button" id="metadata" class="btn btn-primary">Metadata</button></td>
+          <td><button type="button" id="layers" class="btn btn-info">Layers</button></td>
+          <td><a href="{% url 'projectview' webargs=project.project_name %}"><button type="button" class="btn btn-success">View</button></a></td>
+          <td><button type="button" id="edit" class="btn btn-danger">Edit</button></td>
+        </tr>
+        <tr id="metadata_{{ project.project_name }}" style="display:none;">
+          <td colspan="1"><strong><small>resolutions</small></strong> {{ project.scalinglevels }}</td> 
+          <td colspan="2"><strong><small>(x,y,z) bounds</small></strong> ({{ project.xoffset }},{{ project.ximagesize }}), ({{ project.yoffset }}, {{ project.yimagesize }}), ({{ project.zoffset }}, {{ project.zimagesize }})</td>
+          <td colspan="2"><strong><small>time bounds</small></strong> ({{ project.starttime }}, {{ project.endtime }})</td>
+        </tr>
+        <tr id="layers_{{ project.project_name }}" style="display:none;">
+          <td colspan="7">Layers</td> 
         </tr>
         {% endfor %}
         </tbody>
@@ -58,3 +74,21 @@
  </div>
 
 {# end view projects modal #}
+
+<script>
+  $( "button#metadata" ).click(function() {
+    var id = $(this).parent().parent().attr('id');
+    console.log(id);
+    $( "#metadata_" + id ).toggle();  
+  });
+  $( "button#layers" ).click(function() {
+    var id = $(this).parent().parent().attr('id');
+    // todo run queries for layer separately, so we don't overwhelm the DB 
+    console.log(id);
+    $( "#layers_" + id ).toggle();  
+  });
+  $( "button#edit" ).click(function() {
+    $( "#remoteModal" ).load("http://google.com");
+    $( "#remoteModal" ).modal('show');
+  });
+</script>
