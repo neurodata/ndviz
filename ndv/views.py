@@ -34,7 +34,7 @@ import urllib2
 import json
 import re
 
-VERSION = 'v0.4.0.1'
+VERSION = 'v0.4.1 Beta'
 
 VALID_SERVERS = {
     'localhost':'localhost',
@@ -377,6 +377,35 @@ def projectview(request, webargs):
 def getDataview(request, webargs):
   """ get the info from the dataview from the db and return it for the modal """
 
+def manage(request):
+  context = {
+      'layers': None,
+      'project_name': None,
+      'xsize': 0,
+      'ysize': 0,
+      'zsize': 0,
+      'xoffset': 0,
+      'yoffset': 0,
+      'zoffset': 0,
+      'res': 0,
+      'xdownmax': 0,
+      'ydownmax': 0,
+      'starttime': 0,
+      'endtime': 0,
+      'maxres': 0,
+      'minres':0,
+      'xstart': 0,
+      'ystart': 0,
+      'zstart': 0,
+      'plane': 'xy',
+      'marker': 0,
+      'timeseries': False,
+      'version': VERSION,
+      'viewtype': 'manage',
+      'manage': True,
+      }
+  return render(request, 'ndv/viewer.html', context)
+
 def dataview(request, webargs):
   """ display the given dataview """
   """ /dataview/<<dataview name>> """
@@ -426,7 +455,7 @@ def dataview(request, webargs):
       'marker': 0,
       'plane': 'xy',
       'timeseries': False,
-      'dataview': 'test',
+      'dataview': True,
       'version': VERSION,
       'viewtype': 'dataview',
       'dv_token': dv.token,

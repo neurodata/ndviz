@@ -28,7 +28,11 @@ base_urlpatterns = patterns('ndv.views',
     url(r'^ramoninfo/(?P<webargs>[\w,/-]+)', 'ramoninfo'),
     # validate token/channel/server
     url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
-    url(r'^manage/$', 'viewProjects', name='viewProjects'),
+    # content for the manage modal 
+    url(r'^viewProjects$', 'viewProjects', name='viewProjects'),
+    # manage modal 
+    url(r'^manage$', 'manage', name='manage'),
+    # user auth 
     url(r'^login/$', 'processLogin', name='login'),
     url(r'^logout/$', 'processLogout', name='logout'),
     url(r'^$', 'default'),

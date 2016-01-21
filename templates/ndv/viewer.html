@@ -1119,6 +1119,15 @@
       });
     </script>
   {% endif %}
+  {% if manage %}
+    <script>
+      $(window).load(function() {
+        console.log('running');
+        $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+        $( "#remoteModal" ).modal('show');
+      });
+    </script>
+  {% endif %}
 
 </body>
 {# jquery and bootstrap js #}
