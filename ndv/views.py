@@ -347,6 +347,10 @@ def projectview(request, webargs):
   if res is None:
     res = project.scalinglevels
 
+  # get dataviews for project
+  dvi = DataViewItem.objects.filter(vizproject = project_name)
+  dv = DataView.objects.filter(items = dvi)
+
   context = {
       'layers': layers,
       'project_name': project_name,
@@ -371,6 +375,7 @@ def projectview(request, webargs):
       'timeseries': timeseries,
       'version': VERSION,
       'viewtype': 'projectview',
+      'dataviews': dv,
   }
   return render(request, 'ndv/viewer.html', context)
 
