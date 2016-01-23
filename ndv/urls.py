@@ -25,7 +25,7 @@ base_urlpatterns = patterns('ndv.views',
     # for getting the projinfo json information from ocp
     url(r'^projinfo/(?P<queryargs>[\w,./-]+)', 'projinfo', name='projinfo'),
     # for getting the ramon json information from ocp
-    url(r'^ramoninfo/(?P<webargs>[\w,/-]+)', 'ramoninfo'),
+    url(r'^ramoninfo/(?P<webargs>[\w,./-]+)', 'ramoninfo'),
     # validate token/channel/server
     url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
     url(r'^manage/$', 'viewProjects', name='viewProjects'),
