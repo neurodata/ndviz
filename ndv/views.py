@@ -643,6 +643,53 @@ def viewProjects(request):
     }
     return render(request, 'manage/viewprojects.html', context)
 
+@login_required
+def getLayers(request, project):
+  # get all layers for a project
+  projectobj = get_object_or_404(VizProject, project_name=project)
+  
+  layers = VizLayer.objects.filter(project = projectobj)
+  context = {
+    'layers': layers,
+  }
+  return render(request, 'manage/getlayers.html', context) 
+
+@login_required
+def editVizProject(request, project):
+  if request.method == 'POST':
+    return HttpResponse('TODO');
+    # submit edits
+  elif request.method == 'GET':
+    projectobj = get_object_or_404(VizProject, project_name=project)
+    layers = VizLayer.objects.filter(project = projectobj)
+    context = {
+      'project': projectobj,
+      'layers': layers,
+    }
+    return render(request, 'manage/editvizproject.html', context) 
+
+@login_required
+def autopopulateDataset(request, webargs):
+  [server, token_raw] = webargs.split('/', 1)
+  token = token_raw.split('/')[0]
+
+  # make get request to ocp 
+
+  if server == 'localhost':
+    if settings.OCP_SERVER == None:
+      addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token + '/info/'
+    else:
+      addr = 'http://' + settings.OCP_SERVER + '/ocp/ca/' + token + '/info/'
+  else:
+    addr = 'http://' + VALID_SERVERS[server] + '/ocp/ca/' + token + '/info/'
+  try:
+    r = urllib2.urlopen(addr)
+  except urllib2.HTTPError, e:
+    r = '[ERROR]: ' + str(e.getcode())
+    return HttpResponseBadRequest(r)
+
+  return HttpResponse(r.read())
+
 # Login / Logout
 def processLogin(request):
   if request.method == 'POST':

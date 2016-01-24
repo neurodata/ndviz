@@ -1,0 +1,173 @@
+{# view projects modal ("Manage" link) #}
+
+<div class="modal-dialog modal-lg">
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <a name="top"></a>
+      <h3 class="modal-title" id="editVizProjectTitle">Editing VizProject: {{ project.project_name }}</h3>
+    </div>
+    <div class="modal-body">
+    <form class="form-horizontal">
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Basic Info</label>
+      </div>
+      <div class="form-group">
+        <label for="projectName" class="col-sm-2 control-label">Project Name</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="projectName" value="{{ project.project_name }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="projectDesc" class="col-sm-2 control-label">Project Description</label>
+        <div class="col-sm-10">
+          <textarea rows="3" class="form-control" id="projectDesc">{{ project.project_description }}</textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <div class="checkbox">
+            <label>
+              {% if project.public %}
+              <input type="checkbox" id="public" checked />Public?
+              {% else %}
+              <input type="checkbox" id="public"/>Public?
+              {% endif %}
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Dataspace</label>
+        <p class="form-control-static">Dataspace parameters can be entered manually or auto-populated using the button below.</p>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Autopopulate</label>
+        <div class="col-xs-5">
+          <input type="text" class="form-control" id="autopopulate_server" placeholder="example.com">
+        </div>
+        <div class="col-xs-4">
+          <input type="text" class="form-control" id="autopopulate_token" placeholder="token">
+        </div>
+        <div class="col-xs-1">
+          <button type="button" class="btn btn-info" id="autopopulate_go">Go</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="xoffset" class="col-sm-2 control-label">x-offset</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="xoffset" value="{{ project.xoffset }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="ximagesize" class="col-sm-2 control-label">x-imagesize</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="ximagesize" value="{{ project.ximagesize }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="yoffset" class="col-sm-2 control-label">y-offset</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="yoffset" value="{{ project.yoffset }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="yimagesize" class="col-sm-2 control-label">y-imagesize</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="yimagesize" value="{{ project.yimagesize }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="zoffset" class="col-sm-2 control-label">z-offset</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="zoffset" value="{{ project.zoffset }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="zimagesize" class="col-sm-2 control-label">z-imagesize</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="zimagesize" value="{{ project.zimagesize }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="starttime" class="col-sm-2 control-label">Start Time</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="starttime" value="{{ project.starttime }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="endtime" class="col-sm-2 control-label">End Time</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="endtime" value="{{ project.endtime }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="minres" class="col-sm-2 control-label">Minimum Resolution</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="minres" value="{{ project.minres }}" />
+          <span id="helpBlock" class="help-block">This should almost always be 0.</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="scalinglevels" class="col-sm-2 control-label">Scaling Levels</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="scalinglevels" value="{{ project.scalinglevels }}" />
+        </div>
+      </div>
+    
+      <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      <button type="button" id="tomanage" class="btn btn-default">Back</button>
+    </div>
+   </div>
+ </div>
+
+{# end edit vizprojects modal #}
+
+
+<script>
+  $( "button#autopopulate_go" ).click(function() {
+    var server = $( "#autopopulate_server" ).val();   
+    var token = $( "#autopopulate_token" ).val();
+    var url = "{% url 'autopopulateDataset' webargs='placeholder' %}";
+    url = url.replace('placeholder', server + '/' + token + '/');
+    
+    var jqxhr = $.ajax({
+      url: url,
+      type: 'GET',
+      success: function(response) {
+        var projinfo = jQuery.parseJSON( response );
+        $( "#xoffset" ).val( projinfo.dataset.offset[0][0] );
+        $( "#yoffset" ).val( projinfo.dataset.offset[0][1] );
+        $( "#zoffset" ).val( projinfo.dataset.offset[0][2] );
+        
+        $( "#ximagesize" ).val( projinfo.dataset.imagesize[0][0] );
+        $( "#yimagesize" ).val( projinfo.dataset.imagesize[0][1] );
+        $( "#zimagesize" ).val( projinfo.dataset.imagesize[0][2] );
+       
+        $( "#starttime" ).val( projinfo.dataset.timerange[0] );
+        $( "#endtime" ).val( projinfo.dataset.timerange[1] );
+ 
+        $( "#scalinglevels" ).val( projinfo.dataset.scalinglevels );
+        $( "#minres" ).val( projinfo.dataset.resolutions[0] );
+
+        $( "button#autopopulate_go" ).switchClass( "btn-info", "btn-success" );
+        $( "button#autopopulate_go" ).switchClass( "btn-danger", "btn-success" );
+      },
+    })
+    .fail(function(response) {
+        $( "button#autopopulate_go" ).switchClass( "btn-info", "btn-danger" );
+        $( "button#autopopulate_go" ).switchClass( "btn-success", "btn-danger" );
+    });
+  });
+
+  $( "button#tomanage" ).click(function() {
+    $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+    $( "#remoteModal" ).modal('show');
+  });
+</script>
+

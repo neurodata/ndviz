@@ -31,7 +31,10 @@ base_urlpatterns = patterns('ndv.views',
     # content for the manage modal 
     url(r'^viewProjects$', 'viewProjects', name='viewProjects'),
     # manage modal 
-    url(r'^manage$', 'manage', name='manage'),
+    url(r'^manage/layers/(?P<project>[\w,-]+)/?', 'getLayers', name='getLayers'),
+    url(r'^manage/editproject/(?P<project>[\w,-]+)/?', 'editVizProject', name='editVizProject'),
+    url(r'^manage/autopopulate/(?P<webargs>[\w,\.,/-]+)/?', 'autopopulateDataset', name='autopopulateDataset'),
+    url(r'^manage/?$', 'manage', name='manage'),
     # user auth 
     url(r'^login/$', 'processLogin', name='login'),
     url(r'^logout/$', 'processLogout', name='logout'),

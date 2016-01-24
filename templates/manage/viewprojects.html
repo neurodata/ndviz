@@ -78,17 +78,22 @@
 <script>
   $( "button#metadata" ).click(function() {
     var id = $(this).parent().parent().attr('id');
-    console.log(id);
     $( "#metadata_" + id ).toggle();  
   });
   $( "button#layers" ).click(function() {
     var id = $(this).parent().parent().attr('id');
-    // todo run queries for layer separately, so we don't overwhelm the DB 
+    var layersUrl = "{% url 'getLayers' project='placeholder' %}";
+    layersUrl = layersUrl.replace('placeholder', id);
+    console.log(layersUrl);
+    $( "#layers_" + id ).load(layersUrl);
     console.log(id);
     $( "#layers_" + id ).toggle();  
   });
   $( "button#edit" ).click(function() {
-    $( "#remoteModal" ).load("http://google.com");
+    var id = $(this).parent().parent().attr('id');
+    var editUrl = "{% url 'editVizProject' project='placeholder' %}";
+    editUrl = editUrl.replace('placeholder', id);
+    $( "#remoteModal" ).load(editUrl);
     $( "#remoteModal" ).modal('show');
   });
 </script>
