@@ -47,7 +47,7 @@ class VizLayer ( models.Model ):
   channel = models.CharField(max_length=255)
   # do we want to use the tilecache or ocpcatmaid? (default ocpcatmaid)  
   tilecache = models.BooleanField(default=False) 
-  tilecache_server = models.CharField(max_length=255, default=None)
+  tilecache_server = models.CharField(max_length=255, default=None, blank=True)
 
   # for mcfc cutout 
   COLOR_CHOICES = (
