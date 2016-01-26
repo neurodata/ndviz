@@ -46,7 +46,7 @@ base_urlpatterns = patterns('ndv.views',
 )
 
 urlpatterns = patterns('',
-  url(r'^admin', include(admin.site.urls)),
+  url(r'^admin/', include(admin.site.urls)),
   url('^ndv/', include(base_urlpatterns)),
   url('^', include(base_urlpatterns)), # maintain unprefixed URLs
 )
