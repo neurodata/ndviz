@@ -665,8 +665,29 @@ def editVizProject(request, project):
     context = {
       'project': projectobj,
       'layers': layers,
+      'serverOptions': VizLayer.SERVER_CHOICES,
+      'layerOptions': VizLayer.LAYER_CHOICES,
+      'colorOptions' : VizLayer.COLOR_CHOICES,
     }
     return render(request, 'manage/editvizproject.html', context) 
+
+# AB TODO 
+@login_required
+def deleteLayer(request):
+  if request.method == 'POST':
+
+    import pdb; pdb.set_trace()
+    """
+    projectobj = get_object_or_404(VizProject, project_name=project)
+    try:
+      layer = VizLayer.objects.get(project = project, layer_name = layer) 
+    except VizLayer.DoesNotExist:
+      return HttpResponseNotFound('No layer ({}) for VizProject {}'.format(layer, project))
+
+    import pdb; pdb.set_trace() 
+    """
+  else:
+    return HttpResponseBadRequest('Invalid Request')
 
 @login_required
 def autopopulateDataset(request, webargs):

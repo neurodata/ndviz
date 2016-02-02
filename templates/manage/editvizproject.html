@@ -1,5 +1,9 @@
 {# view projects modal ("Manage" link) #}
 
+{% load staticfiles %}
+
+<script src="{% static 'ndv/js/jquery.confirm.min.js' %}"></script>
+
 <div class="modal-dialog modal-lg">
   <div class="modal-content">
     <div class="modal-header">
@@ -39,7 +43,6 @@
       </div>
       <div class="form-group">
         <label class="col-sm-2 control-label">Dataspace</label>
-        <p class="form-control-static">Dataspace parameters can be entered manually or auto-populated using the button below.</p>
       </div>
       <div class="form-group">
         <label class="col-sm-2 control-label">Autopopulate</label>
@@ -51,6 +54,9 @@
         </div>
         <div class="col-xs-1">
           <button type="button" class="btn btn-info" id="autopopulate_go">Go</button>
+        </div>
+        <div class="col-sm-offset-2 col-sm-10">
+          <span id="helpBlock" class="help-block">Auto-populates the form fields below. <strong>Note:</strong> This will overwrite <em>all</em> of the fields below!</span>
         </div>
       </div>
 
@@ -115,8 +121,103 @@
           <input type="text" class="form-control" id="scalinglevels" value="{{ project.scalinglevels }}" />
         </div>
       </div>
-    
-      <button type="submit" class="btn btn-primary">Save</button>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Layers</label>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button id="addnewlayer" class="btn btn-primary">Add New Layer</button>
+        </div>
+      </div>
+      <div id="newlayers">
+      </div>
+      {% for layer in layers %}
+      <div id="{{ layer.layer_name }}">
+        <div class="form-group">
+          <a class="toggleLayer" href="#"><label class="col-sm-offset-2 col-sm-10">{{ layer.layer_name }}</label></a>
+        </div>
+        <div id="hidden_{{ layer.layer_name }}" style="display:none;">
+          <div class="form-group">
+            <label for="layerName" class="col-sm-2 control-label">Layer Name</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="layerName_{{ layer.layer_name }}" value="{{ layer.layer_name }}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="layerDesc" class="col-sm-2 control-label">Layer Description</label>
+            <div class="col-sm-10">
+              <textarea rows="3" class="form-control" id="layerDesc_{{ layer.layer_name }}">{{ layer.layer_description }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="layerServer" class="col-sm-2 control-label">Server</label>
+            <div class="col-sm-10">
+              <select class="form-control" id="layerServer_{{ layer.layer_name }}">
+                {% for option in serverOptions %}
+                <option value="{{ option.0 }}">{{ option.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="layerType" class="col-sm-2 control-label">Layer Type</label>
+            <div class="col-sm-10">
+              <select class="form-control" id="layerType_{{ layer.layer_name }}">
+                {% for option in layerOptions %}
+                <option value="{{ option.0 }}">{{ option.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="layerToken" class="col-sm-2 control-label">Token</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="layerToken_{{ layer.layer_name }}" value="{{ layer.token }}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="layerChannel" class="col-sm-2 control-label">Channel</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="layerChannel_{{ layer.layer_name }}" value="{{ layer.channel }}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="layerColor" class="col-sm-2 control-label">Color</label>
+            <div class="col-sm-10">
+              <select class="form-control" id="layerColor_{{ layer.layer_name }}">
+                {% for option in colorOptions %}
+                <option value="{{ option.0 }}">{{ option.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="checkbox">
+                <label>
+                  {% if layer.propagate == 2 %}
+                  <input type="checkbox" id="layerPropagated_{{ layer.layer_name }}" checked />Propagated?
+                  {% else %}
+                  <input type="checkbox" id="layerPropagated_{{ layer.layer_name }}" />Propagated?
+                  {% endif %}
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button class="deleteLayer btn btn-danger">Delete Layer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
     </form>
     </div>
     <div class="modal-footer">
@@ -130,6 +231,30 @@
 
 
 <script>
+  var new_layer_count = 0;
+  
+  $( "button#addnewlayer" ).click(function(event) {
+    new_layer_count = new_layer_count + 1;
+    var new_layer_name = 'newlayer_' + new_layer_count;
+    var htmlid = '<div id="' + new_layer_name + '">';
+    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name</label><div class="col-sm-10"><input type="text" class="form-control" id="layerName_' + new_layer_name + '" /></div></div>';
+    var layerdesc = '<div class="form-group"><label for="layerDesc" class="col-sm-2 control-label">Layer Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" id="layerDesc_' + new_layer_name + '"></textarea></div></div>';
+    var layerserver = '<div class="form-group"><label for="layerServer" class="col-sm-2 control-label">Server</label><div class="col-sm-10"><select class="form-control" id="layerServer_' + new_layer_name + '">{% for option in serverOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
+    var layertype = '<div class="form-group"><label for="layerType" class="col-sm-2 control-label">Layer Type</label><div class="col-sm-10"><select class="form-control" id="layerType_' + new_layer_name + '">{% for option in layerOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
+    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token</label><div class="col-sm-10"><input type="text" class="form-control" id="layerToken_' + new_layer_name + '" /></div></div>';
+    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel</label><div class="col-sm-10"><input type="text" class="form-control" id="layerChannel_' + new_layer_name + '" /></div></div>';
+    var color = '<div class="form-group"><label for="layerColor" class="col-sm-2 control-label">Color</label><div class="col-sm-10"><select class="form-control" id="layerColor_' + new_layer_name + '">{% for option in colorOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
+    var propagate = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" id="layerPropagated_' + new_layer_name + '" />Propagated?</label></div></div></div>';
+    var deletelayer = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><button class="deleteNewLayer btn btn-danger">Cancel Add New Layer</button></div></div>';
+    var closeid = '</div>';
+
+    var html = htmlid + layername + layerdesc + layerserver + layertype + token + channel + color + propagate + deletelayer + closeid;
+    
+
+    $( "#newlayers" ).append( html );
+    postNewLayerAdd();
+  });
+    
   $( "button#autopopulate_go" ).click(function() {
     var server = $( "#autopopulate_server" ).val();   
     var token = $( "#autopopulate_token" ).val();
@@ -165,9 +290,83 @@
     });
   });
 
+  function postNewLayerAdd() {
+    // we need to reload the delete new layer buttons from the dom 
+    $( ".deleteNewLayer" ).click(function(event) {
+      $(this).parent().parent().parent().remove();
+    });
+  };
+
+  $( ".toggleLayer" ).click(function(event) {
+    var layerid = $(this).parent().parent().attr('id');
+    $( "#hidden_" + layerid ).toggle()
+    
+  });
+
+  // get cookie for csrf protection in POST
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = jQuery.trim(cookies[i]);
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  
+  $( ".deleteLayer" ).click(function(event) {
+    console.log( $(this).parent().parent().parent() );
+    var layer_name = 'test'
+    $.confirm({
+      title: "Confirmation Required",
+      confirmButton: "Yes, Delete",
+      confirmButtonClass: "btn-danger",
+      cancelButton: "No",
+      cancelButtonClass: "btn-primary",
+      text: "Are you sure you want to delete layer " + layer_name + "?",
+      confirm: function() {
+
+        var csrftoken = getCookie('csrftoken');
+
+        // posts to the delete layer URL
+        var project_name = '';
+        var layer_name = ''; 
+        $.ajax({
+          method: 'POST',
+          url: '{% url "deleteLayer" %}',
+          data: { project: project_name, layer: layer_name  }, 
+          beforeSend: function(xhr, settings) {
+            // CSRF protection 
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+          success: function(response) {
+            // AB TODO 
+          }
+        })
+        .fail(function(response) {
+          // AB TODO
+        });
+      },
+      cancel: function() {
+
+      }
+    });
+    // stacking modals kills scrollbars 
+    $( "#remoteModal" ).css("overflow-y", "auto");
+  });
+  
   $( "button#tomanage" ).click(function() {
     $( "#remoteModal" ).load("{% url 'viewProjects' %}");
     $( "#remoteModal" ).modal('show');
   });
+
 </script>
 
