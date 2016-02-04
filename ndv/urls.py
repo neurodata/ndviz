@@ -33,6 +33,8 @@ base_urlpatterns = patterns('ndv.views',
     # manage modal 
     url(r'^manage/layers/(?P<project>[\w,-]+)/?', 'getLayers', name='getLayers'),
     url(r'^manage/layers/delete/$', 'deleteLayer', name='deleteLayer'),
+    url(r'^manage/addproject/$', 'addVizProject', name='addVizProject'),
+    url(r'^manage/editproject/submit/$', 'editProjectSubmit', name='editProjectSubmit'),
     url(r'^manage/editproject/(?P<project>[\w,-]+)/?', 'editVizProject', name='editVizProject'),
     url(r'^manage/autopopulate/(?P<webargs>[\w,\.,/-]+)/?', 'autopopulateDataset', name='autopopulateDataset'),
     url(r'^manage/?$', 'manage', name='manage'),

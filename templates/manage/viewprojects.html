@@ -6,7 +6,7 @@
       <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <a name="top"></a>
       <h3 class="modal-title" id="dataviewTitle">Manage Projects and Dataviews</h3>
-      <p class="bg-info"><a href="#listprojects">List Projects</a> | <a href="#">Create Project</a> | <a href="#listdataviews">List Dataviews</a> | <a href="#">Create Dataview</a></p>
+      <p class="bg-info"><a href="#listprojects">List Projects</a> | <a id="createProject" href="#">Create Project</a> | <a href="#listdataviews">List Dataviews</a> | <a href="#">Create Dataview</a></p>
     </div>
     <div class="modal-body">
       <a name="listprojects"></a>
@@ -94,6 +94,11 @@
     var editUrl = "{% url 'editVizProject' project='placeholder' %}";
     editUrl = editUrl.replace('placeholder', id);
     $( "#remoteModal" ).load(editUrl);
+    $( "#remoteModal" ).modal('show');
+  });
+  $( "#createProject" ).click(function() {
+    var addProjectUrl = "{% url 'addVizProject' %}";
+    $( "#remoteModal" ).load(addProjectUrl);
     $( "#remoteModal" ).modal('show');
   });
 </script>

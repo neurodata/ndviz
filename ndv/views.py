@@ -690,6 +690,205 @@ def deleteLayer(request):
     return HttpResponseBadRequest('Invalid Request')
 
 @login_required
+def addVizProject(request):
+  if request.method == 'POST':
+    response = request.POST 
+    
+    # separate out layers  
+    layersNew = {}
+    for item in response.keys():
+      if item.startswith('layer'):
+        [itemtype, sep, layername] = item.partition('_')
+        itemtype = itemtype[5:].lower()
+        if layername not in layersNew.keys():
+          layersNew[layername] = {}  
+        layersNew[layername][itemtype] = response[item]
+
+    # create new project
+    proj = VizProject()
+    proj.project_name = response['projectName']
+    proj.project_description = response['projectDesc']
+    proj.user = request.user
+    if 'public' in response.keys():
+      proj.public = 1
+    else:
+      proj.public = 0
+
+    proj.xoffset = response['xoffset']
+    proj.yoffset = response['yoffset']
+    proj.zoffset = response['zoffset']
+
+    proj.ximagesize = response['ximagesize']
+    proj.yimagesize = response['yimagesize']
+    proj.zimagesize = response['zimagesize']
+
+    proj.starttime = response['starttime']
+    proj.endtime = response['endtime']
+
+    proj.minres = response['minres']
+    proj.scalinglevels = response['scalinglevels']
+
+    layers = []
+    # add new layers 
+    for layerKey in layersNew.keys():
+      if layerKey.startswith('newlayer'):
+        layer = VizLayer()
+        layerInfo = layersNew[layerKey]
+        
+        layer.layer_name = layerInfo['name']
+        layer.layer_description = layerInfo['desc']
+        layer.server = layerInfo['server']
+        layer.layertype = layerInfo['type']
+        layer.token = layerInfo['token']
+        layer.channel = layerInfo['channel']
+        layer.color = layerInfo['color']
+        
+        if 'tilecache' in layerInfo.keys():
+          layer.tilecache = True
+        else:
+          layer.tilecache = False
+
+        if 'propagated' in layerInfo.keys():
+          layer.propagate = 2
+        else:
+          layer.propagate = 0
+        
+        # since this is a new layer, we need to associate it w/ the editing user 
+        layer.user = request.user 
+        
+        layers.append(layer)
+
+    # after creating everything, save changes (this allows for error handling)
+    import pdb; pdb.set_trace() 
+    for layer in layers:
+      layer.save()
+      proj.layers.add(layer) 
+
+    proj.save()
+    return HttpResponse('Added Project Successfully')
+  else:
+    context = {
+      'serverOptions': VizLayer.SERVER_CHOICES,
+      'layerOptions': VizLayer.LAYER_CHOICES,
+      'colorOptions': VizLayer.COLOR_CHOICES,
+    }
+    return render(request, 'manage/addvizproject.html', context) 
+
+@login_required
+def editProjectSubmit(request):
+  if request.method == 'POST':
+    # parse the response 
+    projNameOrig = request.POST['oldProjectName']
+    response = request.POST 
+
+    # process layer updates 
+    layersNew = {}
+    for item in response.keys():
+      if item.startswith('layer'):
+        [itemtype, sep, layername] = item.partition('_')
+        itemtype = itemtype[5:].lower()
+        if layername not in layersNew.keys():
+          layersNew[layername] = {}  
+        layersNew[layername][itemtype] = response[item]
+    
+    # get the original project / layers 
+    try:
+      proj = VizProject.objects.get(project_name = projNameOrig)
+    except VizProject.DoesNotExist:
+      return HttpResponseBadRequest('Error: Project {} does not exist!'.format(projNameOrig))
+
+    layers = proj.layers.select_related()
+
+    # apply changes to project 
+    proj.project_name = response['projectName']
+    proj.project_description = response['projectDesc']
+    #proj.user = request.user
+    if 'public' in response.keys():
+      proj.public = 1
+    else:
+      proj.public = 0
+
+    proj.xoffset = response['xoffset']
+    proj.yoffset = response['yoffset']
+    proj.zoffset = response['zoffset']
+
+    proj.ximagesize = response['ximagesize']
+    proj.yimagesize = response['yimagesize']
+    proj.zimagesize = response['zimagesize']
+
+    proj.starttime = response['starttime']
+    proj.endtime = response['endtime']
+
+    proj.minres = response['minres']
+    proj.scalinglevels = response['scalinglevels']
+
+    # apply changes to layers
+    
+    for layer in layers:
+      if layer.layer_name in layersNew.keys():
+        layerInfo = layersNew[layer.layer_name]
+        layer.layer_name = layerInfo['name']
+        layer.layer_description = layerInfo['desc']
+        layer.server = layerInfo['server']
+        layer.layertype = layerInfo['type']
+        layer.token = layerInfo['token']
+        layer.channel = layerInfo['channel']
+        layer.color = layerInfo['color']
+        
+        if 'tilecache' in layerInfo.keys():
+          layer.tilecache = True
+        else:
+          layer.tilecache = False
+
+        if 'propagated' in layerInfo.keys():
+          layer.propagate = 2
+        else:
+          layer.propagate = 0
+
+    # Note: Any error checking must be done before this point. After this point, all changes are saved to the DB. 
+
+    # add new layers 
+    for layerKey in layersNew.keys():
+      if layerKey.startswith('newlayer'):
+        layer = VizLayer()
+        layerInfo = layersNew[layerKey]
+        
+        layer.layer_name = layerInfo['name']
+        layer.layer_description = layerInfo['desc']
+        layer.server = layerInfo['server']
+        layer.layertype = layerInfo['type']
+        layer.token = layerInfo['token']
+        layer.channel = layerInfo['channel']
+        layer.color = layerInfo['color']
+        
+        if 'tilecache' in layerInfo.keys():
+          layer.tilecache = True
+        else:
+          layer.tilecache = False
+
+        if 'propagated' in layerInfo.keys():
+          layer.propagate = 2
+        else:
+          layer.propagate = 0
+        
+        # since this is a new layer, we need to associate it w/ the editing user 
+        layer.user = request.user 
+
+        # associate this layer with the vizproject
+        layer.save() 
+        proj.layers.add(layer)
+
+    # save changes made to existing objects 
+    for layer in layers:
+      layer.save()
+
+    proj.save()
+
+    return HttpResponse('Saved Changes Successfully')
+  else:
+    return HttpResponseBadRequest('Invalid Request')
+
+@login_required
 def autopopulateDataset(request, webargs):
   [server, token_raw] = webargs.split('/', 1)
   token = token_raw.split('/')[0]

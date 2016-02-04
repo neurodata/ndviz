@@ -1,4 +1,4 @@
-{# view projects modal ("Manage" link) #}
+{# add viz project #}
 
 {% load staticfiles %}
 
@@ -9,35 +9,30 @@
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <a name="top"></a>
-      <h3 class="modal-title" id="editVizProjectTitle">Editing VizProject: {{ project.project_name }}</h3>
+      <h3 class="modal-title" id="addVizProjectTitle">Adding New VizProject</h3>
     </div>
     <div class="modal-body">
-    <form class="form-horizontal" id="editProjectForm">
-    <input type="hidden" name="oldProjectName" value="{{ project.project_name }}" />
+    <form class="form-horizontal" id="addProjectForm">
       <div class="form-group">
         <label class="col-sm-2 control-label">Basic Info</label>
       </div>
       <div class="form-group">
         <label for="projectName" class="col-sm-2 control-label">Project Name</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="projectName" id="projectName" value="{{ project.project_name }}" />
+          <input type="text" class="form-control" name="projectName" id="projectName" />
         </div>
       </div>
       <div class="form-group">
         <label for="projectDesc" class="col-sm-2 control-label">Project Description</label>
         <div class="col-sm-10">
-          <textarea rows="3" class="form-control" name="projectDesc" id="projectDesc">{{ project.project_description }}</textarea>
+          <textarea rows="3" class="form-control" name="projectDesc" id="projectDesc"></textarea>
         </div>
       </div>
       <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
           <div class="checkbox">
             <label>
-              {% if project.public %}
-              <input type="checkbox" name="public" id="public" checked />Public?
-              {% else %}
               <input type="checkbox" name="public" id="public" />Public?
-              {% endif %}
             </label>
           </div>
         </div>
@@ -64,62 +59,62 @@
       <div class="form-group">
         <label for="xoffset" class="col-sm-2 control-label">x-offset</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="xoffset" id="xoffset" value="{{ project.xoffset }}" />
+          <input type="text" class="form-control" name="xoffset" id="xoffset" />
         </div>
       </div>
       <div class="form-group">
         <label for="ximagesize" class="col-sm-2 control-label">x-imagesize</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="ximagesize" id="ximagesize" value="{{ project.ximagesize }}" />
+          <input type="text" class="form-control" name="ximagesize" id="ximagesize" />
         </div>
       </div>
       <div class="form-group">
         <label for="yoffset" class="col-sm-2 control-label">y-offset</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="yoffset" id="yoffset" value="{{ project.yoffset }}" />
+          <input type="text" class="form-control" name="yoffset" id="yoffset" />
         </div>
       </div>
       <div class="form-group">
         <label for="yimagesize" class="col-sm-2 control-label">y-imagesize</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="yimagesize" id="yimagesize" value="{{ project.yimagesize }}" />
+          <input type="text" class="form-control" name="yimagesize" id="yimagesize" />
         </div>
       </div>
       <div class="form-group">
         <label for="zoffset" class="col-sm-2 control-label">z-offset</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="zoffset" id="zoffset" value="{{ project.zoffset }}" />
+          <input type="text" class="form-control" name="zoffset" id="zoffset" />
         </div>
       </div>
       <div class="form-group">
         <label for="zimagesize" class="col-sm-2 control-label">z-imagesize</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="zimagesize" id="zimagesize" value="{{ project.zimagesize }}" />
+          <input type="text" class="form-control" name="zimagesize" id="zimagesize" />
         </div>
       </div>
       <div class="form-group">
         <label for="starttime" class="col-sm-2 control-label">Start Time</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="starttime" id="starttime" value="{{ project.starttime }}" />
+          <input type="text" class="form-control" name="starttime" id="starttime" />
         </div>
       </div>
       <div class="form-group">
         <label for="endtime" class="col-sm-2 control-label">End Time</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="endtime" id="endtime" value="{{ project.endtime }}" />
+          <input type="text" class="form-control" name="endtime" id="endtime" />
         </div>
       </div>
       <div class="form-group">
         <label for="minres" class="col-sm-2 control-label">Minimum Resolution</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="minres" id="minres" value="{{ project.minres }}" />
+          <input type="text" class="form-control" name="minres" id="minres" />
           <span id="helpBlock" class="help-block">This should almost always be 0.</span>
         </div>
       </div>
       <div class="form-group">
         <label for="scalinglevels" class="col-sm-2 control-label">Scaling Levels</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="scalinglevels" id="scalinglevels" value="{{ project.scalinglevels }}" />
+          <input type="text" class="form-control" name="scalinglevels" id="scalinglevels" />
         </div>
       </div>
       <div class="form-group">
@@ -132,101 +127,11 @@
       </div>
       <div id="newlayers">
       </div>
-      {% for layer in layers %}
-      <div id="{{ layer.layer_name }}">
-        <div class="form-group">
-          <a class="toggleLayer" href="#"><label class="col-sm-offset-2 col-sm-10">{{ layer.layer_name }}</label></a>
-        </div>
-        <div id="hidden_{{ layer.layer_name }}" style="display:none;">
-          <div class="form-group">
-            <label for="layerName" class="col-sm-2 control-label">Layer Name</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerName_{{ layer.layer_name }}" id="layerName_{{ layer.layer_name }}" value="{{ layer.layer_name }}" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="layerDesc" class="col-sm-2 control-label">Layer Description</label>
-            <div class="col-sm-10">
-              <textarea rows="3" class="form-control" name="layerDesc_{{ layer.layer_name }}" id="layerDesc_{{ layer.layer_name }}">{{ layer.layer_description }}</textarea>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="layerServer" class="col-sm-2 control-label">Server</label>
-            <div class="col-sm-10">
-              <select class="form-control" name="layerServer_{{ layer.layer_name }}" id="layerServer_{{ layer.layer_name }}">
-                {% for option in serverOptions %}
-                <option value="{{ option.0 }}">{{ option.1 }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="layerType" class="col-sm-2 control-label">Layer Type</label>
-            <div class="col-sm-10">
-              <select class="form-control" name="layerType_{{ layer.layer_name }}" id="layerType_{{ layer.layer_name }}">
-                {% for option in layerOptions %}
-                <option value="{{ option.0 }}">{{ option.1 }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="layerToken" class="col-sm-2 control-label">Token</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerToken_{{ layer.layer_name }}" id="layerToken_{{ layer.layer_name }}" value="{{ layer.token }}" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="layerChannel" class="col-sm-2 control-label">Channel</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerChannel_{{ layer.layer_name }}" id="layerChannel_{{ layer.layer_name }}" value="{{ layer.channel }}" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="layerColor" class="col-sm-2 control-label">Color</label>
-            <div class="col-sm-10">
-              <select class="form-control" name="layerColor_{{ layer.layer_name }}" id="layerColor_{{ layer.layer_name }}">
-                {% for option in colorOptions %}
-                <option value="{{ option.0 }}">{{ option.1 }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="checkbox">
-                <label>
-                  {% if layer.propagate == 2 %}
-                  <input type="checkbox" name="layerPropagated_{{ layer.layer_name }}" id="layerPropagated_{{ layer.layer_name }}" checked />Propagated?
-                  {% else %}
-                  <input type="checkbox" name="layerPropagated_{{ layer.layer_name }}" id="layerPropagated_{{ layer.layer_name }}" />Propagated?
-                  {% endif %}
-                </label>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <div class="checkbox">
-                <label>
-                  {% if layer.tilecache == True %}
-                  <input type="checkbox" name="layerTilecache_{{ layer.layer_name }}" id="layerTilecache_{{ layer.layer_name }}" checked />Tilecache?
-                  {% else %}
-                  <input type="checkbox" name="layerTilecache_{{ layer.layer_name }}" id="layerTilecache_{{ layer.layer_name }}" />Tilecache?
-                  {% endif %}
-                </label>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <button class="deleteLayer btn btn-danger">Delete Layer</button>
-            </div>
-          </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <div id="submitInfo"></div>
         </div>
       </div>
-      {% endfor %}
-
       <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
           <button type="submit" class="btn btn-primary">Save</button>
@@ -241,8 +146,7 @@
    </div>
  </div>
 
-{# end edit vizprojects modal #}
-
+{# end add vizproject modal #}
 
 <script>
   var new_layer_count = 0;
@@ -312,12 +216,6 @@
     });
   };
 
-  $( ".toggleLayer" ).click(function(event) {
-    var layerid = $(this).parent().parent().attr('id');
-    $( "#hidden_" + layerid ).toggle()
-    
-  });
-
   // get cookie for csrf protection in POST
   function getCookie(name) {
     var cookieValue = null;
@@ -335,65 +233,22 @@
     return cookieValue;
   }
   
-  $( ".deleteLayer" ).click(function(event) {
-    console.log( $(this).parent().parent().parent() );
-    var layer_name = 'test'
-    $.confirm({
-      title: "Confirmation Required",
-      confirmButton: "Yes, Delete",
-      confirmButtonClass: "btn-danger",
-      cancelButton: "No",
-      cancelButtonClass: "btn-primary",
-      text: "Are you sure you want to delete layer " + layer_name + "?",
-      confirm: function() {
-
-        var csrftoken = getCookie('csrftoken');
-
-        // posts to the delete layer URL
-        var project_name = '';
-        var layer_name = ''; 
-        $.ajax({
-          method: 'POST',
-          url: '{% url "deleteLayer" %}',
-          data: { project: project_name, layer: layer_name  }, 
-          beforeSend: function(xhr, settings) {
-            // CSRF protection 
-            if (!this.crossDomain) {
-              xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-          },
-          success: function(response) {
-            // AB TODO 
-          }
-        })
-        .fail(function(response) {
-          // AB TODO
-        });
-      },
-      cancel: function() {
-
-      }
-    });
-    // stacking modals kills scrollbars 
-    $( "#remoteModal" ).css("overflow-y", "auto");
-  });
-  
   $( "button#tomanage" ).click(function() {
     $( "#remoteModal" ).load("{% url 'viewProjects' %}");
     $( "#remoteModal" ).modal('show');
   });
     
   // form submit AB TODO 
-  $( "#editProjectForm" ).submit(function(e) {
+  $( "#addProjectForm" ).submit(function(e) {
     e.preventDefault();
         
     var csrftoken = getCookie('csrftoken');
-    
+    $( "#submitInfo" ).empty();
     $.ajax({
       method: 'POST',
-      url: '{% url "editProjectSubmit" %}',
+      url: '{% url "addVizProject" %}',
       dataType: 'json',
-      data: $('#editProjectForm').serialize(), 
+      data: $('#addProjectForm').serialize(), 
       beforeSend: function(xhr, settings) {
         // CSRF protection 
         if (!this.crossDomain) {
@@ -401,13 +256,14 @@
         }
       },
       success: function(response) {
-        // AB TODO 
+        $( "#submitInfo" ).append("<p class='bg-info'>Successfully saved new VizProject.</p>");
       }
     })
     .fail(function(response) {
-      // AB TODO
+      $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to save new VizProject. Message from the server: " + response.statusText + " (" + response.status + ")</p>");
+      // log full error message to console 
+      console.log(response.responseText);
     });
-    console.log(e);
   });
 </script>
 
