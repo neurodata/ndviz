@@ -14,9 +14,8 @@
 
 from django.db import models
 from django.conf import settings
-# Each VizProject has some metadata and is comprised of VizLayers
-# TODO add a VizDataView which aggregates VizProjects(?)
 
+# Each VizProject has some metadata and is comprised of VizLayers
 class VizLayer ( models.Model ):
   layer_name = models.CharField(max_length=255)
   layer_description = models.CharField(max_length=255)
@@ -48,7 +47,8 @@ class VizLayer ( models.Model ):
   channel = models.CharField(max_length=255)
   # do we want to use the tilecache or ocpcatmaid? (default ocpcatmaid)  
   tilecache = models.BooleanField(default=False) 
-  
+  tilecache_server = models.CharField(max_length=255, default=None, blank=True)
+
   # for mcfc cutout 
   COLOR_CHOICES = (
       ('C', 'cyan'),
@@ -69,7 +69,6 @@ class VizProject ( models.Model ):
   project_name = models.CharField(max_length=255, primary_key=True, verbose_name="Name for this visualization project.")
   project_description = models.CharField(max_length=4096, blank=True)
   user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True)
-  # AB TODO if private, require login 
   PUBLIC_CHOICES = (
       (1, 'Yes'),
       (0, 'No'),
@@ -105,7 +104,6 @@ class DataViewItem ( models.Model ):
   vizproject = models.ForeignKey(VizProject)
  
   # optional fields to allow a user to define a different starting position 
-  # TODO add bool to allow user to turn these on or off  
   xstart = models.IntegerField(default=0)
   ystart = models.IntegerField(default=0)
   zstart = models.IntegerField(default=0)

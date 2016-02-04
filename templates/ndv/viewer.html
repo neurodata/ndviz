@@ -54,6 +54,7 @@
     ndv.querylayer = 'none';
     ndv.querytoken = 'none';
     ndv.querychannel = 'none';
+    ndv.queryserver = 'none';
    
     // timeseries globals
     ndv.playdelay = 1;
@@ -121,10 +122,25 @@
         {% endif %}
 
         {% if layer.tilecache %}
-          {% if layer.layertype == 'timeseries' %}
-            var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
+          {% if layer.color %}
+            {% if layer.tilecache_server %}
+              var url = 'http://{{ layer.tilecache_server }}/ocptilecache/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
+            {% else %}
+              var url = 'http://{{ layer.server }}/ocptilecache/tilecache/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
+            {% endif %}
+          {% elif layer.layertype == 'timeseries' %}
+            {% if layer.tilecache_server %}
+              var url = 'http://{{ layer.tilecache_server }}/ocptilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
+            {% else %}
+              var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
+            {% endif %}
           {% else %}
-            var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
+            {% if layer.tilecache_server %}
+            {# note: presently unclear what the tilecache URL endpoint should be #}
+              var url = 'http://{{ layer.tilecache_server }}/ocptilecache/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
+            {% else %}
+              var url = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
+            {% endif %}
           {% endif %}
 
         {% else %}
@@ -702,14 +718,13 @@
 
 		// get anno id from coordinate
     // expects a L.point object for point and a number for zoom
-    // TODO if the server is localhost (the query server) that doesnt work
 		function getAnnoId(point, zoom) {
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       if (script_name == '') {
-        var ocpUrlBase = "http://{{ request.get_host }}/query/localhost/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
+        var ocpUrlBase = "http://{{ request.get_host }}/query/" + ndv.queryserver + "/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
       }
       else {
-        var ocpUrlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/query/localhost/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
+        var ocpUrlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/query/" + ndv.queryserver + "/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
       }
 			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
 			var ocpUrl = ocpUrlBase.concat(cutout);
@@ -742,17 +757,15 @@
         return "No RAMON object here.";
       }
 
-      // AB TODO set this based on the project
-      var queryserver = "localhost";
       // string for return
       var objstr = 'ID: ' + objid;
 
       var script_name = '{{ request.META.SCRIPT_NAME }}';
       if (script_name == '') {
-        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
+        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
       }
       else {
-        var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
+        var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
       }
 
       // make request (using jquery)
@@ -839,6 +852,7 @@
         ndv.querylayer = 'none';
         ndv.querytoken = 'none';
         ndv.querychannel = 'none';
+        ndv.queryserver = 'none';
       }
     });
 
@@ -854,6 +868,7 @@
         ndv.querylayer = curlayer;
         ndv.querytoken = '{{ layer.token }}';
         ndv.querychannel = '{{ layer.channel }}';
+        ndv.queryserver = '{{ layer.server }}';
         ndv.querytool = true;
       }
     });
