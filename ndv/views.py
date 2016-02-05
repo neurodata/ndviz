@@ -693,7 +693,11 @@ def deleteLayer(request):
 def addVizProject(request):
   if request.method == 'POST':
     response = request.POST 
-    
+   
+    existingProj = VizProject.objects.get(project_name = response['projectName'])
+    if existingProj:
+      return HttpResponseBadRequest('Error: Project {} already exists!'.format(response['projectName']))
+
     # separate out layers  
     layersNew = {}
     for item in response.keys():
@@ -745,6 +749,8 @@ def addVizProject(request):
         
         if 'tilecache' in layerInfo.keys():
           layer.tilecache = True
+          if len(layerInfo['tilecacheserver']) > 0:
+            layer.tilecache_server = layerInfo['tilecacheserver']
         else:
           layer.tilecache = False
 
@@ -759,12 +765,15 @@ def addVizProject(request):
         layers.append(layer)
 
     # after creating everything, save changes (this allows for error handling)
-    import pdb; pdb.set_trace() 
-    for layer in layers:
-      layer.save()
-      proj.layers.add(layer) 
+    try:
+      # must save the project first due to foreign key contraints 
+      proj.save()
+      for layer in layers:
+        layer.save()
+        proj.layers.add(layer) 
 
-    proj.save()
+    except Exception as e:
+      return HttpResponseBadRequest('Error: Exception occurred during save! ({})'.format(e))
     return HttpResponse('Added Project Successfully')
   else:
     context = {
