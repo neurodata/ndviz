@@ -96,23 +96,44 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     this._tileContainer.removeChild(tile);
   },
 
+	_getTileSize: function () {
+		var map = this._map,
+		    zoom = map.getZoom() + this.options.zoomOffset,
+		    zoomN = this.options.maxNativeZoom,
+		    tileSize = this.options.tileSize;
+   
+		if (zoomN && zoom > zoomN) {
+      tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
+    }
+    else if ( (zoomN == 0) && (zoom > zoomN) ) {
+      // another quick for the case where maxNativeZoom is 0 
+      tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
+    }
+
+		return tileSize;
+	},
+
+
 	_getZoomForUrl: function () {
 
 		var options = this.options,
 		    zoom = this._map.getZoom();
-
 		if (options.zoomReverse) {
 			if (options.maxNativeZoom) {
-				zoom = options.maxNativeZoom - zoom;
+        zoom = options.maxNativeZoom - zoom;
 			}
-			else {
-				zoom = options.maxZoom - zoom;
+			else if (options.maxNativeZoom == 0) {
+        // inelegantly handle the case where maxNativeZoom exists and is 0
+        zoom = options.maxNativeZoom - zoom;
+      }
+      else {
+        zoom = options.maxZoom - zoom;
 			}
 		}
 
 		zoom += options.zoomOffset;
 		//return options.maxNativeZoom ? Math.min(zoom, options.maxNativeZoom) : zoom;
-		return Math.max(0, zoom);
+    return Math.max(0, zoom);
 	},
 
   setBrightness: function (brightness) {
