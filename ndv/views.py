@@ -451,11 +451,13 @@ def dataviewsPublic(request):
 def query(request, queryargs):
   # redirects a query to the specified server
   # expected syntax is:
-  # ocp/ocpviz/query/<<server>>/<<query>>
-  # e.g. ocp/ocpviz/query/dsp061/ca/kharris15apical/info/
+  # query/<<server.tld>>/<<query>>
+  # e.g. ocp/ocpviz/query/dsp061.pha.jhu.edu/ca/kharris15apical/info/
   [server, oquery] = queryargs.split('/', 1)
+  """
   if server not in VALID_SERVERS.keys():
     return HttpResponse("Error: Server not valid.")
+  """
 
   # make get request
   if server == 'localhost':
@@ -465,7 +467,7 @@ def query(request, queryargs):
     else:
       addr = 'http://' + settings.OCP_SERVER + '/ocp/' + oquery
   else:
-    addr = 'http://' + VALID_SERVERS[server] + '/ocp/' + oquery
+    addr = 'http://' + server + '/ocp/' + oquery
   try:
     r = urllib2.urlopen(addr)
   except urllib2.HTTPError, e:
@@ -476,12 +478,10 @@ def query(request, queryargs):
 def ramoninfo(request, webargs):
   # gets ramon info json from OCP
   # expected syntax is:
-  # ocp/viz/ramoninfo/<<server>>/<<token>>/<<channel>>/<<id>>/
+  # ramoninfo/<<serverhostname>>/<<token>>/<<channel>>/<<id>>/
 
   [server, token, channel, objids] = webargs.split('/', 3)
   objids = objids.strip('/')
-  if server not in VALID_SERVERS.keys():
-    return HttpResponse("Error: Server not valid.")
 
   if server == 'localhost':
     if settings.OCP_SERVER is None:
@@ -489,7 +489,7 @@ def ramoninfo(request, webargs):
     else:
       addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( settings.OCP_SERVER, token, channel, objids )
   else:
-    addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( VALID_SERVERS[server], token, channel, objids )
+    addr = 'http://{}/ocp/ca/{}/{}/{}/json/'.format( server, token, channel, objids )
   try:
     r = urllib2.urlopen(addr)
   except urllib2.HTTPError, e:
