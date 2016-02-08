@@ -106,7 +106,8 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
       tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
     }
     else if ( (zoomN == 0) && (zoom > zoomN) ) {
-      // another quick for the case where maxNativeZoom is 0 
+      // another quick for the case where maxNativeZoom is 0
+      // AB TODO consider using == undefined in the general case 
       tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
     }
 
