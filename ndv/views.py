@@ -656,10 +656,7 @@ def getLayers(request, project):
 
 @login_required
 def editVizProject(request, project):
-  if request.method == 'POST':
-    return HttpResponse('TODO');
-    # submit edits
-  elif request.method == 'GET':
+  if request.method == 'GET':
     projectobj = get_object_or_404(VizProject, project_name=project)
     layers = VizLayer.objects.filter(project = projectobj)
     context = {
@@ -669,7 +666,9 @@ def editVizProject(request, project):
       'layerOptions': VizLayer.LAYER_CHOICES,
       'colorOptions' : VizLayer.COLOR_CHOICES,
     }
-    return render(request, 'manage/editvizproject.html', context) 
+    return render(request, 'manage/editvizproject.html', context)
+  else:
+    return HttpResponseBadRequest('Invalid Request')
 
 @login_required
 def deleteLayer(request):
@@ -812,7 +811,7 @@ def deleteVizProject(request):
   return HttpResponseBadRequest('Invalid Request')
 
 @login_required
-def editProjectSubmit(request):
+def editVizProjectSubmit(request):
   if request.method == 'POST':
     # parse the response 
     projNameOrig = request.POST['oldProjectName']

@@ -249,18 +249,25 @@
 
 
 <script>
+  // set the values for each layer appropriately
+  {% for layer in layers %}
+    $( "#layerServer_{{ layer.layer_name }}" ).val( "{{ layer.server }}" );
+    $( "#layerType_{{ layer.layer_name }}" ).val( "{{ layer.layertype }}" );
+    $( "#layerColor_{{ layer.layer_name }}" ).val( "{{ layer.color }}" );
+  {% endfor %}
+
   var new_layer_count = 0;
 
   $( "button#addnewlayer" ).click(function(event) {
     new_layer_count = new_layer_count + 1;
     var new_layer_name = 'newlayer_' + new_layer_count;
     var htmlid = '<div id="' + new_layer_name + '">';
-    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name</label><div class="col-sm-10"><input type="text" class="form-control" name="layerName_' + new_layer_name + '" id="layerName_' + new_layer_name + '" /></div></div>';
+    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerName_' + new_layer_name + '" id="layerName_' + new_layer_name + '" /></div></div>';
     var layerdesc = '<div class="form-group"><label for="layerDesc" class="col-sm-2 control-label">Layer Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="layerDesc_' + new_layer_name + '" id="layerDesc_' + new_layer_name + '"></textarea></div></div>';
     var layerserver = '<div class="form-group"><label for="layerServer" class="col-sm-2 control-label">Server</label><div class="col-sm-10"><select class="form-control" name="layerServer_' + new_layer_name + '" id="layerServer_' + new_layer_name + '">{% for option in serverOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
     var layertype = '<div class="form-group"><label for="layerType" class="col-sm-2 control-label">Layer Type</label><div class="col-sm-10"><select class="form-control" name="layerType_' + new_layer_name + '" id="layerType_' + new_layer_name + '">{% for option in layerOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
-    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token</label><div class="col-sm-10"><input type="text" class="form-control" name="layerToken_' + new_layer_name + '" id="layerToken_' + new_layer_name + '" /></div></div>';
-    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel</label><div class="col-sm-10"><input type="text" class="form-control" name="layerChannel_' + new_layer_name + '" id="layerChannel_' + new_layer_name + '" /></div></div>';
+    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerToken_' + new_layer_name + '" id="layerToken_' + new_layer_name + '" /></div></div>';
+    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerChannel_' + new_layer_name + '" id="layerChannel_' + new_layer_name + '" /></div></div>';
     var color = '<div class="form-group"><label for="layerColor" class="col-sm-2 control-label">Color</label><div class="col-sm-10"><select class="form-control" name="layerColor_' + new_layer_name + '" id="layerColor_' + new_layer_name + '">{% for option in colorOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
     var propagate = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerPropagated_' + new_layer_name + '" id="layerPropagated_' + new_layer_name + '" />Propagated?</label></div></div></div>';
     var tilecache = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerTilecache_' + new_layer_name + '" id="layerTilecache_' + new_layer_name + '" />Tilecache?</label></div></div></div>';
@@ -477,10 +484,9 @@
 
     var csrftoken = getCookie('csrftoken');
     $( "#submitInfo" ).empty();
-    $.ajax({
+    var jqxhr = $.ajax({
       method: 'POST',
-      url: '{% url "editProjectSubmit" %}',
-      dataType: 'json',
+      url: '{% url "editVizProjectSubmit" %}',
       data: $('#editProjectForm').serialize(),
       beforeSend: function(xhr, settings) {
         // CSRF protection
@@ -495,18 +501,17 @@
           $( "#remoteModal" ).load("{% url 'viewProjects' %}");
           $( "#remoteModal" ).modal('show');
         }, 500);
-
       },
       statusCode: {
         400: function(response) {
           $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to save new VizProject. " + response.responseText + "</p>");
         }
-      }
+      },
     })
     .fail(function(response) {
       $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to save new VizProject with unknown error. Message from the server: " + response.statusText + " (" + response.status + ")</p>");
       // log full error message to console
-      console.log(response.responseText);    });
-    console.log(e);
+      console.log(response.responseText);
+    });
   });
 </script>
