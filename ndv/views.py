@@ -786,6 +786,29 @@ def addVizProject(request):
     return render(request, 'manage/addvizproject.html', context) 
 
 @login_required
+def deleteVizProject(request):
+  if request.method == 'POST':
+    response = request.POST 
+    try:
+      projobj = VizProject.objects.get(project_name = response['project'] )
+    except VizProject.DoesNotExist:
+      return HttpResponseNotFound('VizProject {} not found!'.format( response['project'] ));
+  
+    layers = projobj.layers.select_related()
+
+    for layer in layers:
+      layer.delete() 
+    
+    try:
+      projobj.delete()
+    except Exception as e:
+      return HttpResponseBadRequest('Error: Failed to delete VizProject!')
+
+    return HttpResponse('Delete OK.')
+    
+  return HttpResponseBadRequest('Invalid Request')
+
+@login_required
 def editProjectSubmit(request):
   if request.method == 'POST':
     # parse the response 
