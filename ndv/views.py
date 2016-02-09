@@ -691,6 +691,8 @@ def deleteLayer(request):
 
 @login_required
 def addVizProject(request):
+  # note that this method will save a new vizproject with or without layers 
+  # layers can be added later in the edit vizproject page 
   if request.method == 'POST':
     response = request.POST 
    

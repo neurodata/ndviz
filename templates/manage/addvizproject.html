@@ -13,7 +13,6 @@
     </div>
     <div class="modal-body">
     <form class="form-horizontal" id="addProjectForm">
-      {% csrf_token %}
       <div class="form-group">
         <label class="col-sm-2 control-label">Basic Info</label>
       </div>
@@ -156,12 +155,12 @@
     new_layer_count = new_layer_count + 1;
     var new_layer_name = 'newlayer_' + new_layer_count;
     var htmlid = '<div id="' + new_layer_name + '">';
-    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name</label><div class="col-sm-10"><input type="text" class="form-control" name="layerName_' + new_layer_name + '" id="layerName_' + new_layer_name + '" /></div></div>';
+    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerName_' + new_layer_name + '" id="layerName_' + new_layer_name + '" /></div></div>';
     var layerdesc = '<div class="form-group"><label for="layerDesc" class="col-sm-2 control-label">Layer Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="layerDesc_' + new_layer_name + '" id="layerDesc_' + new_layer_name + '"></textarea></div></div>';
     var layerserver = '<div class="form-group"><label for="layerServer" class="col-sm-2 control-label">Server</label><div class="col-sm-10"><select class="form-control" name="layerServer_' + new_layer_name + '" id="layerServer_' + new_layer_name + '">{% for option in serverOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
     var layertype = '<div class="form-group"><label for="layerType" class="col-sm-2 control-label">Layer Type</label><div class="col-sm-10"><select class="form-control" name="layerType_' + new_layer_name + '" id="layerType_' + new_layer_name + '">{% for option in layerOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
-    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token</label><div class="col-sm-10"><input type="text" class="form-control" name="layerToken_' + new_layer_name + '" id="layerToken_' + new_layer_name + '" /></div></div>';
-    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel</label><div class="col-sm-10"><input type="text" class="form-control" name="layerChannel_' + new_layer_name + '" id="layerChannel_' + new_layer_name + '" /></div></div>';
+    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerToken_' + new_layer_name + '" id="layerToken_' + new_layer_name + '" /></div></div>';
+    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerChannel_' + new_layer_name + '" id="layerChannel_' + new_layer_name + '" /></div></div>';
     var color = '<div class="form-group"><label for="layerColor" class="col-sm-2 control-label">Color</label><div class="col-sm-10"><select class="form-control" name="layerColor_' + new_layer_name + '" id="layerColor_' + new_layer_name + '">{% for option in colorOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
     var propagate = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerPropagated_' + new_layer_name + '" id="layerPropagated_' + new_layer_name + '" />Propagated?</label></div></div></div>';
     var tilecache = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerTilecache_' + new_layer_name + '" id="layerTilecache_' + new_layer_name + '" />Tilecache?</label></div></div></div>';
@@ -243,7 +242,6 @@
   $( "#addProjectForm" ).submit(function(e) {
     e.preventDefault();
 
-
     // validate form
     $( "#projectName" ).parent().parent().find( ".help-block" ).remove();
     $( "#projectName" ).parent().parent().removeClass("has-error");
@@ -274,6 +272,45 @@
         failed_validation = true;
         return false; // break out of loop
       };
+    });
+    // check that each layer has a name
+    $( "input[name^='layerName']" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ($(this).val() == '') {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      }
+    });
+    if (failed_validation) {
+      return;
+    };
+    // check that each layer has a token
+    $( "input[name^='layerToken']" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ($(this).val() == '') {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      }
+    });
+    if (failed_validation) {
+      return;
+    };
+    // check that each layer has a channel
+    $( "input[name^='layerChannel']" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ($(this).val() == '') {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      }
     });
     if (failed_validation) {
       return;
