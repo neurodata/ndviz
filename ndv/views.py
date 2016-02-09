@@ -671,21 +671,24 @@ def editVizProject(request, project):
     }
     return render(request, 'manage/editvizproject.html', context) 
 
-# AB TODO 
 @login_required
 def deleteLayer(request):
   if request.method == 'POST':
-
-    import pdb; pdb.set_trace()
-    """
-    projectobj = get_object_or_404(VizProject, project_name=project)
+    response = request.POST 
     try:
-      layer = VizLayer.objects.get(project = project, layer_name = layer) 
-    except VizLayer.DoesNotExist:
-      return HttpResponseNotFound('No layer ({}) for VizProject {}'.format(layer, project))
-
-    import pdb; pdb.set_trace() 
-    """
+      projobj = VizProject.objects.get(project_name = response['project'] )
+    except VizProject.DoesNotExist:
+      return HttpResponseNotFound('VizProject {} not found!'.format( response['project'] ));
+ 
+    layers = projobj.layers.select_related()
+    for layer in layers:
+      if layer.layer_name == response['layer']:
+        try:
+          layer.delete()
+          return HttpResponse('Delete OK.')
+        except Exception as e:
+          return HttpResponseBadRequest('Error: Failed to delete VizLayer!')
+    return HttpResponseNotFound('VizLayer {} not found.'.format( response['layer'] ))
   else:
     return HttpResponseBadRequest('Invalid Request')
 
