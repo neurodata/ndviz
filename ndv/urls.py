@@ -29,7 +29,7 @@ base_urlpatterns = patterns('ndv.views',
     # validate token/channel/server
     url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
     # content for the manage modal 
-    url(r'^viewProjects$', 'viewProjects', name='viewProjects'),
+    url(r'^manage/viewProjects/$', 'viewProjects', name='viewProjects'),
     # manage modal 
     url(r'^manage/layers/(?P<project>[\w,-]+)/?', 'getLayers', name='getLayers'),
     url(r'^manage/layers/delete/$', 'deleteLayer', name='deleteLayer'),

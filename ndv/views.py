@@ -694,8 +694,8 @@ def addVizProject(request):
   if request.method == 'POST':
     response = request.POST 
    
-    existingProj = VizProject.objects.get(project_name = response['projectName'])
-    if existingProj:
+    existingProj = VizProject.objects.filter(project_name = response['projectName'])
+    if len(existingProj) > 0:
       return HttpResponseBadRequest('Error: Project {} already exists!'.format(response['projectName']))
 
     # separate out layers  
