@@ -928,7 +928,7 @@ def editVizProjectSubmit(request):
       for layer in layers:
         proj.layers.add(layer)
       try:
-        proj_old = Project.objects.get(project_name = projNameOrig)
+        proj_old = VizProject.objects.get(project_name = projNameOrig)
         for layer in layers:
           proj_old.layers.remove(layer)
         proj_old.delete()
