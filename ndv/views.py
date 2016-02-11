@@ -919,7 +919,7 @@ def editVizProjectSubmit(request):
       layer.save()
 
     # changing the primary key will create a new object
-    if proj.name == projNameOrig:
+    if proj.project_name == projNameOrig:
       proj.save()
     else:
       # project name changed
