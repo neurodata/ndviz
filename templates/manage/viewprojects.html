@@ -1,28 +1,51 @@
 {# view projects modal ("Manage" link) #}
 
+{% load staticfiles %}
+
+<script src="{% static 'ndv/js/jquery.confirm.min.js' %}"></script>
+
 <div class="modal-dialog modal-lg">
   <div class="modal-content">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <a name="top"></a>
       <h3 class="modal-title" id="dataviewTitle">Manage Projects and Dataviews</h3>
-      <p class="bg-info"><a href="#listprojects">List Projects</a> | <a href="#">Create Project</a> | <a href="#listdataviews">List Dataviews</a> | <a href="#">Create Dataview</a></p>
+      <div class="btn-toolbar" role="toolbar" aria-label="Manage Toolbar">
+        <div class="btn-group" role="group" aria-label="Manage Buttons">
+          <a class="btn btn-default" href="#listprojects" role="button">List Projects</a>
+          <a id="createProject" class="btn btn-default" href="#" role="button">Create Project</a>
+          <a class="btn btn-default" href="#listdataviews" role="button">List Dataviews</a>
+          <a id="createDataview" class="btn btn-default" href="#" role="button">Create Dataview</a>
+        </div>
+      </div>
     </div>
     <div class="modal-body">
+      <div id="info"></div>
       <a name="listprojects"></a>
       {% if projects %}
       <table class="table table-hover">
         <caption>All viz projects for user <strong>{{ user.get_username }}</strong> are listed below. (<a href="#top">back to top</a>)</caption>
+        <thead>
+          <tr>
+            <th>Project Name</ht>
+            <th>Description</th>
+            <th>Public?</th>
+            <th colspan="4"></th>
+          </tr>
+        </thead>
         <tbody>
         {% for project in projects %}
-        <tr>
+        <tr id="{{ project.project_name }}">
           <td>{{ project.project_name }}</td>
           <td>{{ project.project_description }}</td>
-          <td>{{ project.public }}</td>
-          <td><a href="#">Popup Dataset Metadata</a></td>
-          <td><a href="#">Layers</a></td>
-          <td><a href="{% url 'projectview' webargs=project.project_name %}">View</a></td>
-          <td><a href="#">Edit</a></td>
+          <td>{% if project.public %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
+          <td><button type="button" id="layers" class="btn btn-primary">Layers</button></td>
+          <td><a href="{% url 'projectview' webargs=project.project_name %}"><button type="button" class="btn btn-success">View</button></a></td>
+          <td><button type="button" id="edit" class="btn btn-warning">Edit</button></td>
+          <td><button type="button" id="delete" class="btn btn-danger">Delete</button></td>
+        </tr>
+        <tr id="layers_{{ project.project_name }}" style="display:none;">
+          <td colspan="7">Layers</td>
         </tr>
         {% endfor %}
         </tbody>
@@ -34,15 +57,24 @@
       {% if dataviews %}
       <table class="table table-hover">
         <caption>All dataviews for user <strong>{{ user.get_username }}</strong> are listed below. (<a href="#top">back to top</a>)</caption>
+        <thead>
+          <tr>
+            <th>DataView Name</ht>
+            <th>Description</th>
+            <th>Public?</th>
+            <th colspan="4"></th>
+          </tr>
+        </thead>
         <tbody>
         {% for dv in dataviews %}
-        <tr>
+        <tr id="{{ dv.token }}">
           <td>{{ dv.name }} (<em>{{ dv.token }}</em>)</td>
           <td>{{ dv.desc }}</td>
-          <td>{{ dv.public }}</td>
-          <td><a href="#">Items</a></td>
-          <td><a href="{% url 'dataview' webargs=dv.token %}">View</a></td>
-          <td><a href="#">Edit</a></td>
+          <td>{% if dv.public %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
+          <td><button type="button" id="items" class="btn btn-primary">Items</button></td>
+          <td><a href="{% url 'dataview' webargs=dv.token %}"><button type="button" class="btn btn-success">View</button></a></td>
+          <td><button type="button" id="dvedit" class="btn btn-warning">Edit</button></td>
+          <td><button type="button" id="dvdelete" class="btn btn-danger">Delete</button></td>
         </tr>
         {% endfor %}
         </tbody>
@@ -58,3 +90,148 @@
  </div>
 
 {# end view projects modal #}
+
+<script>
+  // get cookie for csrf protection in POST
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = jQuery.trim(cookies[i]);
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  $( "button#layers" ).click(function() {
+    var id = $(this).parent().parent().attr('id');
+    var layersUrl = "{% url 'getLayers' project='placeholder' %}";
+    layersUrl = layersUrl.replace('placeholder', id);
+    $( "#layers_" + id ).load(layersUrl);
+    $( "#layers_" + id ).toggle();
+  });
+  $( "button#edit" ).click(function() {
+    var id = $(this).parent().parent().attr('id');
+    var editUrl = "{% url 'editVizProject' project='placeholder' %}";
+    editUrl = editUrl.replace('placeholder', id);
+    $( "#remoteModal" ).load(editUrl);
+    $( "#remoteModal" ).modal('show');
+  });
+  $( "button#delete" ).click(function() {
+    var id = $(this).parent().parent().attr('id');
+    $.confirm({
+      title: "Confirmation Required",
+      confirmButton: "Yes, Delete",
+      confirmButtonClass: "btn-danger",
+      CancelButton: "No",
+      cancelButtonClass: "btn-primary",
+      text: "Are you sure you want to delete VizProject " + id + " and all of its associated layers?",
+      confirm: function() {
+        var csrftoken = getCookie('csrftoken');
+        $.ajax({
+          method: 'POST',
+          url: '{% url "deleteVizProject" %}',
+          data: { project: id },
+          beforeSend: function(xhr, settings) {
+            // CSRF protection
+            if (!this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+          success: function(response) {
+            // reload manage page
+            $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+            $( "#remoteModal" ).modal('show');
+            $( "#info" ).empty();
+            $( "#info" ).removeClass();
+            $( "#info" ).addClass("bg-success");
+            $( "#info" ).append("<p>Success: Deleted VizProject: " + id + "!</p>");
+
+          }
+        }).fail(function(response) {
+            $( "#info" ).empty();
+            $( "#info" ).removeClass();
+            $( "#info" ).addClass("bg-danger");
+            $( "#info" ).append("<p>Error: Failed to delete VizProject: " + id + "!</p>");
+            $( "#info" ).focus();
+            console.log(response.responseText);
+        });
+      },
+      cancel: function() {
+        // do nothing
+      }
+    });
+    $( "#remoteModal" ).css("overflow-y", "auto");
+  });
+  $( "button#items" ).click(function() {
+    console.log('items');
+    // AB TODO
+  });
+  $( "button#dvedit" ).click(function() {
+    var id = $(this).parent().parent().attr('id');
+    var editUrl = "{% url 'editDataview' token='placeholder' %}";
+    editUrl = editUrl.replace('placeholder', id);
+    $( "#remoteModal" ).load(editUrl);
+    $( "#remoteModal" ).modal('show');
+  });
+  $( "button#dvdelete" ).click(function() {
+    var id = $(this).parent().parent().attr('id');
+    $.confirm({
+      title: "Confirmation Required",
+      confirmButton: "Yes, Delete",
+      confirmButtonClass: "btn-danger",
+      CancelButton: "No",
+      cancelButtonClass: "btn-primary",
+      text: "Are you sure you want to delete DataView " + id + " and all of its associated items?",
+      confirm: function() {
+        var csrftoken = getCookie('csrftoken');
+        $.ajax({
+          method: 'POST',
+          url: '{% url "deleteDataview" %}',
+          data: { dataview_token: id },
+          beforeSend: function(xhr, settings) {
+            // CSRF protection
+            if (!this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+          success: function(response) {
+            // reload manage page
+            $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+            $( "#remoteModal" ).modal('show');
+            $( "#info" ).empty();
+            $( "#info" ).removeClass();
+            $( "#info" ).addClass("bg-success");
+            $( "#info" ).append("<p>Success: Deleted DataView: " + id + "!</p>");
+          }
+        }).fail(function(response) {
+            $( "#info" ).empty();
+            $( "#info" ).removeClass();
+            $( "#info" ).addClass("bg-danger");
+            $( "#info" ).append("<p>Error: Failed to delete DataView: " + id + "!</p>");
+            $( "#info" ).focus();
+            console.log(response.responseText);
+        });
+      },
+      cancel: function() {
+        // do nothing
+      }
+    });
+    $( "#remoteModal" ).css("overflow-y", "auto");
+  });
+  $( "#createProject" ).click(function() {
+    var addProjectUrl = "{% url 'addVizProject' %}";
+    $( "#remoteModal" ).load(addProjectUrl);
+    $( "#remoteModal" ).modal('show');
+  });
+  $( "#createDataview" ).click(function() {
+    var addDataviewUrl = "{% url 'addDataview' %}";
+    $( "#remoteModal" ).load(addDataviewUrl);
+    $( "#remoteModal" ).modal('show');
+  });
+</script>

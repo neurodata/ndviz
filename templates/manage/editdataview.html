@@ -1,0 +1,367 @@
+{# edit dataview #}
+
+{% load staticfiles %}
+
+<script src="{% static 'ndv/js/jquery.confirm.min.js' %}"></script>
+
+<div class="modal-dialog modal-lg">
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <a name="top"></a>
+      <h3 class="modal-title" id="editDataViewTitle">Editing DataView: {{ dv.name }}</h3>
+    </div>
+    <div class="modal-body">
+    <form class="form-horizontal" id="editDataviewForm">
+    <input type="hidden" id="oldDataviewName" name="oldDataviewName" value="{{ dv.name }}" />
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Basic Info</label>
+      </div>
+      <div class="form-group">
+        <label for="dataviewName" class="col-sm-2 control-label">Name*</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" name="dataviewName" id="dataviewName" value="{{ dv.name }}"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="dataviewDesc" class="col-sm-2 control-label">Description*</label>
+        <div class="col-sm-10">
+          <textarea rows="3" class="form-control" name="dataviewDesc" id="dataviewDesc">{{ dv.desc }}</textarea>
+          <span id="help-block">Note: Unlike the DataView Item description, this description will be public.</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <div class="checkbox">
+            <label>
+              {% if dv.public %}
+              <input type="checkbox" name="public" id="public" checked />Public?
+              {% else %}
+              <input type="checkbox" name="public" id="public" />Public?
+              {% endif %}
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="dataviewToken" class="col-sm-2 control-label">Token*</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" name="dataviewToken" id="dataviewToken" value="{{ dv.token }}"/>
+          <span class="help-block">The token is the URL key for accessing a dataview.</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Items</label>
+      </div>
+
+
+      {% for item in items %}
+      <div id="{{ item.id }}">
+        <div class="form-group">
+          <a class="toggleItem" href="#"><label class="col-sm-offset-2 col-sm-10">{{ item.name }} ({{ item.id }})</label></a>
+        </div>
+        <div id="hidden_{{ item.id }}" style="display:none;">
+          <div class="form-group">
+            <label for="itemName" class="col-sm-2 control-label">Display Name*</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" name="itemName_{{ item.name }}" id="itemName_{{ item.name }}" value="{{ item.name }}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemDesc" class="col-sm-2 control-label">Internal Description</label>
+            <div class="col-sm-10">
+              <textarea rows="3" class="form-control" name="itemDesc_{{ item.name }}" id="itemDesc_{{ item.name }}">{{ item.desc_int }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemCaption" class="col-sm-2 control-label">Public Caption</label>
+            <div class="col-sm-10">
+              <textarea rows="3" class="form-control" name="itemCaption_{{ item.name }}" id="itemCaption_{{ item.name }}">{{ item.caption }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemProject" class="col-sm-2 control-label">VizProject</label>
+            <div class="col-sm-10">
+              <select class="form-control" name="itemProject_{{ item.name }}" id="itemProject_{{ item.name }}">
+                {% for project in vizProjects %}
+                <option value="{{ project.0 }}">{{ project.0 }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="itemxstart" class="col-sm-2 control-label">Starting x-coordinate</label>
+            <div class="col-sm-10">
+              <input type="number" class="form-control" name="itemxstart_{{ item.name }}" id="itemxstart_{{ item.name }}" value = "{{ item.xstart }}"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemystart" class="col-sm-2 control-label">Starting y-coordinate</label>
+            <div class="col-sm-10">
+              <input type="number" class="form-control" name="itemystart_{{ item.name }}" id="itemystart_{{ item.name }}" value = "{{ item.ystart }}"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemzstart" class="col-sm-2 control-label">Starting z-coordinate</label>
+            <div class="col-sm-10">
+              <input type="number" class="form-control" name="itemzstart_{{ item.name }}" id="itemzstart_{{ item.name }}" value = "{{ item.zstart }}"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemresstart" class="col-sm-2 control-label">Starting Resolution</label>
+            <div class="col-sm-10">
+              <input type="number" class="form-control" name="itemresstart_{{ item.name }}" id="itemresstart_{{ item.name }}" value = "{{ item.zstart }}"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="checkbox">
+                <label>
+                  {% if item.marker_start %}
+                  <input type="checkbox" name="itemMarker_{{ item.name }}" id="itemMarker_{{ item.name }}" checked />Marker for Starting Location?
+                  {% else %}
+                  <input type="checkbox" name="itemMarker_{{ item.name }}" id="itemMarker_{{ item.name }}" />Marker for Starting Location?
+                  {% endif %}
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="itemThumbnailUrl" class="col-sm-2 control-label">Thumbnail URL</label>
+            <div class="col-sm-10">
+              <input type="url" class="form-control" name="itemThumbnailUrl_{{ item.name }}" id="itemThumbnailUrl_{{ item.name }}" value="{{ item.thumbnail_url }}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button class="deleteItem btn btn-danger" type="button">Delete Item</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button id="addnewitem" type="button" class="btn btn-primary">Add New Item</button>
+        </div>
+      </div>
+      <div id="newitems">
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <div id="submitInfo"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      <button type="button" id="tomanage" class="btn btn-default">Back</button>
+    </div>
+   </div>
+ </div>
+
+{# end edit dataview modal #}
+
+
+<script>
+  // set the values for each layer appropriately
+  {% for item in items %}
+    $( "#itemProject_{{ item.name }}" ).val( "{{ item.vizproject }}" );
+  {% endfor %}
+
+  var new_item_count = 0;
+
+  $( "button#addnewitem" ).click(function(event) {
+    new_item_count = new_item_count + 1;
+    var new_item_name = 'newitem_' + new_item_count;
+    var htmlid = '<div id="' + new_item_name + '">';
+    var name = '<div class="form-group"><label for="itemName" class="col-sm-2 control-label">Display Name*</label><div class="col-sm-10"><input type="text" class="form-control" name="itemName_' + new_item_name + '" id="itemName_' + new_item_name + '" /></div></div>';
+    var desc = '<div class="form-group"><label for="itemDesc" class="col-sm-2 control-label">Internal Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="itemDesc_' + new_item_name + '" id="itemDesc_' + new_item_name + '"></textarea></div></div>';
+    var caption = '<div class="form-group"><label for="itemCaption" class="col-sm-2 control-label">Public Caption</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="itemCaption_' + new_item_name + '" id="itemCaption_' + new_item_name + '"></textarea></div></div>';
+    var vizproject = '<div class="form-group"><label for="itemProject" class="col-sm-2 control-label">VizProject</label><div class="col-sm-10"><select class="form-control" name="itemProject_' + new_item_name + '" id="itemProject_' + new_item_name + '">{% for project in vizProjects %}<option value="{{ project.0 }}">{{ project.0 }}</option>{% endfor %}</select></div></div>';
+    var xstart = '<div class="form-group"><label for="itemxstart" class="col-sm-2 control-label">Starting x-coordinate</label><div class="col-sm-10"><input type="number" class="form-control" name="itemxstart_' + new_item_name + '" id="itemxstart_' + new_item_name + '" value = "0"/></div></div>';
+    var ystart = '<div class="form-group"><label for="itemystart" class="col-sm-2 control-label">Starting y-coordinate</label><div class="col-sm-10"><input type="number" class="form-control" name="itemystart_' + new_item_name + '" id="itemystart_' + new_item_name + '" value = "0"/></div></div>';
+    var zstart = '<div class="form-group"><label for="itemzstart" class="col-sm-2 control-label">Starting z-coordinate</label><div class="col-sm-10"><input type="number" class="form-control" name="itemzstart_' + new_item_name + '" id="itemzstart_' + new_item_name + '" value = "0"/></div></div>';
+    var resstart = '<div class="form-group"><label for="itemresstart" class="col-sm-2 control-label">Starting Resolution</label><div class="col-sm-10"><input type="number" class="form-control" name="itemresstart_' + new_item_name + '" id="itemresstart_' + new_item_name + '" value = "0"/></div></div>';
+    var marker = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="itemMarker_' + new_item_name + '" id="itemMarker_' + new_item_name + '" />Marker for Starting Location?</label></div></div></div>';
+    var thumbnail = '<div class="form-group"><label for="itemThumbnailUrl" class="col-sm-2 control-label">Thumbnail URL</label><div class="col-sm-10"><input type="url" class="form-control" name="itemThumbnailUrl_' + new_item_name + '" id="itemThumbnailUrl_' + new_item_name + '" /></div></div>';
+
+    var deleteitem = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><button class="deleteNewItem btn btn-danger">Cancel Add New Item</button></div></div>';
+    var closeid = '</div>';
+
+    var html = htmlid + name + desc + caption + vizproject + xstart + ystart + zstart + resstart + marker + thumbnail + deleteitem + closeid;
+
+
+    $( "#newitems" ).append( html );
+    postNewItemAdd();
+  });
+
+  function postNewItemAdd() {
+    // we need to reload the delete new layer buttons from the dom
+    $( ".deleteNewItem" ).click(function(event) {
+      $(this).parent().parent().parent().remove();
+    });
+  };
+
+  $( ".toggleItem" ).click(function(event) {
+    var itemid = $(this).parent().parent().attr('id');
+    $( "#hidden_" + itemid ).toggle()
+  });
+
+  // get cookie for csrf protection in POST
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = jQuery.trim(cookies[i]);
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  $( ".deleteItem" ).click(function(event) {
+    var item_id = $(this).parent().parent().parent().parent().attr('id');
+    $.confirm({
+      title: "Confirmation Required",
+      confirmButton: "Yes, Delete",
+      confirmButtonClass: "btn-danger",
+      cancelButton: "No",
+      cancelButtonClass: "btn-primary",
+      text: "Are you sure you want to delete DataView item #" + item_id + "?",
+      confirm: function() {
+
+        var csrftoken = getCookie('csrftoken');
+
+        // posts to the delete layer URL
+        var dataview_name = $( "#oldDataviewName" ).val();
+        $( "#submitInfo" ).empty();
+        var jqxhr = $.ajax({
+          method: 'POST',
+          url: '{% url "deleteDataviewItem" %}',
+          data: { dataview: dataview_name, dvitem: item_id  },
+          beforeSend: function(xhr, settings) {
+            // CSRF protection
+            if (!this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+          statusCode: {
+            400: function(response) {
+              $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to delete DataView Item. " + response.responseText + "</p>");
+            }
+          },
+          success: function(response) {
+            // remove layer from form
+            $( "#" + item_id ).remove();
+            $( "#submitInfo" ).append("<p class='bg-info'>Successfully deleted DataView Item.");
+          },
+        })
+        .fail(function(response) {
+          $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to delete DataView Item with unknown error. Message from the server: " + response.statusText + " (" + response.status + ")</p>");
+          // log full error message to console
+          console.log(response.responseText);
+        });
+
+      },
+      cancel: function() {
+        // do nothing
+      }
+    });
+    // stacking modals kills scrollbars
+    $( "#remoteModal" ).css("overflow-y", "auto");
+  });
+
+  $( "button#tomanage" ).click(function() {
+    $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+    $( "#remoteModal" ).modal('show');
+  });
+
+
+  $( "#editDataviewForm" ).submit(function(e) {
+    e.preventDefault();
+
+    // validate form
+    $( "#dataviewToken" ).parent().parent().find( ".help-block" ).remove();
+    $( "#dataviewToken" ).parent().parent().removeClass("has-error");
+    if (/^[a-zA-Z0-9_]*$/.test( $( "#dataviewToken" ).val() ) == false || $( "#dataviewToken" ).val() == '' ) {
+      $( "#dataviewToken" ).parent().parent().addClass("has-error");
+      $( "#dataviewToken" ).parent().append("<span class='help-block'>Error: Dataview token is required and cannot contain spaces or special characters!</span>");
+      $( "#dataviewToken" ).focus();
+      return;
+    }
+    var failed_validation = false;
+    var required_fields = [
+      'dataviewName',
+      'dataviewDesc',
+      'dataviewToken',
+    ];
+    $( "#addDataviewForm *" ).filter( ":input" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ( ($(this).val() == '' ) && (jQuery.inArray(id, required_fields) > 1) ) {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      };
+    });
+    // check that each item has a name
+    $( "input[name^='itemName']" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ($(this).val() == '') {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      }
+    });
+    if (failed_validation) {
+      return;
+    };
+
+    var csrftoken = getCookie('csrftoken');
+    $( "#submitInfo" ).empty();
+    var jqxhr = $.ajax({
+      method: 'POST',
+      url: '{% url "editDataviewSubmit" %}',
+      data: $('#editDataviewForm').serialize(),
+      beforeSend: function(xhr, settings) {
+        // CSRF protection
+        if (!this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+      },
+      success: function(response) {
+        // seems like an immediate redirect w/ an info box on the main remote modal would be better
+        $( "#submitInfo" ).append("<p class='bg-info'>Successfully saved Dataview. Redirecting to manage home...</p>");
+        setTimeout(function() {
+          $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+          $( "#remoteModal" ).modal('show');
+        }, 500);
+      },
+      statusCode: {
+        400: function(response) {
+          $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to save DataView. " + response.responseText + "</p>");
+        }
+      },
+    })
+    .fail(function(response) {
+      $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to save DataView with unknown error. Message from the server: " + response.statusText + " (" + response.status + ")</p>");
+      // log full error message to console
+      console.log(response.responseText);
+    });
+  });
+</script>

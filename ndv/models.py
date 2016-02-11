@@ -47,7 +47,7 @@ class VizLayer ( models.Model ):
   channel = models.CharField(max_length=255)
   # do we want to use the tilecache or ocpcatmaid? (default ocpcatmaid)  
   tilecache = models.BooleanField(default=False) 
-  tilecache_server = models.CharField(max_length=255, default=None, blank=True)
+  tilecache_server = models.CharField(max_length=255, default=None, blank=True, null=True)
 
   # for mcfc cutout 
   COLOR_CHOICES = (
@@ -56,7 +56,7 @@ class VizLayer ( models.Model ):
       ('Y', 'yellow'),
       ('R', 'red'),
       ('G', 'green'),
-      ('B', 'blue'), 
+      ('B', 'blue'),
   )
   color = models.CharField(max_length=255, choices=COLOR_CHOICES, blank=True)
 
@@ -96,8 +96,8 @@ class VizProject ( models.Model ):
    
 class DataViewItem ( models.Model ):
   name = models.CharField(max_length=255, verbose_name="An item attached to a particular dataview.")
-  desc_int = models.CharField(max_length=255, verbose_name="An internal description for this item. The external description will be the project description.")
-  caption = models.CharField(max_length=255, verbose_name="A caption for this dataview item (to be displayed publically")
+  desc_int = models.CharField(max_length=255, verbose_name="An internal description for this item. The external description will be the project description.", blank=True)
+  caption = models.CharField(max_length=255, verbose_name="A caption for this dataview item (to be displayed publically", blank=True)
   user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True)
   
   # link to the vizproject 

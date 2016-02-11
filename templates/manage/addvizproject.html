@@ -1,0 +1,352 @@
+{# add viz project #}
+
+{% load staticfiles %}
+
+<script src="{% static 'ndv/js/jquery.confirm.min.js' %}"></script>
+
+<div class="modal-dialog modal-lg">
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <a name="top"></a>
+      <h3 class="modal-title" id="addVizProjectTitle">Adding New VizProject</h3>
+    </div>
+    <div class="modal-body">
+    <form class="form-horizontal" id="addProjectForm">
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Basic Info</label>
+      </div>
+      <div class="form-group">
+        <label for="projectName" class="col-sm-2 control-label">Project Name*</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" name="projectName" id="projectName" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="projectDesc" class="col-sm-2 control-label">Project Description</label>
+        <div class="col-sm-10">
+          <textarea rows="3" class="form-control" name="projectDesc" id="projectDesc"></textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="public" id="public" />Public?
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Dataspace</label>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Autopopulate</label>
+        <div class="col-xs-5">
+          <input type="text" class="form-control" id="autopopulate_server" placeholder="example.com">
+        </div>
+        <div class="col-xs-4">
+          <input type="text" class="form-control" id="autopopulate_token" placeholder="token">
+        </div>
+        <div class="col-xs-1">
+          <button type="button" class="btn btn-info" id="autopopulate_go">Go</button>
+        </div>
+        <div class="col-sm-offset-2 col-sm-10">
+          <span id="helpBlock" class="help-block">Auto-populates the form fields below. <strong>Note:</strong> This will overwrite <em>all</em> of the fields below!</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="xoffset" class="col-sm-2 control-label">x-offset*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="xoffset" id="xoffset" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="ximagesize" class="col-sm-2 control-label">x-imagesize*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="ximagesize" id="ximagesize" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="yoffset" class="col-sm-2 control-label">y-offset*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="yoffset" id="yoffset" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="yimagesize" class="col-sm-2 control-label">y-imagesize*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="yimagesize" id="yimagesize" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="zoffset" class="col-sm-2 control-label">z-offset*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="zoffset" id="zoffset" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="zimagesize" class="col-sm-2 control-label">z-imagesize*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="zimagesize" id="zimagesize" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="starttime" class="col-sm-2 control-label">Start Time</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="starttime" id="starttime" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="endtime" class="col-sm-2 control-label">End Time</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="endtime" id="endtime" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="minres" class="col-sm-2 control-label">Minimum Resolution*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="minres" id="minres" value="0"/>
+          <span id="helpBlock" class="help-block">This should almost always be 0.</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="scalinglevels" class="col-sm-2 control-label">Scaling Levels*</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" name="scalinglevels" id="scalinglevels" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Layers</label>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button id="addnewlayer" type="button" class="btn btn-primary">Add New Layer</button>
+        </div>
+      </div>
+      <div id="newlayers">
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <div id="submitInfo"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      <button type="button" id="tomanage" class="btn btn-default">Back</button>
+    </div>
+   </div>
+ </div>
+
+{# end add vizproject modal #}
+
+<script>
+  var new_layer_count = 0;
+
+  $( "button#addnewlayer" ).click(function(event) {
+    new_layer_count = new_layer_count + 1;
+    var new_layer_name = 'newlayer_' + new_layer_count;
+    var htmlid = '<div id="' + new_layer_name + '">';
+    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerName_' + new_layer_name + '" id="layerName_' + new_layer_name + '" /></div></div>';
+    var layerdesc = '<div class="form-group"><label for="layerDesc" class="col-sm-2 control-label">Layer Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="layerDesc_' + new_layer_name + '" id="layerDesc_' + new_layer_name + '"></textarea></div></div>';
+    var layerserver = '<div class="form-group"><label for="layerServer" class="col-sm-2 control-label">Server</label><div class="col-sm-10"><select class="form-control" name="layerServer_' + new_layer_name + '" id="layerServer_' + new_layer_name + '">{% for option in serverOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
+    var layertype = '<div class="form-group"><label for="layerType" class="col-sm-2 control-label">Layer Type</label><div class="col-sm-10"><select class="form-control" name="layerType_' + new_layer_name + '" id="layerType_' + new_layer_name + '">{% for option in layerOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
+    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerToken_' + new_layer_name + '" id="layerToken_' + new_layer_name + '" /></div></div>';
+    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerChannel_' + new_layer_name + '" id="layerChannel_' + new_layer_name + '" /></div></div>';
+    var color = '<div class="form-group"><label for="layerColor" class="col-sm-2 control-label">Color</label><div class="col-sm-10"><select class="form-control" name="layerColor_' + new_layer_name + '" id="layerColor_' + new_layer_name + '"><option value="" selected>None</option>{% for option in colorOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
+    var propagate = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerPropagated_' + new_layer_name + '" id="layerPropagated_' + new_layer_name + '" />Propagated?</label></div></div></div>';
+    var tilecache = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerTilecache_' + new_layer_name + '" id="layerTilecache_' + new_layer_name + '" />Tilecache?</label></div></div></div>';
+    var tilecacheserver = '<div class="form-group"><label for="layerTilecacheServer" class="col-sm-2 control-label">Tilecache Server (optional)</label><div class="col-sm-10"><input type="text" class="form-control" name="layerTilecacheserver_' + new_layer_name + '" id="layerTilecacheserver_' + new_layer_name + '" /><p class="help-block">Use this field if you want to set an alternate server for tilecache requests.</div></div>';
+    var deletelayer = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><button class="deleteNewLayer btn btn-danger">Cancel Add New Layer</button></div></div>';
+    var closeid = '</div>';
+
+    var html = htmlid + layername + layerdesc + layerserver + layertype + token + channel + color + propagate + tilecache + tilecacheserver + deletelayer + closeid;
+
+
+    $( "#newlayers" ).append( html );
+    postNewLayerAdd();
+  });
+
+  $( "button#autopopulate_go" ).click(function() {
+    var server = $( "#autopopulate_server" ).val();
+    var token = $( "#autopopulate_token" ).val();
+    var url = "{% url 'autopopulateDataset' webargs='placeholder' %}";
+    url = url.replace('placeholder', server + '/' + token + '/');
+
+    var jqxhr = $.ajax({
+      url: url,
+      type: 'GET',
+      success: function(response) {
+        var projinfo = jQuery.parseJSON( response );
+        $( "#xoffset" ).val( projinfo.dataset.offset[0][0] );
+        $( "#yoffset" ).val( projinfo.dataset.offset[0][1] );
+        $( "#zoffset" ).val( projinfo.dataset.offset[0][2] );
+
+        $( "#ximagesize" ).val( projinfo.dataset.imagesize[0][0] );
+        $( "#yimagesize" ).val( projinfo.dataset.imagesize[0][1] );
+        $( "#zimagesize" ).val( projinfo.dataset.imagesize[0][2] );
+
+        $( "#starttime" ).val( projinfo.dataset.timerange[0] );
+        $( "#endtime" ).val( projinfo.dataset.timerange[1] );
+
+        $( "#scalinglevels" ).val( projinfo.dataset.scalinglevels );
+        $( "#minres" ).val( projinfo.dataset.resolutions[0] );
+
+        $( "button#autopopulate_go" ).switchClass( "btn-info", "btn-success" );
+        $( "button#autopopulate_go" ).switchClass( "btn-danger", "btn-success" );
+      },
+    })
+    .fail(function(response) {
+        $( "button#autopopulate_go" ).switchClass( "btn-info", "btn-danger" );
+        $( "button#autopopulate_go" ).switchClass( "btn-success", "btn-danger" );
+    });
+  });
+
+  function postNewLayerAdd() {
+    // we need to reload the delete new layer buttons from the dom
+    $( ".deleteNewLayer" ).click(function(event) {
+      $(this).parent().parent().parent().remove();
+    });
+  };
+
+  // get cookie for csrf protection in POST
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = jQuery.trim(cookies[i]);
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) == (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  $( "button#tomanage" ).click(function() {
+    $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+    $( "#remoteModal" ).modal('show');
+  });
+
+  $( "#addProjectForm" ).submit(function(e) {
+    e.preventDefault();
+
+    // validate form
+    $( "#projectName" ).parent().parent().find( ".help-block" ).remove();
+    $( "#projectName" ).parent().parent().removeClass("has-error");
+    if (/^[a-zA-Z0-9_]*$/.test( $( "#projectName" ).val() ) == false || $( "#projectName" ).val() == '' ) {
+      $( "#projectName" ).parent().parent().addClass("has-error");
+      $( "#projectName" ).parent().append("<span class='help-block'>Error: Project name is required and cannot contain spaces or special characters!</span>");
+      $( "#projectName" ).focus();
+      return;
+    }
+    var failed_validation = false;
+    var required_fields = [
+      'projectName',
+      'xoffset',
+      'ximagesize',
+      'yoffset',
+      'yimagesize',
+      'zoffset',
+      'zimagesize',
+      'minres',
+      'scalinglevels'
+    ];
+    $( "#addProjectForm *" ).filter( ":input" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ( ($(this).val() == '' ) && (jQuery.inArray(id, required_fields) > -1) ) {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      };
+    });
+    // check that each layer has a name
+    $( "input[name^='layerName']" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ($(this).val() == '') {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      }
+    });
+    if (failed_validation) {
+      return;
+    };
+    // check that each layer has a token
+    $( "input[name^='layerToken']" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ($(this).val() == '') {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      }
+    });
+    if (failed_validation) {
+      return;
+    };
+    // check that each layer has a channel
+    $( "input[name^='layerChannel']" ).each(function() {
+      $(this).parent().parent().removeClass("has-error");
+      var id = $(this).attr('id');
+      if ($(this).val() == '') {
+        $(this).parent().parent().addClass("has-error");
+        $(this).focus();
+        failed_validation = true;
+        return false; // break out of loop
+      }
+    });
+    if (failed_validation) {
+      return;
+    };
+
+    var csrftoken = getCookie('csrftoken');
+    $( "#submitInfo" ).empty();
+    $.ajax({
+      method: 'POST',
+      url: '{% url "addVizProject" %}',
+      data: $('#addProjectForm').serialize(),
+      beforeSend: function(xhr, settings) {
+        // CSRF protection
+        if (!this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+      },
+      success: function(response) {
+        // seems like an immediate redirect w/ an info box on the main remote modal would be better
+        $( "#submitInfo" ).append("<p class='bg-info'>Successfully saved new VizProject. Redirecting to manage home...</p>");
+        setTimeout(function() {
+          $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+          $( "#remoteModal" ).modal('show');
+        }, 500);
+
+      },
+      statusCode: {
+        400: function(response) {
+          $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to save new VizProject. " + response.responseText + "</p>");
+        }
+      },
+    })
+    .fail(function(response) {
+      $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to save new VizProject with unknown error. Message from the server: " + response.statusText + " (" + response.status + ")</p>");
+      // log full error message to console
+      console.log(response.responseText);
+    });
+  });
+</script>
