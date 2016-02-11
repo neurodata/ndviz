@@ -51,10 +51,8 @@
           $( "#loginlink" ).hide()
           $( "#managelink" ).show()
           $( "#logoutlink" ).show()
-
-          var html = '<div class="bg-info"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="sr-only">Success:</span> User ' + $( "#username" ).val() + ' logged in!';
-          $( '.login_info' ).append(html);
-
+          
+          $( "#login" ).modal('toggle'); 
         },
       })
       .fail(function(response) {
