@@ -40,6 +40,8 @@ base_urlpatterns = patterns('ndv.views',
     url(r'^manage/adddataview/$', 'addDataview', name='addDataview'),
     url(r'^manage/editdataview/submit/$', 'editDataviewSubmit', name='editDataviewSubmit'),
     url(r'^manage/editdataview/(?P<token>[\w,-]+)/?', 'editDataview', name='editDataview'),
+    url(r'^manage/deletedataview/$', 'deleteDataview', name='deleteDataview'),
+    url(r'^manage/deletedataviewitem/$', 'deleteDataviewItem', name='deleteDataviewItem'),
     url(r'^manage/autopopulate/(?P<webargs>[\w,\.,/-]+)/?', 'autopopulateDataset', name='autopopulateDataset'),
     url(r'^manage/?$', 'manage', name='manage'),
     # user auth 

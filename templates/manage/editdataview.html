@@ -56,11 +56,11 @@
 
 
       {% for item in items %}
-      <div id="{{ item.name }}">
+      <div id="{{ item.id }}">
         <div class="form-group">
-          <a class="toggleItem" href="#"><label class="col-sm-offset-2 col-sm-10">{{ item.name }}</label></a>
+          <a class="toggleItem" href="#"><label class="col-sm-offset-2 col-sm-10">{{ item.name }} ({{ item.id }})</label></a>
         </div>
-        <div id="hidden_{{ item.name }}" style="display:none;">
+        <div id="hidden_{{ item.id }}" style="display:none;">
           <div class="form-group">
             <label for="itemName" class="col-sm-2 control-label">Display Name*</label>
             <div class="col-sm-10">
@@ -231,47 +231,45 @@
     return cookieValue;
   }
 
-  // AB TODO
   $( ".deleteItem" ).click(function(event) {
-    //console.log( $(this).parent().parent().parent().parent() );
-    var layer_name = $(this).parent().parent().parent().parent().attr('id');
+    var item_id = $(this).parent().parent().parent().parent().attr('id');
     $.confirm({
       title: "Confirmation Required",
       confirmButton: "Yes, Delete",
       confirmButtonClass: "btn-danger",
       cancelButton: "No",
       cancelButtonClass: "btn-primary",
-      text: "Are you sure you want to delete layer " + layer_name + "?",
+      text: "Are you sure you want to delete DataView item #" + item_id + "?",
       confirm: function() {
 
         var csrftoken = getCookie('csrftoken');
 
         // posts to the delete layer URL
-        var project_name = $( "#oldProjectName" ).val();
+        var dataview_name = $( "#oldDataviewName" ).val();
         $( "#submitInfo" ).empty();
         var jqxhr = $.ajax({
           method: 'POST',
-          url: '{% url "deleteLayer" %}',
-          data: { project: project_name, layer: layer_name  },
+          url: '{% url "deleteDataviewItem" %}',
+          data: { dataview: dataview_name, dvitem: item_id  },
           beforeSend: function(xhr, settings) {
             // CSRF protection
             if (!this.crossDomain) {
               xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
           },
-          success: function(response) {
-            // remove layer from form
-            $( "#" + layer_name ).remove();
-            $( "#submitInfo" ).append("<p class='bg-info'>Successfully deleted VizLayer.");
-          },
           statusCode: {
             400: function(response) {
-              $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to delete VizLayer. " + response.responseText + "</p>");
+              $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to delete DataView Item. " + response.responseText + "</p>");
             }
-          }
+          },
+          success: function(response) {
+            // remove layer from form
+            $( "#" + item_id ).remove();
+            $( "#submitInfo" ).append("<p class='bg-info'>Successfully deleted DataView Item.");
+          },
         })
         .fail(function(response) {
-          $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to delete VizLayer with unknown error. Message from the server: " + response.statusText + " (" + response.status + ")</p>");
+          $( "#submitInfo" ).append("<p class='bg-danger'>Error: Failed to delete DataView Item with unknown error. Message from the server: " + response.statusText + " (" + response.status + ")</p>");
           // log full error message to console
           console.log(response.responseText);
         });

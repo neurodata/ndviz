@@ -1167,6 +1167,50 @@ def editDataviewSubmit(request):
     return HttpResponseBadRequest('Invalid Request')
 
 @login_required
+def deleteDataview(request):
+  if request.method == 'POST':
+    response = request.POST 
+    try:
+      dvobj = DataView.objects.get(token = response['dataview_token'] )
+    except DataView.DoesNotExist:
+      return HttpResponseNotFound('DataView {} not found!'.format( response['dataview'] ));
+  
+    items = dvobj.items.select_related()
+
+    for item in items:
+      item.delete() 
+    
+    try:
+      dvobj.delete()
+    except Exception as e:
+      return HttpResponseBadRequest('Error: Failed to delete DataView! {}'.format(e))
+
+    return HttpResponse('Delete OK.')
+    
+  return HttpResponseBadRequest('Invalid Request')
+
+@login_required
+def deleteDataviewItem(request):
+  if request.method == 'POST':
+    response = request.POST 
+    try:
+      dvobj = DataView.objects.get(name = response['dataview'] )
+    except DataView.DoesNotExist:
+      return HttpResponseNotFound('DataView {} not found!'.format( response['dataview'] ));
+ 
+    items = dvobj.items.select_related()
+    for dvitem in items:
+      if dvitem.id == int(response['dvitem']): # names can have spaces, so compare on ID 
+        try:
+          dvitem.delete()
+          return HttpResponse('Delete OK.')
+        except Exception as e:
+          return HttpResponseBadRequest('Error: Failed to delete DataView Item! {}'.format(e))
+    return HttpResponseNotFound('DataView Item {} not found.'.format( response['dvitem'] ))
+  else:
+    return HttpResponseBadRequest('Invalid Request')
+
+@login_required
 def autopopulateDataset(request, webargs):
   [server, token_raw] = webargs.split('/', 1)
   token = token_raw.split('/')[0]
