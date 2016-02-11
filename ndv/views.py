@@ -918,7 +918,249 @@ def editVizProjectSubmit(request):
     for layer in layers:
       layer.save()
 
+    # changing the primary key will create a new object
+    if proj.name == projNameOrig:
+      proj.save()
+    else:
+      # project name changed
+      proj.save()
+      # reassociate with vizlayers 
+      for layer in layers:
+        proj.layers.add(layer)
+      try:
+        proj_old = Project.objects.get(project_name = projNameOrig)
+        for layer in layers:
+          proj_old.layers.remove(layer)
+        proj_old.delete()
+      except Exception, e:
+        return HttpResponseBadRequest('Error changing name of VizProject: {}'.format(e))
     proj.save()
+
+    return HttpResponse('Saved Changes Successfully')
+  else:
+    return HttpResponseBadRequest('Invalid Request')
+
+@login_required
+def addDataview(request):
+  if request.method == 'GET':
+    # get list of vizprojects for the current user
+    projlist = VizProject.objects.filter( user = request.user ).values_list('project_name') 
+    # display form
+    context = {
+      'vizProjects': projlist,
+    } 
+    return render(request, 'manage/adddataview.html', context) 
+  elif request.method == 'POST':
+
+    response = request.POST 
+   
+    # the name is the primary key, but the token must also be unique for URL access 
+    existingDvName = DataView.objects.filter(name = response['dataviewName'])
+    existingDvToken = DataView.objects.filter(token = response['dataviewToken'])
+    if len(existingDvName) > 0:
+      return HttpResponseBadRequest('Error: Dataview with name {} already exists!'.format(response['dataviewName']))
+    elif len(existingDvToken) > 0:
+      return HttpResponseBadRequest('Error: Dataview with token {} already exists!'.format(response['dataviewToken']))
+
+    # separate out items 
+    itemsNew = {}
+    for item in response.keys():
+      if item.startswith('item'):
+        [itemtype, sep, itemname] = item.partition('_')
+        itemtype = itemtype[4:].lower() # remove the 'item' prefix 
+        if itemname not in itemsNew.keys():
+          itemsNew[itemname] = {}  
+        itemsNew[itemname][itemtype] = response[item]
+
+    # create new DataView
+    dv = DataView()
+    dv.name = response['dataviewName']
+    dv.desc = response['dataviewDesc']
+    dv.token = response['dataviewToken']
+    dv.user = request.user 
+    if 'public' in response.keys():
+      dv.public = 1
+    else:
+      dv.public = 0
+    
+    items = []
+    # add new items 
+    for itemKey in itemsNew.keys():
+      if itemKey.startswith('newitem'):
+        dvitem = DataViewItem()
+        itemInfo = itemsNew[itemKey]
+
+        dvitem.name = itemInfo['name']
+        dvitem.desc_int = itemInfo['desc']
+        dvitem.caption = itemInfo['caption']
+        dvitem.user = request.user
+        
+        try:
+          vizproj = VizProject.objects.get(project_name = itemInfo['project'])
+          dvitem.vizproject = vizproj 
+        except VizProject.DoesNotExist:
+          return HttpResponseBadRequest('Could not locate VizProject {}'.format(itemInfo['project']))
+
+        dvitem.xstart = itemInfo['xstart']
+        dvitem.ystart = itemInfo['ystart']
+        dvitem.zstart = itemInfo['zstart']
+        dvitem.resstart = itemInfo['resstart']
+
+        if 'marker' in itemInfo.keys():
+          dvitem.marker_start = True 
+        else:
+          dvitem.marker_start = False 
+
+        dvitem.thumbnail_url = itemInfo['thumbnailurl']
+        
+        items.append(dvitem)
+
+    # after creating everything, save changes (this allows for error handling)
+    try:
+      # must save the project first due to foreign key contraints 
+      dv.save()
+      for item in items:
+        item.save()
+        dv.items.add(item) 
+
+    except Exception as e:
+      return HttpResponseBadRequest('Error: Exception occurred during save! ({})'.format(e))
+    return HttpResponse('Added Dataview Successfully')
+  else:
+    return HttpResponseBadRequest('Invalid Request')
+
+@login_required
+def editDataview(request, token):
+  if request.method == 'GET':
+    dvobj = get_object_or_404(DataView, token=token)
+    items = DataViewItem.objects.filter(dataview = dvobj)
+    projlist = VizProject.objects.filter( user = request.user ).values_list('project_name') 
+    context = {
+      'dv': dvobj,
+      'items': items,
+      'vizProjects': projlist,
+    }
+    return render(request, 'manage/editdataview.html', context)
+  else:
+    return HttpResponseBadRequest('Invalid Request')
+
+@login_required
+def editDataviewSubmit(request):
+  if request.method == 'POST':
+    # parse the response 
+    dvNameOrig = request.POST['oldDataviewName']
+    response = request.POST 
+
+    # process item updates 
+    itemsNew = {}
+    for item in response.keys():
+      if item.startswith('item'):
+        [itemtype, sep, itemname] = item.partition('_')
+        itemtype = itemtype[4:].lower()
+        if itemname not in itemsNew.keys():
+          itemsNew[itemname] = {}  
+        itemsNew[itemname][itemtype] = response[item]
+    
+    # get the original dataview and its items  
+    try:
+      dvobj = DataView.objects.get(name = dvNameOrig)
+    except DataView.DoesNotExist:
+      return HttpResponseBadRequest('Error: Dataview {} does not exist!'.format(dvNameOrig))
+
+    items = dvobj.items.select_related()
+
+    # apply changes to dataview 
+    dvobj.name = response['dataviewName']
+    dvobj.desc = response['dataviewDesc']
+    dvobj.token = response['dataviewToken']
+    #dvobj.user = request.user
+    if 'public' in response.keys():
+      dvobj.public = 1
+    else:
+      dvobj.public = 0
+
+    # apply changes to items
+    
+    for dvitem in items:
+      if dvitem.name in itemsNew.keys():
+        itemInfo = itemsNew[dvitem.name]
+        dvitem.name = itemInfo['name']
+        dvitem.desc_int = itemInfo['desc']
+        dvitem.caption = itemInfo['caption']
+        
+        try:
+          vizproj = VizProject.objects.get(project_name = itemInfo['project'])
+          dvitem.vizproject = vizproj
+        except VizProject.DoesNotExist:
+          return HttpResponseBadRequest('Could not locate VizProject {}'.format(itemInfo['project']))
+
+        dvitem.xstart = itemInfo['xstart']
+        dvitem.ystart = itemInfo['ystart']
+        dvitem.zstart = itemInfo['zstart']
+        dvitem.resstart = itemInfo['resstart']
+
+        if 'marker' in itemInfo.keys():
+          dvitem.marker_start = True 
+        else:
+          dvitem.marker_start = False 
+
+        dvitem.thumbnail_url = itemInfo['thumbnailurl']
+
+    # Note: Any error checking must be done before this point. After this point, all changes are saved to the DB. 
+
+    # add new items 
+    for itemKey in itemsNew.keys():
+      if itemKey.startswith('newitem'):
+        dvitem = DataViewItem()
+        itemInfo = itemsNew[itemKey]
+
+        dvitem.name = itemInfo['name']
+        dvitem.desc_int = itemInfo['desc']
+        dvitem.caption = itemInfo['caption']
+        dvitem.user = request.user
+        
+        try:
+          vizproj = VizProject.objects.get(project_name = itemInfo['project'])
+          dvitem.vizproject = vizproj 
+        except VizProject.DoesNotExist:
+          return HttpResponseBadRequest('Could not locate VizProject {}'.format(itemInfo['project']))
+
+        dvitem.xstart = itemInfo['xstart']
+        dvitem.ystart = itemInfo['ystart']
+        dvitem.zstart = itemInfo['zstart']
+        dvitem.resstart = itemInfo['resstart']
+
+        if 'marker' in itemInfo.keys():
+          dvitem.marker_start = True 
+        else:
+          dvitem.marker_start = False 
+
+        dvitem.thumbnail_url = itemInfo['thumbnailurl']
+  
+        # save and associate with the dataview
+        dvitem.save()
+        dvobj.items.add(dvitem)
+
+    # save changes made to existing objects 
+    for dvitem in items:
+      dvitem.save()
+  
+    # changing the primary key will create a new object
+    if dvobj.name == dvNameOrig:
+      dvobj.save()
+    else:
+      # dataview name changed
+      dvobj.save()
+      # reassociate with dataview items 
+      for dvitem in items:
+        dvobj.items.add(dvitem)
+      try:
+        dvobj_old = DataView.objects.get(name = dvNameOrig)
+        for dvitem in items:
+          dvobj_old.items.remove(dvitem)
+        dvobj_old.delete()
+      except Exception, e:
+        return HttpResponseBadRequest('Error changing name of DataView: {}'.format(e))
 
     return HttpResponse('Saved Changes Successfully')
   else:
