@@ -806,7 +806,10 @@
     // keyboard shortcuts
     $(document).keypress(function(event) {
       if ( !$(event.target).is('input')) {
-        console.log(event.which);
+        // disable shortcuts if modal is open 
+        if ($("#remoteModal").hasClass('in') == true) {
+          return;
+        }
         switch (event.which) {
           case 104: // h -- help
             toggleKeyboardHelp();
