@@ -8,7 +8,7 @@
 
   {# jquery UI #}
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
-  
+
   {# leaflet files #}
   <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" />
   <link rel="stylesheet" href="{% static 'ndv/css/Control.Loading.css' %}" />
@@ -51,18 +51,18 @@
 
     // global variables
     var ndv = {};
-    ndv.querytool = false; 
+    ndv.querytool = false;
     ndv.querylayer = 'none';
     ndv.querytoken = 'none';
     ndv.querychannel = 'none';
     ndv.queryserver = 'none';
-   
+
     // timeseries globals
     ndv.playdelay = 1;
 
     // marker array
     ndv.markers = [];
-    
+
     // upsample settings
     ndv.upsample_num = 2;
 
@@ -70,14 +70,14 @@
     ndv.xstart = {{ xstart }};
     ndv.xmin = {{ xoffset }};
     ndv.xmax = {{ xsize }} + {{ xoffset }} - 1;
-  
+
     ndv.ystart = {{ ystart }};
     ndv.ymin = {{ yoffset }};
     ndv.ymax = {{ ysize }} + {{ yoffset }} - 1;
-    
+
     ndv.zmin = {{ zoffset }};
     ndv.zmax = {{ zsize }} + {{ zoffset }} - 1;
-    
+
     ndv.minres = {{ minres }};
     ndv.maxres = {{ maxres }};
     ndv.res = {{ res }};
@@ -106,8 +106,45 @@
     });
     map.addControl(loadingControl);
 
-    // define layers (namespaced with a layers. prefix) 
-    var layers = {}; 
+    // define layers (namespaced with a layers. prefix)
+    var layers = {};
+
+    // add layer function
+    function addLayer(layername, layertype, layerpropagate, url) {
+
+      var opacity;
+      var propagate;
+      if (layertype == 'annotation') {
+        opacity = 0.4; // annotations loaded at 40% opacity by default
+        propagate = 2; // annotations propagation status doesn't matter
+      }
+      else
+      {
+        opacity = 1.0;
+        propagate = layerpropagate;
+      }
+
+      var curtime = 0;
+      if (layertype == 'timeseries') {
+        curtime = {{ starttime }};
+      }
+
+      layers.layername = L.tileLayer.OCPLayer(
+        url,
+        {
+          zindex: ndv.zindex,
+          zoomReverse: true,
+          minZoom: ndv.maxres,
+          maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+          maxNativeZoom: ndv.maxres + ndv.maxres,
+          tileSize: 512,
+          opacity: opacity,
+          propagate: propagate,
+          curtime: curtime,
+          continuousWorld: true,
+        }
+      ).addTo(map);
+    }
 
     // load image layers first
     {% for layer in layers %}
@@ -158,27 +195,7 @@
         console.log(url);
 
         {# add the layer #}
-        layers.{{ layer.layer_name|cut:" " }} = L.tileLayer.OCPLayer(
-          url,
-          {
-            zindex: ndv.zindex,
-            zoomReverse: true,
-            minZoom: ndv.maxres,
-            maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
-            maxNativeZoom: ndv.maxres + ndv.maxres,
-            tileSize: 512,
-            {% if layer.layertype == 'annotation' %}
-            opacity: 0.4,
-            propagate: 2, 
-            {% else %}
-            propagate: {{ layer.propagate }},
-            {% endif %}
-            {% if layer.layertype == 'timeseries' %}
-            curtime: {{ starttime }},
-            {% endif %}
-            //noWrap: true,
-            continuousWorld: true,
-          }).addTo(map);
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url );
         {% endif %}
     {% endfor %}
 
@@ -216,35 +233,15 @@
         console.log(url);
 
         {# add the layer #}
-        layers.{{ layer.layer_name|cut:" " }} = L.tileLayer.OCPLayer(
-          url,
-          {
-            zindex: ndv.zindex,
-            zoomReverse: true,
-            minZoom: ndv.maxres,
-            maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
-            maxNativeZoom: ndv.maxres + ndv.maxres,
-            tileSize: 512,
-            {% if layer.layertype == 'annotation' %}
-            opacity: 0.4,
-            propagate: 2, 
-            {% else %}
-            propagate: {{ layer.propagate }},
-            {% endif %}
-            {% if layer.layertype == 'timeseries' %}
-            curtime: {{ starttime }},
-            {% endif %}
-            //noWrap: true,
-            continuousWorld: true,
-          }).addTo(map);
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url );
         {% endif %}
     {% endfor %}
 
     // set the initial view
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
 		map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
-    
-    // BEGIN propagate warning box 
+
+    // BEGIN propagate warning box
     var propwarn = L.control();
     propwarn.options.position = 'topright';
     propwarn.onAdd = function (map) {
@@ -270,7 +267,7 @@
     }
     checkPropagate();
 
-    // END propagate warning box 
+    // END propagate warning box
 
     // BEGIN query result palette
     var queryres = L.control();
@@ -332,7 +329,7 @@
       var infoToken = "{{ layers.0.token }}";
       var infoUrl = "http://{{ request.get_host }}{% url 'projinfo' queryargs='placeholder' %}";
       infoUrl = infoUrl.replace('placeholder', 'localhost/' + infoToken + '/')
-      
+
       $( "#projinfotxt" ).load(infoUrl);
 		}
     getProjInfo();
@@ -385,7 +382,7 @@
           });
         });
       });// sliders -- brightness
-      // contrast controls 
+      // contrast controls
       $(function() {
         $( "#slider > .contrast" ).each(function() {
           var layer = $( this ).text();
@@ -401,7 +398,7 @@
           });
         });
       });// sliders -- contrast
-      // opacity controls 
+      // opacity controls
       $(function() {
         $( "#slider > .opacity" ).each(function() {
           var layer = $( this ).text();
@@ -438,7 +435,7 @@
       map.on('click', onMapClick);
     });
     // END image control palette
-    
+
     // BEGIN add data button
     var addDataButton = L.control();
     addDataButton.options.position = 'topright';
@@ -603,21 +600,21 @@
       var pathRaw = '{{ request.path }}';
       var pathArr = pathRaw.split('/');
       var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
-      
+
       if (script_name == '') {
         var token = pathArr[1];
         var channels = '';
-        // handle the case where we are in project view mode 
+        // handle the case where we are in project view mode
         if (token == 'project') {
           token = 'project/' + pathArr[2];
           channels = '';
         }
         else {
           if (pathArr.length > 3 && !(pathArr[2] == 'xy' || pathArr[2] == 'yz' || pathRaw[2] == 'xz')) {
-            channels = pathArr[2]; 
+            channels = pathArr[2];
           }
         }
-        
+
         if (channels == '') {
           var markerUrl = "http://{{ request.get_host }}/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
         }
@@ -628,17 +625,17 @@
       else {
         var token = pathArr[2];
         var channels = '';
-        // handle the case where we are in project view mode 
+        // handle the case where we are in project view mode
         if (token == 'project') {
           token = 'project/' + pathArr[3];
           channels = '';
         }
         else {
           if (pathArr.length > 3 && !(pathArr[3] == 'xy' || pathArr[3] == 'yz' || pathRaw[3] == 'xz')) {
-            channels = pathArr[3]; 
+            channels = pathArr[3];
           }
         }
-        
+
         if (channels == '') {
           var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
         }
@@ -806,7 +803,7 @@
     // keyboard shortcuts
     $(document).keypress(function(event) {
       if ( !$(event.target).is('input')) {
-        // disable shortcuts if modal is open 
+        // disable shortcuts if modal is open
         if ($("#remoteModal").hasClass('in') == true) {
           return;
         }
