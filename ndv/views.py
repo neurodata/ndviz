@@ -1,4 +1,4 @@
-# Copyright 2015 Open Connectome Project (http://openconnecto.me)
+# Copyright 2016 NeuroData (http://neurodata.io)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Designed, Developed, and Maintained by Alex Baden
+# abaden1@jhu.edu
+# github.com/alexbaden
 
 from django.shortcuts import render
 from django.shortcuts import redirect
@@ -173,7 +177,7 @@ def tokenview(request, webargs):
     channel_info[channel] = {}
     channel_info[channel]['channel_name'] = channel
     channel_info[channel]['channel_type'] = jsoninfo['channels'][channel]['channel_type']
-    channel_info[channel]['propagate'] = jsoninfo['channels'][channel]['propagate'] 
+    channel_info[channel]['propagate'] = jsoninfo['channels'][channel]['propagate']
 
   # add channels to dict
   channels = []
@@ -218,7 +222,7 @@ def tokenview(request, webargs):
       timeseries = True
     tmp_layer.layertype = channel['channel_type']
     #tmp_layer.token = project_name
-    tmp_layer.token = token_str 
+    tmp_layer.token = token_str
     tmp_layer.channel = channel['channel_name']
     if settings.OCP_SERVER is None:
       tmp_layer.server = request.META['HTTP_HOST'];
@@ -227,7 +231,7 @@ def tokenview(request, webargs):
     tmp_layer.tilecache = False
     if channel['channel_name'] in channel_colors.keys():
       tmp_layer.color = channel_colors[ channel['channel_name'] ].upper()
-    tmp_layer.propagate = channel['propagate'] 
+    tmp_layer.propagate = channel['propagate']
     layers.append(tmp_layer)
 
   # package data for the template
@@ -254,7 +258,7 @@ def tokenview(request, webargs):
   context = {
       'layers': layers,
       'project_name': project_name,
-      'token': token_str, 
+      'token': token_str,
       'allchannels': channel_info,
       'tokenserver': layers[0].server, # TODO could we pull this info from somewhere else?
       'xsize': ximagesize,
@@ -286,7 +290,7 @@ def tokenview(request, webargs):
 # View a VizProject (pre-prepared project in the database)
 def projectview(request, webargs):
   """ /<<project>>/<<plane>>(opt)/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
-  
+
   # initialize these variables, which will be passed to the template
   x = None
   y = None
@@ -573,13 +577,13 @@ def projinfo(request, queryargs):
     return HttpResponse(r)
 
   jsoninfo = json.loads(r.read())
-  
+
   # metadata
   if len(jsoninfo['metadata'].keys()) == 0:
     metadatahtml = '<p>No LIMS metadata for this project.</p>'
   else:
     metadatahtml = '<p>LIMS Metadata support coming soon</p>'
-  
+
   context = {
     'projectname': jsoninfo['project']['name'],
     'projectdesc': jsoninfo['project']['description'],
@@ -647,12 +651,12 @@ def viewProjects(request):
 def getLayers(request, project):
   # get all layers for a project
   projectobj = get_object_or_404(VizProject, project_name=project)
-  
+
   layers = VizLayer.objects.filter(project = projectobj)
   context = {
     'layers': layers,
   }
-  return render(request, 'manage/getlayers.html', context) 
+  return render(request, 'manage/getlayers.html', context)
 
 @login_required
 def editVizProject(request, project):
@@ -673,12 +677,12 @@ def editVizProject(request, project):
 @login_required
 def deleteLayer(request):
   if request.method == 'POST':
-    response = request.POST 
+    response = request.POST
     try:
       projobj = VizProject.objects.get(project_name = response['project'] )
     except VizProject.DoesNotExist:
       return HttpResponseNotFound('VizProject {} not found!'.format( response['project'] ));
- 
+
     layers = projobj.layers.select_related()
     for layer in layers:
       if layer.layer_name == response['layer']:
@@ -693,23 +697,23 @@ def deleteLayer(request):
 
 @login_required
 def addVizProject(request):
-  # note that this method will save a new vizproject with or without layers 
-  # layers can be added later in the edit vizproject page 
+  # note that this method will save a new vizproject with or without layers
+  # layers can be added later in the edit vizproject page
   if request.method == 'POST':
-    response = request.POST 
-   
+    response = request.POST
+
     existingProj = VizProject.objects.filter(project_name = response['projectName'])
     if len(existingProj) > 0:
       return HttpResponseBadRequest('Error: Project {} already exists!'.format(response['projectName']))
 
-    # separate out layers  
+    # separate out layers
     layersNew = {}
     for item in response.keys():
       if item.startswith('layer'):
         [itemtype, sep, layername] = item.partition('_')
         itemtype = itemtype[5:].lower()
         if layername not in layersNew.keys():
-          layersNew[layername] = {}  
+          layersNew[layername] = {}
         layersNew[layername][itemtype] = response[item]
 
     # create new project
@@ -737,12 +741,12 @@ def addVizProject(request):
     proj.scalinglevels = response['scalinglevels']
 
     layers = []
-    # add new layers 
+    # add new layers
     for layerKey in layersNew.keys():
       if layerKey.startswith('newlayer'):
         layer = VizLayer()
         layerInfo = layersNew[layerKey]
-        
+
         layer.layer_name = layerInfo['name']
         layer.layer_description = layerInfo['desc']
         layer.server = layerInfo['server']
@@ -750,7 +754,7 @@ def addVizProject(request):
         layer.token = layerInfo['token']
         layer.channel = layerInfo['channel']
         layer.color = layerInfo['color']
-        
+
         if 'tilecache' in layerInfo.keys():
           layer.tilecache = True
           if len(layerInfo['tilecacheserver']) > 0:
@@ -762,19 +766,19 @@ def addVizProject(request):
           layer.propagate = 2
         else:
           layer.propagate = 0
-        
-        # since this is a new layer, we need to associate it w/ the editing user 
-        layer.user = request.user 
-        
+
+        # since this is a new layer, we need to associate it w/ the editing user
+        layer.user = request.user
+
         layers.append(layer)
 
     # after creating everything, save changes (this allows for error handling)
     try:
-      # must save the project first due to foreign key contraints 
+      # must save the project first due to foreign key contraints
       proj.save()
       for layer in layers:
         layer.save()
-        proj.layers.add(layer) 
+        proj.layers.add(layer)
 
     except Exception as e:
       return HttpResponseBadRequest('Error: Exception occurred during save! ({})'.format(e))
@@ -785,49 +789,49 @@ def addVizProject(request):
       'layerOptions': VizLayer.LAYER_CHOICES,
       'colorOptions': VizLayer.COLOR_CHOICES,
     }
-    return render(request, 'manage/addvizproject.html', context) 
+    return render(request, 'manage/addvizproject.html', context)
 
 @login_required
 def deleteVizProject(request):
   if request.method == 'POST':
-    response = request.POST 
+    response = request.POST
     try:
       projobj = VizProject.objects.get(project_name = response['project'] )
     except VizProject.DoesNotExist:
       return HttpResponseNotFound('VizProject {} not found!'.format( response['project'] ));
-  
+
     layers = projobj.layers.select_related()
 
     for layer in layers:
-      layer.delete() 
-    
+      layer.delete()
+
     try:
       projobj.delete()
     except Exception as e:
       return HttpResponseBadRequest('Error: Failed to delete VizProject!')
 
     return HttpResponse('Delete OK.')
-    
+
   return HttpResponseBadRequest('Invalid Request')
 
 @login_required
 def editVizProjectSubmit(request):
   if request.method == 'POST':
-    # parse the response 
+    # parse the response
     projNameOrig = request.POST['oldProjectName']
-    response = request.POST 
+    response = request.POST
 
-    # process layer updates 
+    # process layer updates
     layersNew = {}
     for item in response.keys():
       if item.startswith('layer'):
         [itemtype, sep, layername] = item.partition('_')
         itemtype = itemtype[5:].lower()
         if layername not in layersNew.keys():
-          layersNew[layername] = {}  
+          layersNew[layername] = {}
         layersNew[layername][itemtype] = response[item]
-    
-    # get the original project / layers 
+
+    # get the original project / layers
     try:
       proj = VizProject.objects.get(project_name = projNameOrig)
     except VizProject.DoesNotExist:
@@ -835,7 +839,7 @@ def editVizProjectSubmit(request):
 
     layers = proj.layers.select_related()
 
-    # apply changes to project 
+    # apply changes to project
     proj.project_name = response['projectName']
     proj.project_description = response['projectDesc']
     #proj.user = request.user
@@ -859,7 +863,7 @@ def editVizProjectSubmit(request):
     proj.scalinglevels = response['scalinglevels']
 
     # apply changes to layers
-    
+
     for layer in layers:
       if layer.layer_name in layersNew.keys():
         layerInfo = layersNew[layer.layer_name]
@@ -870,7 +874,7 @@ def editVizProjectSubmit(request):
         layer.token = layerInfo['token']
         layer.channel = layerInfo['channel']
         layer.color = layerInfo['color']
-        
+
         if 'tilecache' in layerInfo.keys():
           layer.tilecache = True
         else:
@@ -881,14 +885,14 @@ def editVizProjectSubmit(request):
         else:
           layer.propagate = 0
 
-    # Note: Any error checking must be done before this point. After this point, all changes are saved to the DB. 
+    # Note: Any error checking must be done before this point. After this point, all changes are saved to the DB.
 
-    # add new layers 
+    # add new layers
     for layerKey in layersNew.keys():
       if layerKey.startswith('newlayer'):
         layer = VizLayer()
         layerInfo = layersNew[layerKey]
-        
+
         layer.layer_name = layerInfo['name']
         layer.layer_description = layerInfo['desc']
         layer.server = layerInfo['server']
@@ -896,7 +900,7 @@ def editVizProjectSubmit(request):
         layer.token = layerInfo['token']
         layer.channel = layerInfo['channel']
         layer.color = layerInfo['color']
-        
+
         if 'tilecache' in layerInfo.keys():
           layer.tilecache = True
         else:
@@ -906,15 +910,15 @@ def editVizProjectSubmit(request):
           layer.propagate = 2
         else:
           layer.propagate = 0
-        
-        # since this is a new layer, we need to associate it w/ the editing user 
-        layer.user = request.user 
+
+        # since this is a new layer, we need to associate it w/ the editing user
+        layer.user = request.user
 
         # associate this layer with the vizproject
-        layer.save() 
+        layer.save()
         proj.layers.add(layer)
 
-    # save changes made to existing objects 
+    # save changes made to existing objects
     for layer in layers:
       layer.save()
 
@@ -924,7 +928,7 @@ def editVizProjectSubmit(request):
     else:
       # project name changed
       proj.save()
-      # reassociate with vizlayers 
+      # reassociate with vizlayers
       for layer in layers:
         proj.layers.add(layer)
       try:
@@ -944,17 +948,17 @@ def editVizProjectSubmit(request):
 def addDataview(request):
   if request.method == 'GET':
     # get list of vizprojects for the current user
-    projlist = VizProject.objects.filter( user = request.user ).values_list('project_name') 
+    projlist = VizProject.objects.filter( user = request.user ).values_list('project_name')
     # display form
     context = {
       'vizProjects': projlist,
-    } 
-    return render(request, 'manage/adddataview.html', context) 
+    }
+    return render(request, 'manage/adddataview.html', context)
   elif request.method == 'POST':
 
-    response = request.POST 
-   
-    # the name is the primary key, but the token must also be unique for URL access 
+    response = request.POST
+
+    # the name is the primary key, but the token must also be unique for URL access
     existingDvName = DataView.objects.filter(name = response['dataviewName'])
     existingDvToken = DataView.objects.filter(token = response['dataviewToken'])
     if len(existingDvName) > 0:
@@ -962,14 +966,14 @@ def addDataview(request):
     elif len(existingDvToken) > 0:
       return HttpResponseBadRequest('Error: Dataview with token {} already exists!'.format(response['dataviewToken']))
 
-    # separate out items 
+    # separate out items
     itemsNew = {}
     for item in response.keys():
       if item.startswith('item'):
         [itemtype, sep, itemname] = item.partition('_')
-        itemtype = itemtype[4:].lower() # remove the 'item' prefix 
+        itemtype = itemtype[4:].lower() # remove the 'item' prefix
         if itemname not in itemsNew.keys():
-          itemsNew[itemname] = {}  
+          itemsNew[itemname] = {}
         itemsNew[itemname][itemtype] = response[item]
 
     # create new DataView
@@ -977,14 +981,14 @@ def addDataview(request):
     dv.name = response['dataviewName']
     dv.desc = response['dataviewDesc']
     dv.token = response['dataviewToken']
-    dv.user = request.user 
+    dv.user = request.user
     if 'public' in response.keys():
       dv.public = 1
     else:
       dv.public = 0
-    
+
     items = []
-    # add new items 
+    # add new items
     for itemKey in itemsNew.keys():
       if itemKey.startswith('newitem'):
         dvitem = DataViewItem()
@@ -994,101 +998,7 @@ def addDataview(request):
         dvitem.desc_int = itemInfo['desc']
         dvitem.caption = itemInfo['caption']
         dvitem.user = request.user
-        
-        try:
-          vizproj = VizProject.objects.get(project_name = itemInfo['project'])
-          dvitem.vizproject = vizproj 
-        except VizProject.DoesNotExist:
-          return HttpResponseBadRequest('Could not locate VizProject {}'.format(itemInfo['project']))
 
-        dvitem.xstart = itemInfo['xstart']
-        dvitem.ystart = itemInfo['ystart']
-        dvitem.zstart = itemInfo['zstart']
-        dvitem.resstart = itemInfo['resstart']
-
-        if 'marker' in itemInfo.keys():
-          dvitem.marker_start = True 
-        else:
-          dvitem.marker_start = False 
-
-        dvitem.thumbnail_url = itemInfo['thumbnailurl']
-        
-        items.append(dvitem)
-
-    # after creating everything, save changes (this allows for error handling)
-    try:
-      # must save the project first due to foreign key contraints 
-      dv.save()
-      for item in items:
-        item.save()
-        dv.items.add(item) 
-
-    except Exception as e:
-      return HttpResponseBadRequest('Error: Exception occurred during save! ({})'.format(e))
-    return HttpResponse('Added Dataview Successfully')
-  else:
-    return HttpResponseBadRequest('Invalid Request')
-
-@login_required
-def editDataview(request, token):
-  if request.method == 'GET':
-    dvobj = get_object_or_404(DataView, token=token)
-    items = DataViewItem.objects.filter(dataview = dvobj)
-    projlist = VizProject.objects.filter( user = request.user ).values_list('project_name') 
-    context = {
-      'dv': dvobj,
-      'items': items,
-      'vizProjects': projlist,
-    }
-    return render(request, 'manage/editdataview.html', context)
-  else:
-    return HttpResponseBadRequest('Invalid Request')
-
-@login_required
-def editDataviewSubmit(request):
-  if request.method == 'POST':
-    # parse the response 
-    dvNameOrig = request.POST['oldDataviewName']
-    response = request.POST 
-
-    # process item updates 
-    itemsNew = {}
-    for item in response.keys():
-      if item.startswith('item'):
-        [itemtype, sep, itemname] = item.partition('_')
-        itemtype = itemtype[4:].lower()
-        if itemname not in itemsNew.keys():
-          itemsNew[itemname] = {}  
-        itemsNew[itemname][itemtype] = response[item]
-    
-    # get the original dataview and its items  
-    try:
-      dvobj = DataView.objects.get(name = dvNameOrig)
-    except DataView.DoesNotExist:
-      return HttpResponseBadRequest('Error: Dataview {} does not exist!'.format(dvNameOrig))
-
-    items = dvobj.items.select_related()
-
-    # apply changes to dataview 
-    dvobj.name = response['dataviewName']
-    dvobj.desc = response['dataviewDesc']
-    dvobj.token = response['dataviewToken']
-    #dvobj.user = request.user
-    if 'public' in response.keys():
-      dvobj.public = 1
-    else:
-      dvobj.public = 0
-
-    # apply changes to items
-    
-    for dvitem in items:
-      # use ID instead of name since names have spaces (bad for AJAX)
-      if str(dvitem.id) in itemsNew.keys():
-        itemInfo = itemsNew[str(dvitem.id)]
-        dvitem.name = itemInfo['name']
-        dvitem.desc_int = itemInfo['desc']
-        dvitem.caption = itemInfo['caption']
-        
         try:
           vizproj = VizProject.objects.get(project_name = itemInfo['project'])
           dvitem.vizproject = vizproj
@@ -1101,28 +1011,91 @@ def editDataviewSubmit(request):
         dvitem.resstart = itemInfo['resstart']
 
         if 'marker' in itemInfo.keys():
-          dvitem.marker_start = True 
+          dvitem.marker_start = True
         else:
-          dvitem.marker_start = False 
+          dvitem.marker_start = False
 
         dvitem.thumbnail_url = itemInfo['thumbnailurl']
 
-    # Note: Any error checking must be done before this point. After this point, all changes are saved to the DB. 
+        items.append(dvitem)
 
-    # add new items 
-    for itemKey in itemsNew.keys():
-      if itemKey.startswith('newitem'):
-        dvitem = DataViewItem()
-        itemInfo = itemsNew[itemKey]
+    # after creating everything, save changes (this allows for error handling)
+    try:
+      # must save the project first due to foreign key contraints
+      dv.save()
+      for item in items:
+        item.save()
+        dv.items.add(item)
 
+    except Exception as e:
+      return HttpResponseBadRequest('Error: Exception occurred during save! ({})'.format(e))
+    return HttpResponse('Added Dataview Successfully')
+  else:
+    return HttpResponseBadRequest('Invalid Request')
+
+@login_required
+def editDataview(request, token):
+  if request.method == 'GET':
+    dvobj = get_object_or_404(DataView, token=token)
+    items = DataViewItem.objects.filter(dataview = dvobj)
+    projlist = VizProject.objects.filter( user = request.user ).values_list('project_name')
+    context = {
+      'dv': dvobj,
+      'items': items,
+      'vizProjects': projlist,
+    }
+    return render(request, 'manage/editdataview.html', context)
+  else:
+    return HttpResponseBadRequest('Invalid Request')
+
+@login_required
+def editDataviewSubmit(request):
+  if request.method == 'POST':
+    # parse the response
+    dvNameOrig = request.POST['oldDataviewName']
+    response = request.POST
+
+    # process item updates
+    itemsNew = {}
+    for item in response.keys():
+      if item.startswith('item'):
+        [itemtype, sep, itemname] = item.partition('_')
+        itemtype = itemtype[4:].lower()
+        if itemname not in itemsNew.keys():
+          itemsNew[itemname] = {}
+        itemsNew[itemname][itemtype] = response[item]
+
+    # get the original dataview and its items
+    try:
+      dvobj = DataView.objects.get(name = dvNameOrig)
+    except DataView.DoesNotExist:
+      return HttpResponseBadRequest('Error: Dataview {} does not exist!'.format(dvNameOrig))
+
+    items = dvobj.items.select_related()
+
+    # apply changes to dataview
+    dvobj.name = response['dataviewName']
+    dvobj.desc = response['dataviewDesc']
+    dvobj.token = response['dataviewToken']
+    #dvobj.user = request.user
+    if 'public' in response.keys():
+      dvobj.public = 1
+    else:
+      dvobj.public = 0
+
+    # apply changes to items
+
+    for dvitem in items:
+      # use ID instead of name since names have spaces (bad for AJAX)
+      if str(dvitem.id) in itemsNew.keys():
+        itemInfo = itemsNew[str(dvitem.id)]
         dvitem.name = itemInfo['name']
         dvitem.desc_int = itemInfo['desc']
         dvitem.caption = itemInfo['caption']
-        dvitem.user = request.user
-        
+
         try:
           vizproj = VizProject.objects.get(project_name = itemInfo['project'])
-          dvitem.vizproject = vizproj 
+          dvitem.vizproject = vizproj
         except VizProject.DoesNotExist:
           return HttpResponseBadRequest('Could not locate VizProject {}'.format(itemInfo['project']))
 
@@ -1132,27 +1105,58 @@ def editDataviewSubmit(request):
         dvitem.resstart = itemInfo['resstart']
 
         if 'marker' in itemInfo.keys():
-          dvitem.marker_start = True 
+          dvitem.marker_start = True
         else:
-          dvitem.marker_start = False 
+          dvitem.marker_start = False
 
         dvitem.thumbnail_url = itemInfo['thumbnailurl']
-  
+
+    # Note: Any error checking must be done before this point. After this point, all changes are saved to the DB.
+
+    # add new items
+    for itemKey in itemsNew.keys():
+      if itemKey.startswith('newitem'):
+        dvitem = DataViewItem()
+        itemInfo = itemsNew[itemKey]
+
+        dvitem.name = itemInfo['name']
+        dvitem.desc_int = itemInfo['desc']
+        dvitem.caption = itemInfo['caption']
+        dvitem.user = request.user
+
+        try:
+          vizproj = VizProject.objects.get(project_name = itemInfo['project'])
+          dvitem.vizproject = vizproj
+        except VizProject.DoesNotExist:
+          return HttpResponseBadRequest('Could not locate VizProject {}'.format(itemInfo['project']))
+
+        dvitem.xstart = itemInfo['xstart']
+        dvitem.ystart = itemInfo['ystart']
+        dvitem.zstart = itemInfo['zstart']
+        dvitem.resstart = itemInfo['resstart']
+
+        if 'marker' in itemInfo.keys():
+          dvitem.marker_start = True
+        else:
+          dvitem.marker_start = False
+
+        dvitem.thumbnail_url = itemInfo['thumbnailurl']
+
         # save and associate with the dataview
         dvitem.save()
         dvobj.items.add(dvitem)
 
-    # save changes made to existing objects 
+    # save changes made to existing objects
     for dvitem in items:
       dvitem.save()
-  
+
     # changing the primary key will create a new object
     if dvobj.name == dvNameOrig:
       dvobj.save()
     else:
       # dataview name changed
       dvobj.save()
-      # reassociate with dataview items 
+      # reassociate with dataview items
       for dvitem in items:
         dvobj.items.add(dvitem)
       try:
@@ -1170,38 +1174,38 @@ def editDataviewSubmit(request):
 @login_required
 def deleteDataview(request):
   if request.method == 'POST':
-    response = request.POST 
+    response = request.POST
     try:
       dvobj = DataView.objects.get(token = response['dataview_token'] )
     except DataView.DoesNotExist:
       return HttpResponseNotFound('DataView {} not found!'.format( response['dataview'] ));
-  
+
     items = dvobj.items.select_related()
 
     for item in items:
-      item.delete() 
-    
+      item.delete()
+
     try:
       dvobj.delete()
     except Exception as e:
       return HttpResponseBadRequest('Error: Failed to delete DataView! {}'.format(e))
 
     return HttpResponse('Delete OK.')
-    
+
   return HttpResponseBadRequest('Invalid Request')
 
 @login_required
 def deleteDataviewItem(request):
   if request.method == 'POST':
-    response = request.POST 
+    response = request.POST
     try:
       dvobj = DataView.objects.get(name = response['dataview'] )
     except DataView.DoesNotExist:
       return HttpResponseNotFound('DataView {} not found!'.format( response['dataview'] ));
- 
+
     items = dvobj.items.select_related()
     for dvitem in items:
-      if dvitem.id == int(response['dvitem']): # names can have spaces, so compare on ID 
+      if dvitem.id == int(response['dvitem']): # names can have spaces, so compare on ID
         try:
           dvitem.delete()
           return HttpResponse('Delete OK.')
@@ -1216,7 +1220,7 @@ def autopopulateDataset(request, webargs):
   [server, token_raw] = webargs.split('/', 1)
   token = token_raw.split('/')[0]
 
-  # make get request to ocp 
+  # make get request to ocp
 
   if server == 'localhost':
     if settings.OCP_SERVER == None:

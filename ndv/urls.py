@@ -1,4 +1,4 @@
-# Copyright 2015 Open Connectome Project (http://openconnecto.me)
+# Copyright 2016 NeuroData (http://neurodata.io)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Designed, Developed, and Maintained by Alex Baden
+# abaden1@jhu.edu
+# github.com/alexbaden
+
 
 from django.conf.urls import *
 from django.contrib import admin
@@ -28,9 +33,9 @@ base_urlpatterns = patterns('ndv.views',
     url(r'^ramoninfo/(?P<webargs>[\w,./-]+)', 'ramoninfo'),
     # validate token/channel/server
     url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
-    # content for the manage modal 
+    # content for the manage modal
     url(r'^manage/viewProjects/$', 'viewProjects', name='viewProjects'),
-    # manage modal 
+    # manage modal
     url(r'^manage/layers/delete/$', 'deleteLayer', name='deleteLayer'),
     url(r'^manage/layers/(?P<project>[\w,-]+)/?', 'getLayers', name='getLayers'),
     url(r'^manage/deleteproject/$', 'deleteVizProject', name='deleteVizProject'),
@@ -44,7 +49,7 @@ base_urlpatterns = patterns('ndv.views',
     url(r'^manage/deletedataviewitem/$', 'deleteDataviewItem', name='deleteDataviewItem'),
     url(r'^manage/autopopulate/(?P<webargs>[\w,\.,/-]+)/?', 'autopopulateDataset', name='autopopulateDataset'),
     url(r'^manage/?$', 'manage', name='manage'),
-    # user auth 
+    # user auth
     url(r'^login/$', 'processLogin', name='login'),
     url(r'^logout/$', 'processLogout', name='logout'),
     url(r'^$', 'default'),
