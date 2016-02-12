@@ -1082,8 +1082,9 @@ def editDataviewSubmit(request):
     # apply changes to items
     
     for dvitem in items:
-      if dvitem.name in itemsNew.keys():
-        itemInfo = itemsNew[dvitem.name]
+      # use ID instead of name since names have spaces (bad for AJAX)
+      if str(dvitem.id) in itemsNew.keys():
+        itemInfo = itemsNew[str(dvitem.id)]
         dvitem.name = itemInfo['name']
         dvitem.desc_int = itemInfo['desc']
         dvitem.caption = itemInfo['caption']

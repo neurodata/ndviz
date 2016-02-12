@@ -64,27 +64,28 @@
           <div class="form-group">
             <label for="itemName" class="col-sm-2 control-label">Display Name*</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="itemName_{{ item.name }}" id="itemName_{{ item.name }}" value="{{ item.name }}" />
+              <input type="text" class="form-control" name="itemName_{{ item.id }}" id="itemName_{{ item.id }}" value="{{ item.name }}" />
             </div>
           </div>
           <div class="form-group">
             <label for="itemDesc" class="col-sm-2 control-label">Internal Description</label>
             <div class="col-sm-10">
-              <textarea rows="3" class="form-control" name="itemDesc_{{ item.name }}" id="itemDesc_{{ item.name }}">{{ item.desc_int }}</textarea>
+              <textarea rows="3" class="form-control" name="itemDesc_{{ item.id }}" id="itemDesc_{{ item.id }}">{{ item.desc_int }}</textarea>
             </div>
           </div>
           <div class="form-group">
             <label for="itemCaption" class="col-sm-2 control-label">Public Caption</label>
             <div class="col-sm-10">
-              <textarea rows="3" class="form-control" name="itemCaption_{{ item.name }}" id="itemCaption_{{ item.name }}">{{ item.caption }}</textarea>
+              <textarea rows="3" class="form-control" name="itemCaption_{{ item.id }}" id="itemCaption_{{ item.id }}">{{ item.caption }}</textarea>
             </div>
           </div>
           <div class="form-group">
             <label for="itemProject" class="col-sm-2 control-label">VizProject</label>
             <div class="col-sm-10">
-              <select class="form-control" name="itemProject_{{ item.name }}" id="itemProject_{{ item.name }}">
+              <select class="form-control" name="itemProject_{{ item.id }}" id="itemProject_{{ item.id }}">
                 {% for project in vizProjects %}
-                <option value="{{ project.0 }}">{{ project.0 }}</option>{% endfor %}
+                <option value="{{ project.0 }}">{{ project.0 }}</option>
+                {% endfor %}
               </select>
             </div>
           </div>
@@ -92,25 +93,25 @@
           <div class="form-group">
             <label for="itemxstart" class="col-sm-2 control-label">Starting x-coordinate</label>
             <div class="col-sm-10">
-              <input type="number" class="form-control" name="itemxstart_{{ item.name }}" id="itemxstart_{{ item.name }}" value = "{{ item.xstart }}"/>
+              <input type="number" class="form-control" name="itemxstart_{{ item.id }}" id="itemxstart_{{ item.id }}" value = "{{ item.xstart }}"/>
             </div>
           </div>
           <div class="form-group">
             <label for="itemystart" class="col-sm-2 control-label">Starting y-coordinate</label>
             <div class="col-sm-10">
-              <input type="number" class="form-control" name="itemystart_{{ item.name }}" id="itemystart_{{ item.name }}" value = "{{ item.ystart }}"/>
+              <input type="number" class="form-control" name="itemystart_{{ item.id }}" id="itemystart_{{ item.id }}" value = "{{ item.ystart }}"/>
             </div>
           </div>
           <div class="form-group">
             <label for="itemzstart" class="col-sm-2 control-label">Starting z-coordinate</label>
             <div class="col-sm-10">
-              <input type="number" class="form-control" name="itemzstart_{{ item.name }}" id="itemzstart_{{ item.name }}" value = "{{ item.zstart }}"/>
+              <input type="number" class="form-control" name="itemzstart_{{ item.id }}" id="itemzstart_{{ item.id }}" value = "{{ item.zstart }}"/>
             </div>
           </div>
           <div class="form-group">
             <label for="itemresstart" class="col-sm-2 control-label">Starting Resolution</label>
             <div class="col-sm-10">
-              <input type="number" class="form-control" name="itemresstart_{{ item.name }}" id="itemresstart_{{ item.name }}" value = "{{ item.resstart }}"/>
+              <input type="number" class="form-control" name="itemresstart_{{ item.id }}" id="itemresstart_{{ item.id }}" value = "{{ item.resstart }}"/>
             </div>
           </div>
           <div class="form-group">
@@ -118,9 +119,9 @@
               <div class="checkbox">
                 <label>
                   {% if item.marker_start %}
-                  <input type="checkbox" name="itemMarker_{{ item.name }}" id="itemMarker_{{ item.name }}" checked />Marker for Starting Location?
+                  <input type="checkbox" name="itemMarker_{{ item.id }}" id="itemMarker_{{ item.id }}" checked />Marker for Starting Location?
                   {% else %}
-                  <input type="checkbox" name="itemMarker_{{ item.name }}" id="itemMarker_{{ item.name }}" />Marker for Starting Location?
+                  <input type="checkbox" name="itemMarker_{{ item.id }}" id="itemMarker_{{ item.id }}" />Marker for Starting Location?
                   {% endif %}
                 </label>
               </div>
@@ -129,7 +130,7 @@
           <div class="form-group">
             <label for="itemThumbnailUrl" class="col-sm-2 control-label">Thumbnail URL</label>
             <div class="col-sm-10">
-              <input type="url" class="form-control" name="itemThumbnailUrl_{{ item.name }}" id="itemThumbnailUrl_{{ item.name }}" value="{{ item.thumbnail_url }}" />
+              <input type="url" class="form-control" name="itemThumbnailUrl_{{ item.id }}" id="itemThumbnailUrl_{{ item.id }}" value="{{ item.thumbnail_url }}" />
             </div>
           </div>
           <div class="form-group">
@@ -172,7 +173,7 @@
 <script>
   // set the values for each layer appropriately
   {% for item in items %}
-    $( "#itemProject_{{ item.name }}" ).val( "{{ item.vizproject }}" );
+    $( "#itemProject_{{ item.id }}" ).val( "{{ item.vizproject }}" );
   {% endfor %}
 
   var new_item_count = 0;
