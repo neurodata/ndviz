@@ -50,9 +50,25 @@ VALID_SERVERS = {
     'braingraph1dev':'braingraph1dev.cs.jhu.edu',
     'braingraph2':'braingraph2.cs.jhu.edu',
     'brainviz1':'brainviz1.cs.jhu.edu',
-    }
+}
 
 QUERY_TYPES = ['ANNOS']
+
+BLENDOPTS = [
+    'normal',
+    'multiply',
+    'screen',
+    'overlay',
+    'darken',
+    'lighten',
+    'color-dodge',
+    'color-burn',
+    'exclusion',
+    'hue',
+    'saturation',
+    'color',
+    'luminosity'
+]
 
 def default(request):
   context = {
@@ -252,8 +268,8 @@ def tokenview(request, webargs):
   if options is not None:
     if 'marker' in options.keys():
       marker = True
-    if 'blend' in options.keys():
-      blendmode = options['blend'] # TODO should we validate this?
+    if 'blend' in options.keys() and options['blend'] in BLENDOPTS:
+      blendmode = options['blend']
 
   context = {
       'layers': layers,
@@ -355,6 +371,13 @@ def projectview(request, webargs):
   dvi = DataViewItem.objects.filter(vizproject = project_name)
   dv = DataView.objects.filter(items = dvi)
 
+  blendmode = 'normal'
+  if options is not None:
+    if 'marker' in options.keys():
+      marker = True
+    if 'blend' in options.keys() and options['blend'] in BLENDOPTS:
+      blendmode = options['blend']
+
   context = {
       'layers': layers,
       'project_name': project_name,
@@ -377,6 +400,7 @@ def projectview(request, webargs):
       'plane': 'xy',
       'marker': marker,
       'timeseries': timeseries,
+      'blendmode': blendmode,
       'version': VERSION,
       'viewtype': 'projectview',
       'dataviews': dv,

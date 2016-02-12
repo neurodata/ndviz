@@ -368,7 +368,7 @@
 
       var imgsliderdiv = '<div id="image-sliders"></div>'
 
-      var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="Screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select><span style="float: right;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
+      var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select><span style="float: right;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
 
       var resolution = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (ndv.minres - ndv.upsample_num) + '" max="' + ndv.maxres + '" value="' + ndv.res + '" /></div>';
 
@@ -1147,6 +1147,18 @@
     </div>
   </footer>
   {% endif %}
+
+  {# parse options after loading all elements #}
+    {% if blendmode %}
+    <script>
+      // set select box to display correct value
+      $( "select[name='blendmode']" ).val("{{ blendmode }}");
+      for (layer in layers) {
+        layers[layer].setBlendMode("{{ blendmode }}");
+      }
+    </script>
+    {% endif %}
+  {# end parse options #}
 
   {# after generating the main UI, open dataview, etc #}
   {% if dataview %}
