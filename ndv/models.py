@@ -120,7 +120,7 @@ class DataViewItem ( models.Model ):
 
 class DataView ( models.Model ):
   name = models.CharField(max_length=255, primary_key=True, verbose_name="Long name for this data view.")
-  desc = models.CharField(max_length=255)
+  desc = models.TextField()
   token = models.CharField(max_length=255, verbose_name="The identifier / access name for this dataview (appears in ocp/ocpviz/dataview/<<token>>/)")
   user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True)
 
