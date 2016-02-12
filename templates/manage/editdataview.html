@@ -26,7 +26,7 @@
       <div class="form-group">
         <label for="dataviewDesc" class="col-sm-2 control-label">Description*</label>
         <div class="col-sm-10">
-          <textarea rows="3" class="form-control" name="dataviewDesc" id="dataviewDesc">{{ dv.desc }}</textarea>
+          <textarea rows="3" class="form-control" name="dataviewDesc" id="dataviewDesc" maxlength="2048">{{ dv.desc }}</textarea>
           <span id="help-block">Note: Unlike the DataView Item description, this description will be public.</span>
         </div>
       </div>
@@ -46,7 +46,7 @@
       <div class="form-group">
         <label for="dataviewToken" class="col-sm-2 control-label">Token*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="dataviewToken" id="dataviewToken" value="{{ dv.token }}"/>
+          <input type="text" class="form-control" name="dataviewToken" id="dataviewToken" value="{{ dv.token }}" maxlength="255" />
           <span class="help-block">The token is the URL key for accessing a dataview.</span>
         </div>
       </div>
@@ -64,19 +64,19 @@
           <div class="form-group">
             <label for="itemName" class="col-sm-2 control-label">Display Name*</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="itemName_{{ item.id }}" id="itemName_{{ item.id }}" value="{{ item.name }}" />
+              <input type="text" class="form-control" name="itemName_{{ item.id }}" id="itemName_{{ item.id }}" value="{{ item.name }}" maxlength="255" />
             </div>
           </div>
           <div class="form-group">
             <label for="itemDesc" class="col-sm-2 control-label">Internal Description</label>
             <div class="col-sm-10">
-              <textarea rows="3" class="form-control" name="itemDesc_{{ item.id }}" id="itemDesc_{{ item.id }}">{{ item.desc_int }}</textarea>
+              <textarea rows="3" class="form-control" name="itemDesc_{{ item.id }}" id="itemDesc_{{ item.id }}" maxlength="255">{{ item.desc_int }}</textarea>
             </div>
           </div>
           <div class="form-group">
             <label for="itemCaption" class="col-sm-2 control-label">Public Caption</label>
             <div class="col-sm-10">
-              <textarea rows="3" class="form-control" name="itemCaption_{{ item.id }}" id="itemCaption_{{ item.id }}">{{ item.caption }}</textarea>
+              <textarea rows="3" class="form-control" name="itemCaption_{{ item.id }}" id="itemCaption_{{ item.id }}" maxlength="255">{{ item.caption }}</textarea>
             </div>
           </div>
           <div class="form-group">
@@ -182,9 +182,9 @@
     new_item_count = new_item_count + 1;
     var new_item_name = 'newitem_' + new_item_count;
     var htmlid = '<div id="' + new_item_name + '">';
-    var name = '<div class="form-group"><label for="itemName" class="col-sm-2 control-label">Display Name*</label><div class="col-sm-10"><input type="text" class="form-control" name="itemName_' + new_item_name + '" id="itemName_' + new_item_name + '" /></div></div>';
-    var desc = '<div class="form-group"><label for="itemDesc" class="col-sm-2 control-label">Internal Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="itemDesc_' + new_item_name + '" id="itemDesc_' + new_item_name + '"></textarea></div></div>';
-    var caption = '<div class="form-group"><label for="itemCaption" class="col-sm-2 control-label">Public Caption</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="itemCaption_' + new_item_name + '" id="itemCaption_' + new_item_name + '"></textarea></div></div>';
+    var name = '<div class="form-group"><label for="itemName" class="col-sm-2 control-label">Display Name*</label><div class="col-sm-10"><input type="text" class="form-control" maxlength="255" name="itemName_' + new_item_name + '" id="itemName_' + new_item_name + '" /></div></div>';
+    var desc = '<div class="form-group"><label for="itemDesc" class="col-sm-2 control-label">Internal Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" maxlength="255" name="itemDesc_' + new_item_name + '" id="itemDesc_' + new_item_name + '"></textarea></div></div>';
+    var caption = '<div class="form-group"><label for="itemCaption" class="col-sm-2 control-label">Public Caption</label><div class="col-sm-10"><textarea rows="3" class="form-control" maxlength="255" name="itemCaption_' + new_item_name + '" id="itemCaption_' + new_item_name + '"></textarea></div></div>';
     var vizproject = '<div class="form-group"><label for="itemProject" class="col-sm-2 control-label">VizProject</label><div class="col-sm-10"><select class="form-control" name="itemProject_' + new_item_name + '" id="itemProject_' + new_item_name + '">{% for project in vizProjects %}<option value="{{ project.0 }}">{{ project.0 }}</option>{% endfor %}</select></div></div>';
     var xstart = '<div class="form-group"><label for="itemxstart" class="col-sm-2 control-label">Starting x-coordinate</label><div class="col-sm-10"><input type="number" class="form-control" name="itemxstart_' + new_item_name + '" id="itemxstart_' + new_item_name + '" value = "0"/></div></div>';
     var ystart = '<div class="form-group"><label for="itemystart" class="col-sm-2 control-label">Starting y-coordinate</label><div class="col-sm-10"><input type="number" class="form-control" name="itemystart_' + new_item_name + '" id="itemystart_' + new_item_name + '" value = "0"/></div></div>';

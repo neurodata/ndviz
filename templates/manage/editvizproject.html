@@ -20,13 +20,13 @@
       <div class="form-group">
         <label for="projectName" class="col-sm-2 control-label">Project Name*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="projectName" id="projectName" value="{{ project.project_name }}" />
+          <input type="text" class="form-control" name="projectName" id="projectName" value="{{ project.project_name }}" maxlength="255" />
         </div>
       </div>
       <div class="form-group">
         <label for="projectDesc" class="col-sm-2 control-label">Project Description</label>
         <div class="col-sm-10">
-          <textarea rows="3" class="form-control" name="projectDesc" id="projectDesc">{{ project.project_description }}</textarea>
+          <textarea rows="3" maxlength="255" class="form-control" name="projectDesc" id="projectDesc">{{ project.project_description }}</textarea>
         </div>
       </div>
       <div class="form-group">
@@ -64,62 +64,62 @@
       <div class="form-group">
         <label for="xoffset" class="col-sm-2 control-label">x-offset*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="xoffset" id="xoffset" value="{{ project.xoffset }}" />
+          <input type="number" class="form-control" name="xoffset" id="xoffset" value="{{ project.xoffset }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="ximagesize" class="col-sm-2 control-label">x-imagesize*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="ximagesize" id="ximagesize" value="{{ project.ximagesize }}" />
+          <input type="number" class="form-control" name="ximagesize" id="ximagesize" value="{{ project.ximagesize }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="yoffset" class="col-sm-2 control-label">y-offset*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="yoffset" id="yoffset" value="{{ project.yoffset }}" />
+          <input type="number" class="form-control" name="yoffset" id="yoffset" value="{{ project.yoffset }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="yimagesize" class="col-sm-2 control-label">y-imagesize*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="yimagesize" id="yimagesize" value="{{ project.yimagesize }}" />
+          <input type="number" class="form-control" name="yimagesize" id="yimagesize" value="{{ project.yimagesize }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="zoffset" class="col-sm-2 control-label">z-offset*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="zoffset" id="zoffset" value="{{ project.zoffset }}" />
+          <input type="number" class="form-control" name="zoffset" id="zoffset" value="{{ project.zoffset }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="zimagesize" class="col-sm-2 control-label">z-imagesize*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="zimagesize" id="zimagesize" value="{{ project.zimagesize }}" />
+          <input type="number" class="form-control" name="zimagesize" id="zimagesize" value="{{ project.zimagesize }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="starttime" class="col-sm-2 control-label">Start Time</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="starttime" id="starttime" value="{{ project.starttime }}" />
+          <input type="number" class="form-control" name="starttime" id="starttime" value="{{ project.starttime }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="endtime" class="col-sm-2 control-label">End Time</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="endtime" id="endtime" value="{{ project.endtime }}" />
+          <input type="number" class="form-control" name="endtime" id="endtime" value="{{ project.endtime }}" />
         </div>
       </div>
       <div class="form-group">
         <label for="minres" class="col-sm-2 control-label">Minimum Resolution*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="minres" id="minres" value="{{ project.minres }}" />
+          <input type="number" class="form-control" name="minres" id="minres" value="{{ project.minres }}" />
           <span id="helpBlock" class="help-block">This should almost always be 0.</span>
         </div>
       </div>
       <div class="form-group">
         <label for="scalinglevels" class="col-sm-2 control-label">Scaling Levels*</label>
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="scalinglevels" id="scalinglevels" value="{{ project.scalinglevels }}" />
+          <input type="number" class="form-control" name="scalinglevels" id="scalinglevels" value="{{ project.scalinglevels }}" />
         </div>
       </div>
       <div class="form-group">
@@ -141,13 +141,13 @@
           <div class="form-group">
             <label for="layerName" class="col-sm-2 control-label">Layer Name*</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerName_{{ layer.layer_name }}" id="layerName_{{ layer.layer_name }}" value="{{ layer.layer_name }}" />
+              <input type="text" class="form-control" name="layerName_{{ layer.layer_name }}" id="layerName_{{ layer.layer_name }}" value="{{ layer.layer_name }}" maxlength="255" />
             </div>
           </div>
           <div class="form-group">
             <label for="layerDesc" class="col-sm-2 control-label">Layer Description</label>
             <div class="col-sm-10">
-              <textarea rows="3" class="form-control" name="layerDesc_{{ layer.layer_name }}" id="layerDesc_{{ layer.layer_name }}">{{ layer.layer_description }}</textarea>
+              <textarea rows="3" class="form-control" name="layerDesc_{{ layer.layer_name }}" id="layerDesc_{{ layer.layer_name }}" maxlength="255" >{{ layer.layer_description }}</textarea>
             </div>
           </div>
           <div class="form-group">
@@ -173,13 +173,13 @@
           <div class="form-group">
             <label for="layerToken" class="col-sm-2 control-label">Token*</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerToken_{{ layer.layer_name }}" id="layerToken_{{ layer.layer_name }}" value="{{ layer.token }}" />
+              <input type="text" maxlength="255" class="form-control" name="layerToken_{{ layer.layer_name }}" id="layerToken_{{ layer.layer_name }}" value="{{ layer.token }}" />
             </div>
           </div>
           <div class="form-group">
             <label for="layerChannel" class="col-sm-2 control-label">Channel*</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerChannel_{{ layer.layer_name }}" id="layerChannel_{{ layer.layer_name }}" value="{{ layer.channel }}" />
+              <input type="text" maxlength="255" class="form-control" name="layerChannel_{{ layer.layer_name }}" id="layerChannel_{{ layer.layer_name }}" value="{{ layer.channel }}" />
             </div>
           </div>
           <div class="form-group">
@@ -222,7 +222,7 @@
           <div class="form-group">
             <label for="layerTilecacheServer" class="col-sm-2 control-label">Tilecache Server (optional)</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerTilecacheserver_{{ layer.layer_name }}" id="layerTilecacheserver_{{ layer.layer_name }}" />
+              <input type="text" class="form-control" name="layerTilecacheserver_{{ layer.layer_name }}" id="layerTilecacheserver_{{ layer.layer_name }}" maxlength="255" />
               <p class="help-block">Use this field if you want to set an alternate server for tilecache requests.
             </div>
           </div>
@@ -270,16 +270,16 @@
     new_layer_count = new_layer_count + 1;
     var new_layer_name = 'newlayer_' + new_layer_count;
     var htmlid = '<div id="' + new_layer_name + '">';
-    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerName_' + new_layer_name + '" id="layerName_' + new_layer_name + '" /></div></div>';
-    var layerdesc = '<div class="form-group"><label for="layerDesc" class="col-sm-2 control-label">Layer Description</label><div class="col-sm-10"><textarea rows="3" class="form-control" name="layerDesc_' + new_layer_name + '" id="layerDesc_' + new_layer_name + '"></textarea></div></div>';
+    var layername = '<div class="form-group"><label for="layerName" class="col-sm-2 control-label">Layer Name*</label><div class="col-sm-10"><input type="text" maxlength="255" class="form-control" name="layerName_' + new_layer_name + '" id="layerName_' + new_layer_name + '" /></div></div>';
+    var layerdesc = '<div class="form-group"><label for="layerDesc" class="col-sm-2 control-label">Layer Description</label><div class="col-sm-10"><textarea maxlength="255" rows="3" class="form-control" name="layerDesc_' + new_layer_name + '" id="layerDesc_' + new_layer_name + '"></textarea></div></div>';
     var layerserver = '<div class="form-group"><label for="layerServer" class="col-sm-2 control-label">Server</label><div class="col-sm-10"><select class="form-control" name="layerServer_' + new_layer_name + '" id="layerServer_' + new_layer_name + '">{% for option in serverOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
     var layertype = '<div class="form-group"><label for="layerType" class="col-sm-2 control-label">Layer Type</label><div class="col-sm-10"><select class="form-control" name="layerType_' + new_layer_name + '" id="layerType_' + new_layer_name + '">{% for option in layerOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
-    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerToken_' + new_layer_name + '" id="layerToken_' + new_layer_name + '" /></div></div>';
-    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel*</label><div class="col-sm-10"><input type="text" class="form-control" name="layerChannel_' + new_layer_name + '" id="layerChannel_' + new_layer_name + '" /></div></div>';
+    var token = '<div class="form-group"><label for="layerToken" class="col-sm-2 control-label">Token*</label><div class="col-sm-10"><input type="text" maxlength="255"  class="form-control" name="layerToken_' + new_layer_name + '" id="layerToken_' + new_layer_name + '" /></div></div>';
+    var channel = '<div class="form-group"><label for="layerChannel" class="col-sm-2 control-label">Channel*</label><div class="col-sm-10"><input type="text" maxlength="255" class="form-control" name="layerChannel_' + new_layer_name + '" id="layerChannel_' + new_layer_name + '" /></div></div>';
     var color = '<div class="form-group"><label for="layerColor" class="col-sm-2 control-label">Color</label><div class="col-sm-10"><select class="form-control" name="layerColor_' + new_layer_name + '" id="layerColor_' + new_layer_name + '"><option value="" selected>None</option>{% for option in colorOptions %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}</select></div></div>';
     var propagate = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerPropagated_' + new_layer_name + '" id="layerPropagated_' + new_layer_name + '" />Propagated?</label></div></div></div>';
     var tilecache = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label><input type="checkbox" name="layerTilecache_' + new_layer_name + '" id="layerTilecache_' + new_layer_name + '" />Tilecache?</label></div></div></div>';
-    var tilecacheserver = '<div class="form-group"><label for="layerTilecacheServer" class="col-sm-2 control-label">Tilecache Server (optional)</label><div class="col-sm-10"><input type="text" class="form-control" name="layerTilecacheserver_' + new_layer_name + '" id="layerTilecacheserver_' + new_layer_name + '" /><p class="help-block">Use this field if you want to set an alternate server for tilecache requests.</div></div>';
+    var tilecacheserver = '<div class="form-group"><label for="layerTilecacheServer" class="col-sm-2 control-label">Tilecache Server (optional)</label><div class="col-sm-10"><input type="text" maxlength="255" class="form-control" name="layerTilecacheserver_' + new_layer_name + '" id="layerTilecacheserver_' + new_layer_name + '" /><p class="help-block">Use this field if you want to set an alternate server for tilecache requests.</div></div>';
     var deletelayer = '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><button class="deleteNewLayer btn btn-danger" type="button">Cancel Add New Layer</button></div></div>';
     var closeid = '</div>';
 
