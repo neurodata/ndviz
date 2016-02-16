@@ -149,7 +149,7 @@
         curtime = {{ starttime }};
       }
 
-      layers.layername = L.tileLayer.OCPLayer(
+      layers[layername] = L.tileLayer.OCPLayer(
         url,
         {
           zindex: ndv.zindex,
