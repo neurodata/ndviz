@@ -13,7 +13,7 @@
           <tr>
             <td>{{ dv.name }}</td>
             <td>{{ dv.desc }}</td>
-            <td><a href="#">View</a></td>
+            <td><a href="{% url 'dataview' dv.token %}">View</a></td>
           </tr>
           {% endfor %}
           </tbody>
