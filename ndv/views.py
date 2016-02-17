@@ -510,6 +510,22 @@ def dataviewsPublic(request):
 
   return render(request, 'ndv/publicdata.html', context)
 
+def listPublic(request):
+  
+  dvpub = DataView.objects.filter(public = True)
+
+  jsonlist = []
+
+  for dataview in dvpub:
+    tmp = {}
+    tmp['name'] = dataview.name
+    tmp['desc'] = dataview.desc
+    tmp['token'] = dataview.token 
+    jsonlist.append(tmp)
+  
+  return HttpResponse( json.dumps( jsonlist ), content_type="application/json" )
+
+
 def query(request, queryargs):
   # redirects a query to the specified server
   # expected syntax is:
@@ -1284,3 +1300,5 @@ def processLogin(request):
 def processLogout(request):
     logout(request)
     return HttpResponse('Success')
+
+
