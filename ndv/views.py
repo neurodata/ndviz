@@ -911,8 +911,8 @@ def editVizProjectSubmit(request):
     # apply changes to layers
 
     for layer in layers:
-      if layer.layer_name in layersNew.keys():
-        layerInfo = layersNew[layer.layer_name]
+      if str(layer.id) in layersNew.keys():
+        layerInfo = layersNew[str(layer.id)]
         layer.layer_name = layerInfo['name']
         layer.layer_description = layerInfo['desc']
         layer.server = layerInfo['server']

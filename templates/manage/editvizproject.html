@@ -126,27 +126,27 @@
         <label class="col-sm-2 control-label">Layers</label>
       </div>
       {% for layer in layers %}
-      <div id="{{ layer.layer_name }}">
+      <div id="{{ layer.id }}">
         <div class="form-group">
           <a class="toggleLayer" href="#"><label class="col-sm-offset-2 col-sm-10">{{ layer.layer_name }}</label></a>
         </div>
-        <div id="hidden_{{ layer.layer_name }}" style="display:none;">
+        <div id="hidden_{{ layer.id }}" style="display:none;">
           <div class="form-group">
             <label for="layerName" class="col-sm-2 control-label">Layer Name*</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerName_{{ layer.layer_name }}" id="layerName_{{ layer.layer_name }}" value="{{ layer.layer_name }}" maxlength="255" />
+              <input type="text" class="form-control" name="layerName_{{ layer.id }}" id="layerName_{{ layer.id }}" value="{{ layer.layer_name }}" maxlength="255" />
             </div>
           </div>
           <div class="form-group">
             <label for="layerDesc" class="col-sm-2 control-label">Layer Description</label>
             <div class="col-sm-10">
-              <textarea rows="3" class="form-control" name="layerDesc_{{ layer.layer_name }}" id="layerDesc_{{ layer.layer_name }}" maxlength="255" >{{ layer.layer_description }}</textarea>
+              <textarea rows="3" class="form-control" name="layerDesc_{{ layer.id }}" id="layerDesc_{{ layer.id }}" maxlength="255" >{{ layer.layer_description }}</textarea>
             </div>
           </div>
           <div class="form-group">
             <label for="layerServer" class="col-sm-2 control-label">Server</label>
             <div class="col-sm-10">
-              <select class="form-control" name="layerServer_{{ layer.layer_name }}" id="layerServer_{{ layer.layer_name }}">
+              <select class="form-control" name="layerServer_{{ layer.id }}" id="layerServer_{{ layer.id }}">
                 {% for option in serverOptions %}
                 <option value="{{ option.0 }}">{{ option.1 }}</option>
                 {% endfor %}
@@ -156,7 +156,7 @@
           <div class="form-group">
             <label for="layerType" class="col-sm-2 control-label">Layer Type</label>
             <div class="col-sm-10">
-              <select class="form-control" name="layerType_{{ layer.layer_name }}" id="layerType_{{ layer.layer_name }}">
+              <select class="form-control" name="layerType_{{ layer.id }}" id="layerType_{{ layer.id }}">
                 {% for option in layerOptions %}
                 <option value="{{ option.0 }}">{{ option.1 }}</option>
                 {% endfor %}
@@ -166,19 +166,19 @@
           <div class="form-group">
             <label for="layerToken" class="col-sm-2 control-label">Token*</label>
             <div class="col-sm-10">
-              <input type="text" maxlength="255" class="form-control" name="layerToken_{{ layer.layer_name }}" id="layerToken_{{ layer.layer_name }}" value="{{ layer.token }}" />
+              <input type="text" maxlength="255" class="form-control" name="layerToken_{{ layer.id }}" id="layerToken_{{ layer.id }}" value="{{ layer.token }}" />
             </div>
           </div>
           <div class="form-group">
             <label for="layerChannel" class="col-sm-2 control-label">Channel*</label>
             <div class="col-sm-10">
-              <input type="text" maxlength="255" class="form-control" name="layerChannel_{{ layer.layer_name }}" id="layerChannel_{{ layer.layer_name }}" value="{{ layer.channel }}" />
+              <input type="text" maxlength="255" class="form-control" name="layerChannel_{{ layer.id }}" id="layerChannel_{{ layer.id }}" value="{{ layer.channel }}" />
             </div>
           </div>
           <div class="form-group">
             <label for="layerColor" class="col-sm-2 control-label">Color</label>
             <div class="col-sm-10">
-              <select class="form-control" name="layerColor_{{ layer.layer_name }}" id="layerColor_{{ layer.layer_name }}">
+              <select class="form-control" name="layerColor_{{ layer.id }}" id="layerColor_{{ layer.id }}">
                 <option value="" selected>None</option>
                 {% for option in colorOptions %}
                 <option value="{{ option.0 }}">{{ option.1 }}</option>
@@ -191,9 +191,9 @@
               <div class="checkbox">
                 <label>
                   {% if layer.propagate == 2 %}
-                  <input type="checkbox" name="layerPropagated_{{ layer.layer_name }}" id="layerPropagated_{{ layer.layer_name }}" checked />Propagated?
+                  <input type="checkbox" name="layerPropagated_{{ layer.id }}" id="layerPropagated_{{ layer.id }}" checked />Propagated?
                   {% else %}
-                  <input type="checkbox" name="layerPropagated_{{ layer.layer_name }}" id="layerPropagated_{{ layer.layer_name }}" />Propagated?
+                  <input type="checkbox" name="layerPropagated_{{ layer.id }}" id="layerPropagated_{{ layer.id }}" />Propagated?
                   {% endif %}
                 </label>
               </div>
@@ -204,9 +204,9 @@
               <div class="checkbox">
                 <label>
                   {% if layer.tilecache == True %}
-                  <input type="checkbox" name="layerTilecache_{{ layer.layer_name }}" id="layerTilecache_{{ layer.layer_name }}" checked />Tilecache?
+                  <input type="checkbox" name="layerTilecache_{{ layer.id }}" id="layerTilecache_{{ layer.id }}" checked />Tilecache?
                   {% else %}
-                  <input type="checkbox" name="layerTilecache_{{ layer.layer_name }}" id="layerTilecache_{{ layer.layer_name }}" />Tilecache?
+                  <input type="checkbox" name="layerTilecache_{{ layer.id }}" id="layerTilecache_{{ layer.id }}" />Tilecache?
                   {% endif %}
                 </label>
               </div>
@@ -215,7 +215,7 @@
           <div class="form-group">
             <label for="layerTilecacheServer" class="col-sm-2 control-label">Tilecache Server (optional)</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="layerTilecacheserver_{{ layer.layer_name }}" id="layerTilecacheserver_{{ layer.layer_name }}" maxlength="255" />
+              <input type="text" class="form-control" name="layerTilecacheserver_{{ layer.id }}" id="layerTilecacheserver_{{ layer.id }}" maxlength="255" />
               <p class="help-block">Use this field if you want to set an alternate server for tilecache requests.
             </div>
           </div>
@@ -259,9 +259,9 @@
 <script>
   // set the values for each layer appropriately
   {% for layer in layers %}
-    $( "#layerServer_{{ layer.layer_name }}" ).val( "{{ layer.server }}" );
-    $( "#layerType_{{ layer.layer_name }}" ).val( "{{ layer.layertype }}" );
-    $( "#layerColor_{{ layer.layer_name }}" ).val( "{{ layer.color }}" );
+    $( "#layerServer_{{ layer.id }}" ).val( "{{ layer.server }}" );
+    $( "#layerType_{{ layer.id }}" ).val( "{{ layer.layertype }}" );
+    $( "#layerColor_{{ layer.id }}" ).val( "{{ layer.color }}" );
   {% endfor %}
 
   var new_layer_count = 0;
@@ -357,7 +357,8 @@
 
   $( ".deleteLayer" ).click(function(event) {
     //console.log( $(this).parent().parent().parent().parent() );
-    var layer_name = $(this).parent().parent().parent().parent().attr('id');
+    var layer_id = $(this).parent().parent().parent().parent().attr('id');
+    var layer_name = $( "#hidden_" + layer_id ).val();
     $.confirm({
       title: "Confirmation Required",
       confirmButton: "Yes, Delete",
@@ -384,7 +385,7 @@
           },
           success: function(response) {
             // remove layer from form
-            $( "#" + layer_name ).remove();
+            $( "#" + layer_id ).remove();
             $( "#submitInfo" ).append("<p class='bg-info'>Successfully deleted VizLayer.");
           },
           statusCode: {
