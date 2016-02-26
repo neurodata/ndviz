@@ -407,9 +407,6 @@ def projectview(request, webargs):
   }
   return render(request, 'ndv/viewer.html', context)
 
-def getDataview(request, webargs):
-  """ get the info from the dataview from the db and return it for the modal """
-
 def manage(request):
   context = {
       'layers': None,
