@@ -580,14 +580,23 @@ def ramoninfo(request, webargs):
   html = ''
 
   ramonjson = json.loads(r.read())
-
   for obj in objids.split(','):
     if obj not in ramonjson.keys():
       continue
 
     html += '<h5>{} #{}</h5>'.format( ramonjson[obj]['type'], obj )
-    html += '<table class="table table-condensed"><tr><td>author</td><td>{}</td></tr><tr><td>neuron</td><td>{}</td></tr><tr><td>confidence:</td><td>{}</td></tr></table>'.format( ramonjson[obj]['metadata']['author'], ramonjson[obj]['metadata']['neuron'], ramonjson[obj]['metadata']['confidence'] )
+    html += '<table class="table table-condensed">'
+    for item in ramonjson[obj]['metadata']:
+      if item == 'kvpairs':
+        kvhtml = ''
+        for kvpair in ramonjson[obj]['metadata']['kvpairs'].keys():
+          kvhtml += '<tr><td>{}</td><td>{}</td></tr>'.format( kvpair.capitalize(),  ramonjson[obj]['metadata']['kvpairs'][kvpair] )
+      else: 
+        html += '<tr><td>{}</td><td>{}</td></tr>'.format( item.replace('_',' ').capitalize(),  ramonjson[obj]['metadata'][item] )
+ 
 
+    html += kvhtml # kvpairs at the bottom
+    html += '</table>'
   return HttpResponse(html)
 
 def projinfo(request, queryargs):
