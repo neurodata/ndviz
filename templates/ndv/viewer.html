@@ -827,6 +827,9 @@
         if ($("#remoteModal").hasClass('in') == true) {
           return;
         }
+        if ($("#displayDataview").hasClass('in') == true) {
+          return;
+        }
         switch (event.which) {
           case 104: // h -- help
             toggleKeyboardHelp();
@@ -1171,7 +1174,6 @@
   {% if manage %}
     <script>
       $(window).load(function() {
-        console.log('running');
         $( "#remoteModal" ).load("{% url 'viewProjects' %}");
         $( "#remoteModal" ).modal('show');
       });
