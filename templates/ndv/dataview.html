@@ -15,7 +15,11 @@
               <td><img src="{{ item.thumbnail_url }}" /></td>
               <td>{{ item.name }}</td>
               <td>{{ item.caption }}</td>
+              {% if item.marker_start %}
+              <td><a href="{{ vizprojecturl }}{{ item.vizproject.project_name }}/{{ item.resstart }}/{{ item.xstart }}/{{ item.ystart }}/{{ item.zstart }}/marker/">View</a></td>
+              {% else %}
               <td><a href="{{ vizprojecturl }}{{ item.vizproject.project_name }}/{{ item.resstart }}/{{ item.xstart }}/{{ item.ystart }}/{{ item.zstart }}/">View</a></td>
+              {% endif %}
             </tr>
             {% endfor %}
             </tbody>
