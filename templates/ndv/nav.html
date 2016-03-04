@@ -1,3 +1,4 @@
+  
   {% load staticfiles %}
 
   <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -49,7 +50,7 @@
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Dataviews<span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
             {% for dv in dataviews %}
-            <li><a href="{% url 'dataview' dv.token %}">{{ dv.name }}</a></li>
+            <li><a id="{{ dv.token }}" class="dvdropdown" href="#">{{ dv.name }}</a></li>
             {% empty %}
             <li><a href="#">None</a></li>
             {% endfor %}
@@ -118,13 +119,22 @@
       });
     });
     $(function () {
-      // load data modal
+      // load public data modal
       $( '#databutton' ).on('click', function () {
         $( "#remoteModal" ).load("{% url 'dataviewsPublic' %}");
         $( "#remoteModal" ).modal('show');
       });
     });
-    function loadManageModal() {
-    };
+    $(function () {
+        // load dataview modal
+        $( '.dvdropdown' ).on('click', function () {
+          var token = $(this).attr('id');
+          var url = "http://{{ request.get_host }}{% url 'renderDataview' webargs='placeholder' %}";
+          url = url.replace('placeholder', token);
+
+          $( "#remoteModal" ).load(url);
+          $( "#remoteModal" ).modal('show');
+        });
+    });
   </script>
   {# end remote modal #}

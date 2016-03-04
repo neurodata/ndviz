@@ -61,8 +61,6 @@
 
   {% include "ndv/add_data.html" %}
 
-  {% include "ndv/dataview.html" %}
-
   {% include "ndv/login.html" %}
   {# End Modal Code Includes #}
 
@@ -827,9 +825,6 @@
         if ($("#remoteModal").hasClass('in') == true) {
           return;
         }
-        if ($("#displayDataview").hasClass('in') == true) {
-          return;
-        }
         switch (event.which) {
           case 104: // h -- help
             toggleKeyboardHelp();
@@ -1164,10 +1159,11 @@
   {# end parse options #}
 
   {# after generating the main UI, open dataview, etc #}
-  {% if dataview %}
+  {% if viewtype == 'dataview' %}
     <script>
       $(window).load(function() {
-        $( '#displayDataview' ).modal('show');
+        $( '#remoteModal' ).load("{% url 'renderDataview' dv_token %}")
+        $( '#remoteModal' ).modal('show');
       });
     </script>
   {% endif %}

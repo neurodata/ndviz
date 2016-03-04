@@ -23,6 +23,7 @@ import django.contrib.auth
 
 base_urlpatterns = patterns('ndv.views',
     # data views
+    url(r'^dataview/render/(?P<webargs>[\w:,/-]+)', 'renderDataview', name='renderDataview'),
     url(r'^dataview/(?P<webargs>[\w:,/-]+)', 'dataview', name='dataview'),
     url(r'^list_public/$', 'listPublic', name='listPublic'),
     url(r'^public/$', 'dataviewsPublic', name='dataviewsPublic'),

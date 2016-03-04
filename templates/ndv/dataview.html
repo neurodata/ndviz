@@ -1,41 +1,38 @@
   {# data view modal #}
-  <div class="modal fade" id="displayDataview" tabindex="-1" role="dialog" aria-labelledby="displayDataviewModal" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="dataviewTitle">Data View: {{ dv_name }}</h4>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="dataviewTitle">Data View: {{ dv_name }}</h4>
+      </div>
+      <div class="modal-body">
+        <table class="table table-hover">
+          <caption>{{ dv_desc }}</caption>
+          <tbody>
+          {% for item in dv_items %}
+          <tr>
+            <td><img src="{{ item.thumbnail_url }}" /></td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.caption }}</td>
+            {% if item.marker_start %}
+            <td><a href="{{ vizprojecturl }}{{ item.vizproject.project_name }}/{{ item.resstart }}/{{ item.xstart }}/{{ item.ystart }}/{{ item.zstart }}/marker/">View</a></td>
+            {% else %}
+            <td><a href="{{ vizprojecturl }}{{ item.vizproject.project_name }}/{{ item.resstart }}/{{ item.xstart }}/{{ item.ystart }}/{{ item.zstart }}/">View</a></td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="form-group">
+          <label for="dvurl">Link to this Dataview</label>
+          <input id="dvurl" type="text" class="form-control" value="{{ dv_link }}" readonly>
         </div>
-        <div class="modal-body">
-          <table class="table table-hover">
-            <caption>{{ dv_desc }}</caption>
-            <tbody>
-            {% for item in dv_items %}
-            <tr>
-              <td><img src="{{ item.thumbnail_url }}" /></td>
-              <td>{{ item.name }}</td>
-              <td>{{ item.caption }}</td>
-              {% if item.marker_start %}
-              <td><a href="{{ vizprojecturl }}{{ item.vizproject.project_name }}/{{ item.resstart }}/{{ item.xstart }}/{{ item.ystart }}/{{ item.zstart }}/marker/">View</a></td>
-              {% else %}
-              <td><a href="{{ vizprojecturl }}{{ item.vizproject.project_name }}/{{ item.resstart }}/{{ item.xstart }}/{{ item.ystart }}/{{ item.zstart }}/">View</a></td>
-              {% endif %}
-            </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        
-          <div class="form-group">
-            <label for="dvurl">Link to this Dataview</label>
-            <input id="dvurl" type="text" class="form-control" value="{{ dv_link }}" readonly>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-       </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
      </div>
-  </div>
+   </div>
 
-  {# end dataview modal #} 
-
+  {# end dataview modal #}

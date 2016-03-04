@@ -38,7 +38,7 @@ import urllib2
 import json
 import re
 
-VERSION = 'v0.4.1.1'
+VERSION = 'v0.4.2 Beta'
 
 VALID_SERVERS = {
     'localhost':'localhost',
@@ -453,16 +453,6 @@ def dataview(request, webargs):
   # get dataview from database
   dv = get_object_or_404( DataView, token = token )
 
-  # build the URL to this view
-  dv_url = "http://{}{}".format(request.META['HTTP_HOST'], request.META['PATH_INFO'])
-
-  if (request.META['SCRIPT_NAME'] == ''):
-    vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
-  else:
-    vizprojecturl = "http://{}{}/project/".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'] )
-
-  dv_items = dv.items.all()
-
   context = {
       'layers': None,
       'project_name': None,
@@ -485,17 +475,47 @@ def dataview(request, webargs):
       'marker': 0,
       'plane': 'xy',
       'timeseries': False,
-      'dataview': True,
       'version': VERSION,
       'viewtype': 'dataview',
-      'dv_token': dv.token,
-      'dv_desc': dv.desc,
-      'dv_name': dv.name,
-      'dv_link': dv_url,
-      'dv_items': dv_items,
-      'vizprojecturl': vizprojecturl,
+      'dv_token': token,
       }
   return render(request, 'ndv/viewer.html', context)
+
+def renderDataview(request, webargs):
+  """ Create the DataView HTML """
+
+  try:
+    m = re.match(r"(?P<token>[\w:,-]+)(\/)?$", webargs)
+    [token, misc] = [i for i in m.groups()]
+    if token is None:
+      return HttpResponseNotFound("[ERROR]: No token provided.")
+
+  except Exception, e:
+    print e
+    return HttpResponseNotFound("[ERROR]: Incorrect format for web argument. Argument should be of the form '/dataview/token_for_dataview'")
+
+  # get dataview from database
+  dv = get_object_or_404( DataView, token = token )
+
+  # build URLs 
+  if (request.META['SCRIPT_NAME'] == ''):
+    vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
+    dv_url = "http://{}/dataview/{}".format( request.META['HTTP_HOST'], token ) 
+  else:
+    vizprojecturl = "http://{}{}/project/".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'] )
+    dv_url = "http://{}{}/dataview/{}".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'], token ) 
+
+  dv_items = dv.items.all()
+
+  context = {
+    'dv_token': dv.token,
+    'dv_desc': dv.desc,
+    'dv_name': dv.name,
+    'dv_link': dv_url,
+    'dv_items': dv_items,
+    'vizprojecturl': vizprojecturl,
+  }
+  return render(request, 'ndv/dataview.html', context)
 
 def dataviewsPublic(request):
   """ display a list of all public dataviews """
@@ -508,7 +528,7 @@ def dataviewsPublic(request):
   return render(request, 'ndv/publicdata.html', context)
 
 def listPublic(request):
-  
+
   dvpub = DataView.objects.filter(public = True)
 
   jsonlist = []
@@ -517,9 +537,9 @@ def listPublic(request):
     tmp = {}
     tmp['name'] = dataview.name
     tmp['desc'] = dataview.desc
-    tmp['token'] = dataview.token 
+    tmp['token'] = dataview.token
     jsonlist.append(tmp)
-  
+
   return HttpResponse( json.dumps( jsonlist ), content_type="application/json" )
 
 
@@ -588,9 +608,9 @@ def ramoninfo(request, webargs):
         kvhtml = ''
         for kvpair in ramonjson[obj]['metadata']['kvpairs'].keys():
           kvhtml += '<tr><td>{}</td><td>{}</td></tr>'.format( kvpair.capitalize(),  ramonjson[obj]['metadata']['kvpairs'][kvpair] )
-      else: 
+      else:
         html += '<tr><td>{}</td><td>{}</td></tr>'.format( item.replace('_',' ').capitalize(),  ramonjson[obj]['metadata'][item] )
- 
+
 
     html += kvhtml # kvpairs at the bottom
     html += '</table>'
@@ -1306,5 +1326,3 @@ def processLogin(request):
 def processLogout(request):
     logout(request)
     return HttpResponse('Success')
-
-
