@@ -6,6 +6,7 @@ Viewer Screen
 Interface Overview
 ==================
 .. image:: images/viewer_overview.png
+  :width: 900px
 
 The NeuroDataViz viewing screen displaying data from `Kristen Harris / SynapseWeb <http://openconnecto.me/synapseweb>`_. Important areas of the screen are numbered, and NeuroDataViz features corresponding to numbers are described below.
 
@@ -80,4 +81,4 @@ Keyboard shortcuts are available to make rapidly advancing through a dataset eas
 
 Sharing Data
 ============
-TODO using markers to share data 
+TODO using markers to share data

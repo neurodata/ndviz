@@ -11,6 +11,7 @@ NeuroDataViz has two modes of operation:
 The Management Interface is primarily concerned with building *VizProjects*, which are collections of ndstore projects, and *DataViews*, which are collections of VizProjects. A user can open the Management Interface by first Logging In to NeuroDataViz using the Login button in the navbar. After logging in, a button marked *Manage* should appear in the NavBar. Clicking Manage will launch the Management Interface as an overlay on the user's current window.
 
 .. image:: images/managehome.png
+  :width: 900px
 
 Once the Management Interface loads, the user is presented with a list of VizProjects and a list of DataViews (see above).
 

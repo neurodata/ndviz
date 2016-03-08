@@ -9,6 +9,7 @@ Creating a VizProject
 From the Management Interface, click the **Create Project** link in the menu bar. A description of each field is listed in the table below.
 
 .. image:: images/addvizproject.png
+  :width: 900px
 
 *Basic Information*
 
@@ -17,6 +18,7 @@ From the Management Interface, click the **Create Project** link in the menu bar
 * **Public**: Currently has no effect. It is possible that private projects would be hidden from unauthenticated users in a future release.
 
 .. image:: images/vizprojectdataspace.png
+  :width: 900px
 
 *Dataspace*
 
@@ -35,6 +37,7 @@ Since NeuroDataViz is separate from ndstore, the dataset / dataspace parameters 
 * **Scaling Levels**: The number of downsampled images in the resolution hierarchy. Note that this does not include the two upsampled zoom levels that NeuroDataViz provides. Matches the *ScalingLevels* parameter in ndstore.
 
 .. image:: images/addvizlayer.png
+  :width: 900px
 
 *Layers*
 

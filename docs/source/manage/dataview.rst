@@ -9,6 +9,7 @@ Creating a DataView
 Recall, DataViews are collections of VizProjects. Public DataViews are displayed when clicking the *Data* tab in the navbar. Additionally, when viewing a VizProject, all associated public DataViews are displayed in the *DataViews* tab in the navbar.
 
 .. image:: images/adddataview.png
+  :width: 900px
 
 *Basic Information*
 
@@ -18,6 +19,7 @@ Recall, DataViews are collections of VizProjects. Public DataViews are displayed
 * **Token**: The token is the URL key for the DataView. For example, a token of *mydataview* would be accessed using the URL viz.neurodata.io/dataview/mydataview/.
 
 .. image:: images/adddataviewitem.png
+  :width: 900px
 
 *Items*
 
