@@ -164,6 +164,11 @@
       ).addTo(map);
     }
 
+    function updateLayerUrl(layername, newUrl) {
+      layers[layername].options.url = newUrl;
+      layers[layername].smoothRedraw();
+    }
+
     // load image layers first
     {% for layer in layers %}
       {% if layer.layertype != 'annotation' %}
@@ -453,6 +458,54 @@
       map.on('click', onMapClick);
     });
     // END image control palette
+
+    // BEGIN projection service palette
+    var projectModeButton = L.control();
+    projectModeButton.options.position = 'topright';
+    projectModeButton.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'projectMode');
+      var showicon = '<div id="projectModeIcon" style="float:left;"><a id="showProjectModeBox" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-sort-amount-asc fa-stack-1x"></i></span></a></div>';
+
+      var hiddendivstart = '<div id="projectModeBox" style="display:none;">';
+      var title = '<div style="float:right;"><a id="hideProjectModeBox" href="#"><i class="fa fa-times fa-lg"></a></i></div><div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-sort-amount-asc fa-stack-1x"></i></span></div><div class="headertext">Projection View</div></div>';
+      var width = '<br /><div id="projectModeWidth">Width: <input id="projectModeWidthInput" type="number" min="0" max="50" value="5" /></div>';
+      var type = '<br /><div id="projectModeType">Type: <select id="projectModeTypeInput"><option value="max">Max Projection</option><option value="min">Min Projection</option></select></div>';
+      var apply = '<br /><button class="btn btn-primary" id="projectModeApply" >Load Projection</button>'
+      var hiddendivend = '</div>'
+      this._div.innerHTML = showicon + hiddendivstart + title  + width + type + apply + hiddendivend;
+      return this._div;
+    };
+    projectModeButton.addTo(map);
+    $( "#showProjectModeBox" ).on('click', function () {
+      $( "#projectModeBox" ).toggle( "slow", function () {
+        $( "#projectModeIcon" ).toggle( );
+      });
+    });
+    $( "#hideProjectModeBox" ).on('click', function () {
+      $( "#projectModeBox" ).toggle( "slow" , function () {
+        $( "#projectModeIcon" ).toggle( );
+      });
+    });
+    // disable (and then re-enable) clicking on mouseover
+    projectModeButton.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+    });
+
+    projectModeButton.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+    });
+
+    $( "#projectModeApply" ).click( function() {
+      var width = $( "#projectModeWidthInput" ).val();
+      var type = $( "#projectModeTypeInput" ).val();
+      console.log('Width:' + width);
+      console.log('Type:' + type);
+      for (var layer_name in layers) {
+        map.removeLayer(layers[layer_name]);
+      }
+    });
+
+    // END projection service palette
 
     // BEGIN add data button
     var addDataButton = L.control();
