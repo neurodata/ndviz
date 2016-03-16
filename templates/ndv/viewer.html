@@ -1019,30 +1019,42 @@
     // recoloring test
     // The adjust value is the argument given by the user when
     // they call this filter.
-    Caman.Filter.register("alex", function (adjust) {
-      // Pre-calculate some values that will be used
+    Caman.Filter.register("colorize", function (color) {
 
-      var numOfAreas = 256 / adjust;
-      var numOfValues = 255 / (adjust - 1);
+      var rmult = 0;
+      var gmult = 0;
+      var bmult = 0;
+
+      switch (color) {
+        case 'r':
+          rmult = 1;
+          break;
+        case 'g':
+          gmult = 1;
+          break;
+        case 'b':
+          bmult = 1;
+          break;
+        case 'c':
+          bmult = 1;
+          gmult = 1;
+          break;
+        case 'm':
+          rmult = 1;
+          bmult = 1;
+          break;
+        case 'y':
+          rmult = 1;
+          gmult = 1;
+          break;
+      }
 
       // Our process function that will be called for each pixel.
       // Note that we pass the name of the filter as the first argument.
-      this.process("alex", function (rgba) {
-        //console.log(rgba);
-        /*
-        if (rgba.r > 0) {
-          rgba.r = Math.floor(Math.floor(rgba.r / numOfAreas) * numOfValues);
-        }
-        if (rgba.g > 0) {
-          rgba.g = Math.floor(Math.floor(rgba.g / numOfAreas) * numOfValues);
-        }
-        */
-        if (rgba.b > 0 && rgba.r > 0 && rgba.g > 0) {
-          rgba.b = 255;
-          //rgba.b = Math.floor(Math.floor(rgba.b / numOfAreas) * numOfValues);
-        }
-
-
+      this.process("colorize", function (rgba) {
+        rgba.r = rgba.r*rmult;
+        rgba.g = rgba.g*gmult;
+        rgba.b = rgba.b*bmult;
         // Return the modified RGB values
         return rgba;
       });
@@ -1050,18 +1062,14 @@
     function recolorTest() {
       var tiles = $( ".leaflet-tile" );
       //console.log(tiles);
-
-      for (var index = 0; index < tiles.length; index++) {
-        console.log(tiles[index]);
-        Caman(tiles[index], function () {
-            // manipulate image here
-            //this.brightness(75);
-            // Arguments: (R, G, B, strength)
-            //this.colorize(25, 180, 200, 20);
-            //this.invert();
-            this.alex(10);
-            //this.saturation(-30);
-            this.render();
+      for (var layer in layers) {
+        console.log(layer);
+        layers[layer].tileLayer.on('tileload', function(event) {
+          // event is a TileEvent
+          Caman(event.tile, function () {
+              this.colorize('y');
+              this.render();
+          });
         });
       }
     }
