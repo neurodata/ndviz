@@ -179,15 +179,15 @@
           $( event.tile ).hide();
         });
         layers[layername].tileLayer.on('tileload', function(event) {
-          recolorTile(event);
+          recolorTile(event, layername);
         });
       }
 
       layers[layername].tileLayer.addTo(map);
     }
 
-    // recoloring test
-    // The adjust value is the argument given by the user when
+    // recoloring
+    // The color value is the argument given by the user when
     // they call this filter.
     Caman.Filter.register("colorize", function (color) {
 
@@ -230,7 +230,7 @@
       });
     });
 
-    function recolorTile(tileEvent) {
+    function recolorTile(tileEvent, layer) {
       Caman(tileEvent.tile, function () {
           this.colorize(layers[layer].color.toLowerCase());
           this.render(function() {
