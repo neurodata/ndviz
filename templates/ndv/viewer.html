@@ -172,7 +172,77 @@
           curtime: curtime,
           continuousWorld: true,
         }
-      ).addTo(map);
+      );
+
+      if (color != '') {
+        layers[layername].tileLayer.on('tileloadstart', function(event) {
+          $( event.tile ).hide();
+        });
+        layers[layername].tileLayer.on('tileload', function(event) {
+          recolorTile(event);
+        });
+      }
+
+      layers[layername].tileLayer.addTo(map);
+    }
+
+    // recoloring test
+    // The adjust value is the argument given by the user when
+    // they call this filter.
+    Caman.Filter.register("colorize", function (color) {
+
+      var rmult = 0;
+      var gmult = 0;
+      var bmult = 0;
+
+      switch (color) {
+        case 'r':
+          rmult = 1;
+          break;
+        case 'g':
+          gmult = 1;
+          break;
+        case 'b':
+          bmult = 1;
+          break;
+        case 'c':
+          bmult = 1;
+          gmult = 1;
+          break;
+        case 'm':
+          rmult = 1;
+          bmult = 1;
+          break;
+        case 'y':
+          rmult = 1;
+          gmult = 1;
+          break;
+      }
+
+      // Our process function that will be called for each pixel.
+      // Note that we pass the name of the filter as the first argument.
+      this.process("colorize", function (rgba) {
+        rgba.r = rgba.r*rmult;
+        rgba.g = rgba.g*gmult;
+        rgba.b = rgba.b*bmult;
+        // Return the modified RGB values
+        return rgba;
+      });
+    });
+
+    function recolorTile(tileEvent) {
+      Caman(tileEvent.tile, function () {
+          this.colorize(layers[layer].color.toLowerCase());
+          this.render(function() {
+            // replace tile with canvas in leaflet
+            var urlSplit = tileEvent.url.split("/");
+            var key = urlSplit[ urlSplit.length - 1 ].split("_")[1] + ":" + urlSplit[ urlSplit.length - 1 ].split("_")[0];
+            layers[layer].tileLayer._tiles[key] = this.canvas;
+
+            // display tile
+            $( this.canvas ).show();
+          });
+      });
     }
 
     function updateLayerUrl(layername, newUrl) {
@@ -187,9 +257,6 @@
 
         {% if layer.channel %}
           var webtoken = '{{ layer.token }}/{{ layer.channel }}';
-          {% if layer.color %}
-            webtoken = webtoken + ':{{layer.color}}';
-          {% endif %}
         {% else %}
           var webtoken = '{{ layer.token }}';
         {% endif %}
@@ -217,9 +284,7 @@
           {% endif %}
 
         {% else %}
-          {% if layer.color %}
-            var url = 'http://{{ layer.server }}/ocp/catmaid/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
-          {% elif layer.layertype == 'timeseries' %}
+          {% if layer.layertype == 'timeseries' %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
           {% else %}
             var url = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
@@ -1020,65 +1085,6 @@
         $( ".queryres" ).hide( "slow" );
       });
     });
-
-    // recoloring test
-    // The adjust value is the argument given by the user when
-    // they call this filter.
-    Caman.Filter.register("colorize", function (color) {
-
-      var rmult = 0;
-      var gmult = 0;
-      var bmult = 0;
-
-      switch (color) {
-        case 'r':
-          rmult = 1;
-          break;
-        case 'g':
-          gmult = 1;
-          break;
-        case 'b':
-          bmult = 1;
-          break;
-        case 'c':
-          bmult = 1;
-          gmult = 1;
-          break;
-        case 'm':
-          rmult = 1;
-          bmult = 1;
-          break;
-        case 'y':
-          rmult = 1;
-          gmult = 1;
-          break;
-      }
-
-      // Our process function that will be called for each pixel.
-      // Note that we pass the name of the filter as the first argument.
-      this.process("colorize", function (rgba) {
-        rgba.r = rgba.r*rmult;
-        rgba.g = rgba.g*gmult;
-        rgba.b = rgba.b*bmult;
-        // Return the modified RGB values
-        return rgba;
-      });
-    });
-    function recolorTest() {
-      var tiles = $( ".leaflet-tile" );
-      //console.log(tiles);
-      for (var layer in layers) {
-        console.log(layer);
-        layers[layer].tileLayer.on('tileload', function(event) {
-          // event is a TileEvent
-          Caman(event.tile, function () {
-              this.colorize('y');
-              this.render();
-          });
-        });
-      }
-    }
-    recolorTest();
 
     // timeseries functions
     function loadTimeStep(newTime) {
