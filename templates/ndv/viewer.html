@@ -128,7 +128,7 @@
     var layers = {};
 
     // add layer function
-    function addLayer(layername, layertype, layerpropagate, url, server, token, channel) {
+    function addLayer(layername, layertype, layerpropagate, url, server, token, channel, color) {
 
       layers[layername] = {
         'tileLayer': null,
@@ -136,7 +136,7 @@
         'token': token,
         'channel': channel,
         //'type': null,
-        //'color': null, // AB TODO -- move elsewhere?
+        'color': color,
       }
 
       var opacity;
@@ -225,7 +225,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}" );
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
         {% endif %}
     {% endfor %}
 
@@ -261,7 +261,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url );
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
         {% endif %}
     {% endfor %}
 
@@ -501,10 +501,13 @@
     $( "#projectModeApply" ).click( function() {
       var width = $( "#projectModeWidthInput" ).val();
 
-      //var type = $( "#projectModeTypeInput" ).val();
-      //http://ec2-52-36-22-26.us-west-2.compute.amazonaws.com/nd/catmaid/maxproj/kristina15/tubulin_8thA:R/width:20/xy/20/0_0_1.png
       for (var layername in layers) {
-        var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + ':R/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
+        if (layers[layername].color == '') {
+          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
+        }
+        else {
+          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + ':' + layers[layername].color + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
+        }
         updateLayerUrl( layername, url )
       }
       //for (var layer_name in layers) {
