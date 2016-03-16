@@ -50,6 +50,8 @@
   <script src="{% static 'ndv/js/spin.min.js' %}"></script>
   <script src="{% static 'ndv/js/easy-button.js' %}"></script>
   <script src="{% static 'ndv/js/ocp-leaflet.js' %}"></script>
+  {# camanjs #}
+  <script type="text/javascript" src="{% static "ndv/js/caman.full.js" %}"></script>
 	</head>
 <body>
 
@@ -1014,6 +1016,56 @@
       });
     });
 
+    // recoloring test
+    // The adjust value is the argument given by the user when
+    // they call this filter.
+    Caman.Filter.register("alex", function (adjust) {
+      // Pre-calculate some values that will be used
+
+      var numOfAreas = 256 / adjust;
+      var numOfValues = 255 / (adjust - 1);
+
+      // Our process function that will be called for each pixel.
+      // Note that we pass the name of the filter as the first argument.
+      this.process("alex", function (rgba) {
+        //console.log(rgba);
+        /*
+        if (rgba.r > 0) {
+          rgba.r = Math.floor(Math.floor(rgba.r / numOfAreas) * numOfValues);
+        }
+        if (rgba.g > 0) {
+          rgba.g = Math.floor(Math.floor(rgba.g / numOfAreas) * numOfValues);
+        }
+        */
+        if (rgba.b > 0 && rgba.r > 0 && rgba.g > 0) {
+          rgba.b = 255;
+          //rgba.b = Math.floor(Math.floor(rgba.b / numOfAreas) * numOfValues);
+        }
+
+
+        // Return the modified RGB values
+        return rgba;
+      });
+    });
+    function recolorTest() {
+      var tiles = $( ".leaflet-tile" );
+      //console.log(tiles);
+
+      for (var index = 0; index < tiles.length; index++) {
+        console.log(tiles[index]);
+        Caman(tiles[index], function () {
+            // manipulate image here
+            //this.brightness(75);
+            // Arguments: (R, G, B, strength)
+            //this.colorize(25, 180, 200, 20);
+            //this.invert();
+            this.alex(10);
+            //this.saturation(-30);
+            this.render();
+        });
+      }
+    }
+    recolorTest();
 
     // timeseries functions
     function loadTimeStep(newTime) {
@@ -1237,6 +1289,4 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 {# jquery ui on mobile #}
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-{# camanjs #}
-<script type="text/javascript" src="{% static "ndv/js/caman.full.js" %}"></script>
 </html>

@@ -36,7 +36,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
   _tileOnLoad: function () {
     var layer = this._layer;
-    
+
     //Only if we are loading an actual image
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
@@ -51,7 +51,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
     layer._tileLoaded();
   },
-	
+
   _loadTile: function (tile, tilePoint) {
 		tile._layer  = this;
 		tile.onload  = this._tileOnLoad;
@@ -68,6 +68,27 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 			tile: tile,
 			url: tile.src
 		});
+	},
+
+	_createTile: function () {
+		/* camanjs filtering */
+		var tile = L.DomUtil.create('img', 'leaflet-tile');
+		tile.setAttribute('crossOrigin','anonymous');
+		//console.log(tile);
+		tile.style.width = tile.style.height = this._getTileSize() + 'px';
+		tile.galleryimg = 'no';
+
+		tile.onselectstart = tile.onmousemove = L.Util.falseFn;
+
+		if (L.Browser.ielt9 && this.options.opacity !== undefined) {
+			L.DomUtil.setOpacity(tile, this.options.opacity);
+		}
+		// without this hack, tiles disappear after zoom on Chrome for Android
+		// https://github.com/Leaflet/Leaflet/issues/2078
+		if (L.Browser.mobileWebkit3d) {
+			tile.style.WebkitBackfaceVisibility = 'hidden';
+		}
+		return tile;
 	},
 
   smoothRedraw: function () {
@@ -101,13 +122,13 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		    zoom = map.getZoom() + this.options.zoomOffset,
 		    zoomN = this.options.maxNativeZoom,
 		    tileSize = this.options.tileSize;
-   
+
 		if (zoomN && zoom > zoomN) {
       tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
     }
     else if ( (zoomN == 0) && (zoom > zoomN) ) {
       // another quick for the case where maxNativeZoom is 0
-      // AB TODO consider using == undefined in the general case 
+      // AB TODO consider using == undefined in the general case
       tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
     }
 
