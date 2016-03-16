@@ -130,7 +130,16 @@
     var layers = {};
 
     // add layer function
-    function addLayer(layername, layertype, layerpropagate, url) {
+    function addLayer(layername, layertype, layerpropagate, url, server, token, channel, color) {
+
+      layers[layername] = {
+        'tileLayer': null,
+        'server': server,
+        'token': token,
+        'channel': channel,
+        //'type': null,
+        'color': color,
+      }
 
       var opacity;
       var propagate;
@@ -149,7 +158,7 @@
         curtime = {{ starttime }};
       }
 
-      layers[layername] = L.tileLayer.OCPLayer(
+      layers[layername]['tileLayer'] = L.tileLayer.OCPLayer(
         url,
         {
           zindex: ndv.zindex,
@@ -167,8 +176,8 @@
     }
 
     function updateLayerUrl(layername, newUrl) {
-      layers[layername].options.url = newUrl;
-      layers[layername].smoothRedraw();
+      layers[layername].tileLayer.setUrl(newUrl);
+      //layers[layername].tileLayer.smoothRedraw();
     }
 
     // load image layers first
@@ -217,10 +226,8 @@
           {% endif %}
         {% endif %}
 
-        console.log(url);
-
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url );
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
         {% endif %}
     {% endfor %}
 
@@ -255,10 +262,8 @@
           {% endif %}
         {% endif %}
 
-        console.log(url);
-
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url );
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
         {% endif %}
     {% endfor %}
 
@@ -280,13 +285,12 @@
       $( ".propwarnbox" ).hide();
       $( ".notpropchanlist" ).empty();
       for (layer in layers) {
-        if (layers[layer].options.propagate != 2) {
+        if (layers[layer].tileLayer.options.propagate != 2) {
           $( ".propwarnbox" ).show();
           if ($( ".notpropchanlist" ).text().length > 0)  {
             $( ".notpropchanlist" ).append(", ");
           }
           $( ".notpropchanlist" ).append(layer);
-          console.log(layers[layer].options.propagate);
         }
       }
     }
@@ -399,8 +403,7 @@
             max: 200,
             value: 100,
             slide: function ( event, ui ) {
-              layers[layer].setBrightness(ui.value);
-              console.log(ui.value);
+              layers[layer].tileLayer.setBrightness(ui.value);
               },
             start: function ( event, ui ) { map.dragging.disable(); },
             stop: function ( event, ui ) { map.dragging.enable(); },
@@ -416,7 +419,7 @@
             max: 200,
             value: 100,
             slide: function ( event, ui ) {
-                layers[layer].setContrast(ui.value);
+                layers[layer].tileLayer.setContrast(ui.value);
               },
             start: function ( event, ui ) { map.dragging.disable(); },
             stop: function ( event, ui ) { map.dragging.enable(); },
@@ -430,9 +433,9 @@
           $( this ).empty().slider({
             min: 0,
             max: 100,
-            value: layers[layer].options.opacity*100,
+            value: layers[layer].tileLayer.options.opacity*100,
             slide: function ( event, ui ) {
-                layers[layer].setOpacity(ui.value/100);
+                layers[layer].tileLayer.setOpacity(ui.value/100);
               },
             start: function ( event, ui ) { map.dragging.disable(); },
             stop: function ( event, ui ) { map.dragging.enable(); },
@@ -471,10 +474,10 @@
       var hiddendivstart = '<div id="projectModeBox" style="display:none;">';
       var title = '<div style="float:right;"><a id="hideProjectModeBox" href="#"><i class="fa fa-times fa-lg"></a></i></div><div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-sort-amount-asc fa-stack-1x"></i></span></div><div class="headertext">Projection View</div></div>';
       var width = '<br /><div id="projectModeWidth">Width: <input id="projectModeWidthInput" type="number" min="0" max="50" value="5" /></div>';
-      var type = '<br /><div id="projectModeType">Type: <select id="projectModeTypeInput"><option value="max">Max Projection</option><option value="min">Min Projection</option></select></div>';
+      //var type = '<br /><div id="projectModeType">Type: <select id="projectModeTypeInput"><option value="max">Max Projection</option><option value="min">Min Projection</option></select></div>';
       var apply = '<br /><button class="btn btn-primary" id="projectModeApply" >Load Projection</button>'
       var hiddendivend = '</div>'
-      this._div.innerHTML = showicon + hiddendivstart + title  + width + type + apply + hiddendivend;
+      this._div.innerHTML = showicon + hiddendivstart + title  + width + apply + hiddendivend;
       return this._div;
     };
     projectModeButton.addTo(map);
@@ -499,12 +502,20 @@
 
     $( "#projectModeApply" ).click( function() {
       var width = $( "#projectModeWidthInput" ).val();
-      var type = $( "#projectModeTypeInput" ).val();
-      console.log('Width:' + width);
-      console.log('Type:' + type);
-      for (var layer_name in layers) {
-        map.removeLayer(layers[layer_name]);
+
+      for (var layername in layers) {
+        if (layers[layername].color == '') {
+          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
+        }
+        else {
+          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + ':' + layers[layername].color + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
+        }
+        updateLayerUrl( layername, url )
       }
+      //for (var layer_name in layers) {
+      //  updateLayerUrl( layer_name,  )
+        //map.removeLayer(layers[layer_name]);
+      //}
     });
 
     // END projection service palette
@@ -845,17 +856,14 @@
         url: ramonUrl,
         type: 'GET',
         success: function(response) {
-          console.log(response);
           $( ".querybody" ).empty();
           $( ".querybody" ).append(response);
           $( ".queryres" ).show("slow");
           },
         })
         .fail(function(response) {
-          console.log('failure');
           objstr = 'Failed to retrieve RAMON obj.';
         });
-      console.log(objstr);
       return objstr;
 
     }
@@ -937,7 +945,6 @@
     //$( '#querybutton' ).toggleClass('active');
       var curlayer = "{{ layer.token }}_{{ layer.channel }}";
       if (ndv.querylayer != curlayer) {
-        console.log('Updating ' + ndv.querylayer + ' to ' + curlayer);
         $( '#query_' + ndv.querylayer + '_check' ).css("visibility","hidden");
         $( '#query_{{ layer.token }}_{{ layer.channel }}_check' ).css("visibility","");
         ndv.querylayer = curlayer;
@@ -981,7 +988,7 @@
 
         if (changed.is('select[name="blendmode"]')) {
           for (layer in layers) {
-            layers[layer].setBlendMode(changed.val());
+            layers[layer].tileLayer.setBlendMode(changed.val());
           }
         }
       });
@@ -998,10 +1005,8 @@
     // remove a layer
     $(function() {
       $( "#image-sliders" ).on( "click", ".remove-layer", function() {
-        console.log('click');
         var class_arr = this.className.split(' ');
         var layer_name = $.trim(class_arr[1]);
-        console.log('Removing ' + layer_name);
         // remove layer from the map
         map.removeLayer( layers[layer_name] );
         // remove layer from control panel
@@ -1088,15 +1093,15 @@
         $( "#timestep" ).parent().removeClass("has-error");
         {% for layer in layers %}
         {% if layer.layertype == "timeseries" %}
-          layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTime;
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
         {% endif %}
         {% endfor %}
       }
@@ -1110,15 +1115,15 @@
         if (curTime + 1 <= parseInt({{ endtime }})) {
           $( "#timestep" ).parent().removeClass("has-error");
           var newTime = curTime + 1;
-          layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTime;
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
         }
         else {
           $( "#timestep" ).parent().addClass("has-error");
@@ -1133,19 +1138,19 @@
       map.closePopup();
       {% for layer in layers %}
       {% if layer.layertype == "timeseries" %}
-        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.options.curtime);
+        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime);
         if (curTime - 1 >= parseInt({{ starttime }})) {
           $( "#timestep" ).parent().removeClass("has-error");
           var newTime = curTime - 1;
-          layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTime;
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
           var newTimeStr = newTime.toString();
           {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
         }
         else {
           $( "#timestep" ).parent().addClass("has-error");
@@ -1161,14 +1166,14 @@
       {% for layer in layers %}
       {% if layer.layertype == "timeseries" %}
         var newTimeStr = {{ starttime }};
-        layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
+        layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTimeStr;
         {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
         {% else %}
         var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
         {% endif %}
-        layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-        layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
+        layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
+        layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
       {% endif %}
       {% endfor %}
       // update timestep box
@@ -1180,14 +1185,14 @@
       {% for layer in layers %}
       {% if layer.layertype == "timeseries" %}
         var newTimeStr = {{ endtime }};
-        layers.{{ layer.layer_name|cut:" " }}.options.curtime = newTimeStr;
+        layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTimeStr;
         {% if layer.tilecache %}
             var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% else %}
           var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
           {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.smoothRedraw();
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
+          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
       {% endif %}
       {% endfor %}
       // update timestep box
@@ -1265,7 +1270,7 @@
       // set select box to display correct value
       $( "select[name='blendmode']" ).val("{{ blendmode }}");
       for (layer in layers) {
-        layers[layer].setBlendMode("{{ blendmode }}");
+        layers[layer].tileLayer.setBlendMode("{{ blendmode }}");
       }
     </script>
     {% endif %}
