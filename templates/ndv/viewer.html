@@ -69,7 +69,6 @@
   <script>
   //Caman.DEBUG = true;
 
-
     // global variables
     var ndv = {};
     ndv.querytool = false;
@@ -549,11 +548,9 @@
 
       var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select><span style="float: right;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
 
-      var resolution = '<br /><div id="resolution">Resolution: <input id="res-input" type="number" min="' + (ndv.minres - ndv.upsample_num) + '" max="' + ndv.maxres + '" value="' + ndv.res + '" /></div>';
-
       var hiddendivend = '</div>';
 
-      this._div.innerHTML = showicon + hiddendivstart + title + imgsliderdiv + blendmode + resolution + hiddendivend;
+      this._div.innerHTML = showicon + hiddendivstart + title + imgsliderdiv + blendmode + hiddendivend;
       return this._div;
     };
     imagecontrols.addTo(map);
@@ -727,15 +724,30 @@
     map.on('drag', coordinatesUpdate);
     map.on('zoomend', coordinatesUpdate);
 
+    function resolutionBoxInit() {
+      $( "#res-input" ).val(ndv.res);
+    }
+    resolutionBoxInit();
+
     function resolutionUpdate() {
       $( "#res-input" ).val( map.getMaxZoom() - ndv.upsample_num - map.getZoom() );
     }
-
     map.on('zoomend', resolutionUpdate);
 
     $( "#res-input" ).on('input', function() {
       var val = $( "#res-input" ).val();
-      map.setZoom( map.getMaxZoom() - ndv.upsample_num - val );
+      // ignore when the user deletes the contents of the box
+      if (val == '') {
+        return;
+      }
+      $( "#res-input" ).parent().removeClass("has-error");
+
+      if (val < (ndv.minres - ndv.upsample_num) || val > ndv.maxres) {
+        $( "#res-input" ).parent().addClass("has-error");
+      }
+      else {
+        map.setZoom( map.getMaxZoom() - ndv.upsample_num - val );
+      }
     });
 
     // navigation
