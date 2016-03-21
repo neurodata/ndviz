@@ -375,16 +375,17 @@
       }
     }
 
-    baseLayer.drawTile = function(canvas, tilePoint, zoom) {
+    baseLayer.drawTile = function(canvas, tilePoint, zoom, tileSize) {
       var ctx = canvas.getContext('2d');
       canvas.setAttribute('data-caman-hidpi-disabled','');
       ctx.fillStyle = 'black';
-      ctx.fillRect(0, 0, 512, 512);
+      ctx.fillRect(0, 0, tileSize, tileSize);
 
       /*
 
       */
       this.reloadTile(canvas, tilePoint, zoom);
+      //console.log("drawing tiles");
   		//ctx.fillStyle = 'white';
   		//ctx.fillText('x: ' + tilePoint.x + ', y: ' + tilePoint.y + ', zoom:' + zoom, 20, 20);
 

@@ -56,6 +56,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		tile.onerror = this._tileOnError;
 
 		// don't load negative tiles (ndstore is 0 indexed)
+		// TODO don't load tiles > image bounds
 		this._adjustTilePoint(tilePoint);
     if (tilePoint.x < 0 || tilePoint.y < 0) {
       tile.src = L.Util.emptyImageUrl
@@ -215,134 +216,26 @@ L.tileLayer.OCPLayer = function (url, options) {
 };
 
 /* build our own canvas layer based on our modified TileLayer class */
-L.TileLayer.OCPCanvas = L.TileLayer.Canvas.extend({
+L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
 	options: {
 		async: true
 	},
-/*
-	onAdd: function (map) {
-		this._map = map;
-		this._animated = map._zoomAnimated;
 
-		// create a container div for tiles
-		this._initContainer();
-
-		// set up events
-		map.on({
-			'viewreset': this._reset,
-			'moveend': this._update
-		}, this);
-
-		if (this._animated) {
-			map.on({
-				'zoomanim': this._animateZoom,
-				'zoomend': this._endZoomAnim
-			}, this);
-		}
-
-		if (!this.options.updateWhenIdle) {
-			this._limitedUpdate = L.Util.limitExecByInterval(this._update, 150, this);
-			map.on('move', this._limitedUpdate, this);
-		}
-
-		this._reset();
-		this._update();
+	/* these methods are copied verbatim from L.TileLayer.Canvas */
+	initialize: function (options) {
+		L.setOptions(this, options);
 	},
-*/
 
-	/* properly handle zoom */
-	/*
-	_endZoomAnim: function () {
-
-			var front = this._tileContainer,
-					bg = this._bgBuffer;
-
-			front.style.visibility = '';
-			front.parentNode.appendChild(front); // Bring to fore
-
-			// force reflow
-			L.Util.falseFn(bg.offsetWidth);
-
-			var zoom = this._map.getZoom();
-			if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
-				this._clearBgBuffer();
-			}
-
-			this._animating = false;
-
-	},
-*/
-
-	/*
-	_reset: function (e) {
-
-		var old_tiles = this._tiles;
-
-		function unloadTiles() {
-			for (var key in old_tiles) {
-				this.fire('tileunload', {tile: old_tiles[key]});
-			}
-			old_tiles = {}
-		};
-
-		this.on('load', function () {
-				setTimeout(unloadTiles.bind(this), 300);
-				//setTimeout(this._endZoomAnim(), 200);
-		});
-
-		this._tiles = {};
-		this._tilesToLoad = 0;
-
-		if (this.options.reuseTiles) {
-			this._unusedTiles = [];
+	redraw: function () {
+		if (this._map) {
+			this._reset({hard: true});
+			this._update();
 		}
 
-		this._tileContainer.innerHTML = '';
-
-		if (this._animated && e && e.hard) {
-			this._clearBgBuffer();
+		for (var i in this._tiles) {
+			this._redrawTile(this._tiles[i]);
 		}
-
-		this._initContainer();
-	},
-	*/
-
-	/*
-	_tileLoaded: function () {
-		this._tilesToLoad--;
-
-		if (this._animated) {
-			L.DomUtil.addClass(this._tileContainer, 'leaflet-zoom-animated');
-		}
-
-		if (!this._tilesToLoad) {
-			this.fire('load');
-
-			if (this._animated) {
-				// clear scaled tiles after all new tiles are loaded (for performance)
-				clearTimeout(this._clearBgBufferTimer);
-				this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 500);
-			}
-		}
-	},
-	*/
-
-	/* set tile loaded only after drawing */
-	/*
-	_tileOnLoad: function () {
-		var layer = this._layer;
-
-		//Only if we are loading an actual image
-		if (this.src !== L.Util.emptyImageUrl) {
-			L.DomUtil.addClass(this, 'leaflet-tile-loaded');
-
-			layer.fire('tileload', {
-				tile: this,
-				url: this.src
-			});
-		}
-
-		layer._tileLoaded();
+		return this;
 	},
 
 	_loadTile: function (tile, tilePoint) {
@@ -356,33 +249,27 @@ L.TileLayer.OCPCanvas = L.TileLayer.Canvas.extend({
 		}
 	},
 
-	*/
-	/*
-	tileDrawn: function(tile) {
-		console.log('argggggg');
-		console.log(tile);
-		//var layer = tile._layer;
-		//layer._tileLoaded();
-
+	/* the following methods have been modified from L.TileLayer.Canvas */
+	_createTile: function () {
+		var tile = L.DomUtil.create('canvas', 'leaflet-tile');
+		// scale tile size by zoom
+		tile.width = tile.height = this._getTileSize();
+		tile.onselectstart = tile.onmousemove = L.Util.falseFn;
+		return tile;
 	},
-	*/
-	/*
-	_tileOnLoad: function () {
-		var layer = this._layer;
 
-		//Only if we are loading an actual image
-		if (this.src !== L.Util.emptyImageUrl) {
-			L.DomUtil.addClass(this, 'leaflet-tile-loaded');
-
-			layer.fire('tileload', {
-				tile: this,
-				url: this.src
-			});
-		}
-
-		layer._tileLoaded();
+	_redrawTile: function (tile) {
+		this.drawTile(tile, tile._tilePoint, this._map._zoom, this._getTileSize());
 	},
-	*/
+
+	drawTile: function (/*tile, tilePoint, zoom, tileSize*/) {
+		// override with rendering code
+	},
+
+	/* the following methods have been added */
+	tileDrawn: function (tile) {
+		this._tileOnLoad.call(tile);
+	},
 
 	/* reblends tiles */
 	reload: function() {
