@@ -1,6 +1,4 @@
 // for smooth scrolling through z-indices
-// TODO
-// Implement blend mode, fix other modes for safari and fx
 //
 L.TileLayer.OCPLayer = L.TileLayer.extend({
 
@@ -57,6 +55,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		tile.onload  = this._tileOnLoad;
 		tile.onerror = this._tileOnError;
 
+		// don't load negative tiles (ndstore is 0 indexed)
 		this._adjustTilePoint(tilePoint);
     if (tilePoint.x < 0 || tilePoint.y < 0) {
       tile.src = L.Util.emptyImageUrl
@@ -71,10 +70,10 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 	},
 
 	_createTile: function () {
-		/* camanjs filtering */
 		var tile = L.DomUtil.create('img', 'leaflet-tile');
+		/* camanjs filtering */
 		tile.setAttribute('crossOrigin','anonymous');
-		//console.log(tile);
+
 		tile.style.width = tile.style.height = this._getTileSize() + 'px';
 		tile.galleryimg = 'no';
 
@@ -206,7 +205,6 @@ L.extend(L.DomUtil, {
   },
   setBlendMode: function(el, mode) {
     // TODO validate this somehow?
-    console.log(el.style);
     el.style.setProperty('mix-blend-mode', mode);
   },
 
@@ -214,4 +212,207 @@ L.extend(L.DomUtil, {
 
 L.tileLayer.OCPLayer = function (url, options) {
     return new L.TileLayer.OCPLayer(url, options);
+};
+
+/* build our own canvas layer based on our modified TileLayer class */
+L.TileLayer.OCPCanvas = L.TileLayer.Canvas.extend({
+	options: {
+		async: true
+	},
+/*
+	onAdd: function (map) {
+		this._map = map;
+		this._animated = map._zoomAnimated;
+
+		// create a container div for tiles
+		this._initContainer();
+
+		// set up events
+		map.on({
+			'viewreset': this._reset,
+			'moveend': this._update
+		}, this);
+
+		if (this._animated) {
+			map.on({
+				'zoomanim': this._animateZoom,
+				'zoomend': this._endZoomAnim
+			}, this);
+		}
+
+		if (!this.options.updateWhenIdle) {
+			this._limitedUpdate = L.Util.limitExecByInterval(this._update, 150, this);
+			map.on('move', this._limitedUpdate, this);
+		}
+
+		this._reset();
+		this._update();
+	},
+*/
+
+	/* properly handle zoom */
+	/*
+	_endZoomAnim: function () {
+
+			var front = this._tileContainer,
+					bg = this._bgBuffer;
+
+			front.style.visibility = '';
+			front.parentNode.appendChild(front); // Bring to fore
+
+			// force reflow
+			L.Util.falseFn(bg.offsetWidth);
+
+			var zoom = this._map.getZoom();
+			if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
+				this._clearBgBuffer();
+			}
+
+			this._animating = false;
+
+	},
+*/
+
+	/*
+	_reset: function (e) {
+
+		var old_tiles = this._tiles;
+
+		function unloadTiles() {
+			for (var key in old_tiles) {
+				this.fire('tileunload', {tile: old_tiles[key]});
+			}
+			old_tiles = {}
+		};
+
+		this.on('load', function () {
+				setTimeout(unloadTiles.bind(this), 300);
+				//setTimeout(this._endZoomAnim(), 200);
+		});
+
+		this._tiles = {};
+		this._tilesToLoad = 0;
+
+		if (this.options.reuseTiles) {
+			this._unusedTiles = [];
+		}
+
+		this._tileContainer.innerHTML = '';
+
+		if (this._animated && e && e.hard) {
+			this._clearBgBuffer();
+		}
+
+		this._initContainer();
+	},
+	*/
+
+	/*
+	_tileLoaded: function () {
+		this._tilesToLoad--;
+
+		if (this._animated) {
+			L.DomUtil.addClass(this._tileContainer, 'leaflet-zoom-animated');
+		}
+
+		if (!this._tilesToLoad) {
+			this.fire('load');
+
+			if (this._animated) {
+				// clear scaled tiles after all new tiles are loaded (for performance)
+				clearTimeout(this._clearBgBufferTimer);
+				this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 500);
+			}
+		}
+	},
+	*/
+
+	/* set tile loaded only after drawing */
+	/*
+	_tileOnLoad: function () {
+		var layer = this._layer;
+
+		//Only if we are loading an actual image
+		if (this.src !== L.Util.emptyImageUrl) {
+			L.DomUtil.addClass(this, 'leaflet-tile-loaded');
+
+			layer.fire('tileload', {
+				tile: this,
+				url: this.src
+			});
+		}
+
+		layer._tileLoaded();
+	},
+
+	_loadTile: function (tile, tilePoint) {
+		tile._layer = this;
+		tile._tilePoint = tilePoint;
+
+		this._redrawTile(tile);
+
+		if (!this.options.async) {
+			this.tileDrawn(tile);
+		}
+	},
+
+	*/
+	/*
+	tileDrawn: function(tile) {
+		console.log('argggggg');
+		console.log(tile);
+		//var layer = tile._layer;
+		//layer._tileLoaded();
+
+	},
+	*/
+	/*
+	_tileOnLoad: function () {
+		var layer = this._layer;
+
+		//Only if we are loading an actual image
+		if (this.src !== L.Util.emptyImageUrl) {
+			L.DomUtil.addClass(this, 'leaflet-tile-loaded');
+
+			layer.fire('tileload', {
+				tile: this,
+				url: this.src
+			});
+		}
+
+		layer._tileLoaded();
+	},
+	*/
+
+	/* reblends tiles */
+	reload: function() {
+		for (var i in this._tiles) {
+			this._reloadTile(this._tiles[i]);
+		}
+	},
+
+	_reloadTile: function(tile) {
+		this.reloadTile(tile, tile._tilePoint, this._map._zoom);
+	},
+
+	reloadTile: function(/*tile, tilePoint, zoom*/) {
+		// override with tile rendering code
+	},
+
+	// compatability with OCPLayer above (for panning)
+	smoothRedraw: function() {
+		if (this._map) {
+			this._update();
+		}
+
+		for (var i in this._tiles) {
+			this._reloadTile(this._tiles[i]);
+		}
+		return this;
+	},
+
+});
+
+L.tileLayer.OCPCanvas = function (options) {
+	return new L.TileLayer.OCPCanvas(options);
 };

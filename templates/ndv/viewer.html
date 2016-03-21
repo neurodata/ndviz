@@ -55,7 +55,6 @@
 	</head>
 <body>
 
-
   {# Begin Modal Code Includes #}
   {% include "ndv/help.html" %}
 
@@ -68,6 +67,8 @@
 
   <div id="map"></div>
   <script>
+  //Caman.DEBUG = true;
+
 
     // global variables
     var ndv = {};
@@ -137,14 +138,16 @@
         'server': server,
         'token': token,
         'channel': channel,
-        //'type': null,
+        'type': layertype,
         'color': color,
+        'opacity': 1.0,
       }
 
       var opacity;
       var propagate;
       if (layertype == 'annotation') {
         opacity = 0.4; // annotations loaded at 40% opacity by default
+        layers[layername].opacity = 0.4;
         propagate = 2; // annotations propagation status doesn't matter
       }
       else
@@ -179,7 +182,8 @@
           $( event.tile ).hide();
         });
         layers[layername].tileLayer.on('tileload', function(event) {
-          recolorTile(event, layername);
+          //recolorTile(event, layername);
+          $( event.tile ).show();
         });
       }
 
@@ -189,7 +193,7 @@
     // recoloring
     // The color value is the argument given by the user when
     // they call this filter.
-    Caman.Filter.register("colorize", function (color) {
+    Caman.Filter.register("recolor", function (color) {
 
       var rmult = 0;
       var gmult = 0;
@@ -221,7 +225,7 @@
 
       // Our process function that will be called for each pixel.
       // Note that we pass the name of the filter as the first argument.
-      this.process("colorize", function (rgba) {
+      this.process("recolor", function (rgba) {
         rgba.r = rgba.r*rmult;
         rgba.g = rgba.g*gmult;
         rgba.b = rgba.b*bmult;
@@ -232,7 +236,8 @@
 
     function recolorTile(tileEvent, layer) {
       Caman(tileEvent.tile, function () {
-          this.colorize(layers[layer].color.toLowerCase());
+          this.revert(false);
+          this.recolor(layers[layer].color.toLowerCase());
           this.render(function() {
             // replace tile with canvas in leaflet
             var urlSplit = tileEvent.url.split("/");
@@ -331,6 +336,105 @@
         addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
         {% endif %}
     {% endfor %}
+
+
+    // add a base canvas layer for blending, etc
+    var baseLayer = new L.TileLayer.OCPCanvas({
+              zindex: ndv.zindex,
+              zoomReverse: true,
+              minZoom: ndv.maxres,
+              maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+              maxNativeZoom: ndv.maxres + ndv.maxres,
+              tileSize: 512,
+              continuousWorld: true,
+    });
+
+    function updateOpacity( updatelayer, newopacity ) {
+      for (var tileKey in baseLayer._tiles) {
+        !function updateCaman(tileKey) {
+          Caman(baseLayer._tiles[tileKey], function() {
+            this.revert(false); // revert to base, don't update
+            for (layer in layers) {
+              this.newLayer(function() {
+                //this.setBlendingMode('screen');
+                //var overlayImg = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
+                var overlayImg = layers.em.tileLayer._tiles[tileKey];
+                this.overlayImage(overlayImg);
+
+                if (layers[layer].color != '') {
+                  this.filter.recolor(layers[layer].color.toLowerCase());
+                }
+
+                this.opacity(newopacity*100);
+
+              });
+            }
+            this.render();
+          });
+        }(tileKey);
+      }
+    }
+
+    baseLayer.drawTile = function(canvas, tilePoint, zoom) {
+      var ctx = canvas.getContext('2d');
+      canvas.setAttribute('data-caman-hidpi-disabled','');
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, 512, 512);
+
+      /*
+
+      */
+      this.reloadTile(canvas, tilePoint, zoom);
+  		//ctx.fillStyle = 'white';
+  		//ctx.fillText('x: ' + tilePoint.x + ', y: ' + tilePoint.y + ', zoom:' + zoom, 20, 20);
+
+    };
+    baseLayer.reloadTile = function(canvas, tilePoint, zoom) {
+
+      // Caman changes the tile/canvas name
+      var oldcanvas = canvas;
+
+      Caman(canvas, function () {
+        // manipulate image here
+        this.revert(false);
+        //this.recolor('c');
+        for (layer in layers) {
+          this.newLayer(function() {
+
+            this.setBlendingMode('addition');
+
+            var overlayImg = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
+            this.overlayImage(overlayImg);
+
+            if (layers[layer].color != '') {
+              this.filter.recolor(layers[layer].color.toLowerCase());
+            }
+
+            //this.filter.contrast(15);
+            //this.filter.brightness(5);
+
+            this.opacity(layers[layer].opacity*100);
+            //this.opacity(100);
+
+          });
+        }
+
+        this.render(function() {
+          this.canvas.crossOrigin = '';
+          baseLayer.tileDrawn(oldcanvas);
+        });
+      });
+    }
+    baseLayer.addTo(map);
+
+    map.on('layeradd', function() {
+      baseLayer.reload();
+    });
+    /*
+    map.on('zoomend', function() {
+      baseLayer.redraw();
+    });
+    */
 
     // set the initial view
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
@@ -577,10 +681,6 @@
         }
         updateLayerUrl( layername, url )
       }
-      //for (var layer_name in layers) {
-      //  updateLayerUrl( layer_name,  )
-        //map.removeLayer(layers[layer_name]);
-      //}
     });
 
     // END projection service palette
@@ -855,11 +955,13 @@
 		function reloadLayers() {
 			map.options.fadeAnimation = false;
       map.eachLayer( function (layer) {
-        if ( layer.hasOwnProperty('_url') ) {
+        if ( layer.hasOwnProperty('_url') && layer != baseLayer ) {
           layer.options.zindex = ndv.zindex;
 					layer.smoothRedraw();
         }
       });
+      baseLayer.smoothRedraw();
+      //baseLayer.redraw();
       map.options.fadeAnimation = true;
       coordinatesUpdate();
 		}
@@ -1021,8 +1123,6 @@
     });
     {% endif %}
     {% endfor %}
-
-    // TODO clicking on a marker pops up coordinates
 
     // add keyboard help to map
 		var keyhelp = L.control();
