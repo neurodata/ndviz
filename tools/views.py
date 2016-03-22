@@ -29,7 +29,7 @@ def synaptogram(request, webargs):
     supported_webargs = 'synaptogram/server/token/channel/res/x,xwidth/y,width/z,zwidth/'
 
     try:
-        m = re.match(r"(?P<server>[\w.$\-_]+)/(?P<token>\w+)/?(?P<channels>[\w,_]+)?/?(?P<res>\d+)?/?(?P<xargs>[\d,]+)?/?(?P<yargs>[\d,]+)?/?(?P<zargs>[\d,]+)?/?$", webargs)
+        m = re.match(r"(?P<server>[\w.$\-_]+)/(?P<token>\w+)/?(?P<channels>[\w,_]+)?/?(?P<res>[\d\-]+)?/?(?P<xargs>[\d,]+)?/?(?P<yargs>[\d,]+)?/?(?P<zargs>[\d,]+)?/?$", webargs)
         md = m.groupdict()
         server = md['server']
         token = md['token']
@@ -58,6 +58,12 @@ def synaptogram(request, webargs):
         channels = chanstr.split(',')
     else:
         channels = None
+
+    # scale up the xy res if < 0
+    while res < 0:
+        res += 1
+        x = int(x / 2)
+        y = int(y / 2)
 
     context = {
         'server': server,
