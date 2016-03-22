@@ -69,12 +69,12 @@ html, body, #map {
   padding-top: 2px;
   padding-left: 15px;
 }
-#slider > .brightness  {
+#slider > .minslider  {
   float: right;
   width: 60%;
   margin: 5px;
 }
-#slider > .contrast  {
+#slider > .maxslider  {
   float: right;
   width: 60%;
   margin: 5px;
