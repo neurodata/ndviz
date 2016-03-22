@@ -425,7 +425,8 @@
             this.overlayImage(overlayImg);
 
             // make sure we set min/max before coloring
-            //this.filter.remap(layers[layer].min, layers[layer].max);
+            // AB TODO add a switch to turn this on/off
+            this.filter.remap(layers[layer].min, layers[layer].max);
 
             // all options (min, max, color, opacity, etc) are set in the layers object
             if (layers[layer].color != '') {
