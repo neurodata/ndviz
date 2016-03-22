@@ -698,7 +698,98 @@
     });
 
     // END projection service palette
-    
+
+    // BEGIN synaptogram service palette
+
+    var synaptogramMode = L.control();
+    synaptogramMode.options.position = 'topright';
+    synaptogramMode.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'synaptogramMode');
+      var showicon = '<div id="synaptogramModeIcon" style="float:left;"><a id="showSynaptogramModeBox" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-cubes fa-stack-1x"></i></span></a></div>';
+
+      var hiddendivstart = '<div id="synaptogramModeBox" style="display:none;">';
+      var title = '<div style="float:right;"><a id="hideSynaptogramModeBox" href="#"><i class="fa fa-times fa-lg"></a></i></div><div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-cubes fa-stack-1x"></i></span></div><div class="headertext">Synaptogram</div></div>';
+      var x = '<br /><div id="synaptogramXInput">x: <input id="synaptogramX" type="number" min="0" value="0" /></div>';
+      var y = '<br /><div id="synaptogramYInput">y: <input id="synaptogramY" type="number" min="0" value="0" /></div>';
+      var z = '<br /><div id="synaptogramZInput">z: <input id="synaptogramZ" type="number" min="0" value="0" /></div>';
+      var res = '<br /><div id="synaptogramResInput">res: <input id="synaptogramRes" type="number" min="0" value="0" /></div>';
+      // AB TODO -- res won't work below res 0
+      var apply = '<br /><button class="btn btn-primary" id="loadSynaptogram" >Load Synaptogram</button>'
+      var hiddendivend = '</div>'
+      this._div.innerHTML = showicon + hiddendivstart + title  + x + y + z + res + apply + hiddendivend;
+      return this._div;
+    };
+    synaptogramMode.addTo(map);
+    $( "#showSynaptogramModeBox" ).on('click', function () {
+      $( "#synaptogramModeBox" ).toggle( "slow", function () {
+        $( "#synaptogramModeIcon" ).toggle( );
+      });
+    });
+    $( "#hideSynaptogramModeBox" ).on('click', function () {
+      $( "#synaptogramModeBox" ).toggle( "slow" , function () {
+        $( "#synaptogramModeIcon" ).toggle( );
+      });
+    });
+    // disable (and then re-enable) clicking on mouseover
+    synaptogramMode.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+    });
+
+    synaptogramMode.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+    });
+
+    // update coordinates on click
+    map.on('click', function(event) {
+      // get current res
+      var res = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+      $( "#synaptogramRes" ).val(res);
+
+      $( "#synaptogramX" ).val(Math.round(event.containerPoint.x));
+      $( "#synaptogramY" ).val(Math.round(event.containerPoint.y));
+      $( "#synaptogramZ" ).val(ndv.zindex);
+
+    });
+
+    $( "#loadSynaptogram" ).click( function() {
+      var strWindowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes";
+
+      var x = $( "#synaptogramX" ).val();
+      var y = $( "#synaptogramY" ).val();
+      var z = $( "#synaptogramZ" ).val();
+      var res = $( "#synaptogramRes" ).val();
+
+      var channels = []
+      for (layer in layers) {
+        channels.push(layer);
+      }
+      var chanstr = channels.join(',');
+
+      var token = '{{ layers.0.token }}' // AB TODO allow user to choose if multiple?
+      var server = '{{ layers.0.server }}'
+
+      window.open('http://{{ request.get_host }}{{ request.META.SCRIPT_NAME }}/tools/synaptogram/' + server + '/' + token + '/' + chanstr + '/' + res + '/' + x + ',5/' + y + ',5/' + z + ',7/', "Synaptogram", strWindowFeatures);
+
+    });
+
+    /*
+    $( "#projectModeApply" ).click( function() {
+      var width = $( "#projectModeWidthInput" ).val();
+
+      for (var layername in layers) {
+        if (layers[layername].color == '') {
+          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
+        }
+        else {
+          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + ':' + layers[layername].color + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
+        }
+        updateLayerUrl( layername, url )
+      }
+    });
+    */
+
+    // END synaptogram service palette
+
     // BEGIN add data button
     var addDataButton = L.control();
     addDataButton.options.position = 'topright';

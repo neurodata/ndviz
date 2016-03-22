@@ -35,7 +35,7 @@ html, body, #map {
 .propwarnbox {
   font-size: 13px !important;
 }
-#imagecontrolshide, #projinfobox, #projectModeBox {
+#imagecontrolshide, #projinfobox, #projectModeBox, #synaptogramModeBox {
   padding: 8px 8px;
   width: 300px;
   /*font: 14px/16px Arial, Helvetica, sans-serif;*/
