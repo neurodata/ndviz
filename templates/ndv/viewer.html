@@ -745,8 +745,12 @@
       var res = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
       $( "#synaptogramRes" ).val(res);
 
-      $( "#synaptogramX" ).val(Math.round(event.containerPoint.x));
-      $( "#synaptogramY" ).val(Math.round(event.containerPoint.y));
+      // project latlng
+      var coordinates = map.project(event.latlng);
+
+
+      $( "#synaptogramX" ).val(Math.round(coordinates.x));
+      $( "#synaptogramY" ).val(Math.round(coordinates.y));
       $( "#synaptogramZ" ).val(ndv.zindex);
 
     });
