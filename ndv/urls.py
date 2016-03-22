@@ -17,11 +17,13 @@
 # github.com/alexbaden
 
 
-from django.conf.urls import *
+from django.conf.urls import patterns, include, url
 from django.contrib import admin
 import django.contrib.auth
 
 base_urlpatterns = patterns('ndv.views',
+    # tools
+    url(r'^tools/', include('tools.urls')),
     # data views
     url(r'^dataview/render/(?P<webargs>[\w:,/-]+)', 'renderDataview', name='renderDataview'),
     url(r'^dataview/(?P<webargs>[\w:,/-]+)', 'dataview', name='dataview'),
