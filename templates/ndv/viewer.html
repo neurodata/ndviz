@@ -396,14 +396,18 @@
       var vertexShader = document.getElementById('vertexShader').text;
       var fragmentShader = document.getElementById('fragmentShader').text;
 
-      function loadTexture(img, color, opacity, minval, maxval, gamma, blending) {
+      function loadTexture(img, tilesToLoad, color, opacity, minval, maxval, gamma, blending) {
         // use dom elements
         console.log(img);
-        console.log('break');
-        var texture = new THREE.Texture({
-          image: img
-        })
+        //console.log('break');
+
+        var texture = new THREE.Texture();
+        texture.image = img;
         console.log(texture);
+        if (tilesToLoad > 0) {
+          texture.needsUpdate = true;
+        }
+        //console.log(texture);
         var geometry = new THREE.PlaneBufferGeometry(tileSize, tileSize);
 
         // some default uniforms
@@ -499,6 +503,7 @@
         //var color = new THREE.Color("rgb(" + layers[layer].color[0] + ", " + layers[layer].color[1] + ", " + layers[layer].color[2] + ")");
         var color = setThreeColor(layers[layer].color);
         var img = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
+        var tilesToLoad = layers[layer].tileLayer._tilesToLoad;
         //console.log(img);
         var opacity = layers[layer].opacity;
         var minval = layers[layer].min;
@@ -507,7 +512,7 @@
         var blending = THREE.AdditiveBlending;
         // TODO blending settings by user
 
-        loadTexture(img, color, opacity, minval, maxval, gamma, blending);
+        loadTexture(img, tilesToLoad, color, opacity, minval, maxval, gamma, blending);
       }
 
       tile.camera.position.z = 1;
