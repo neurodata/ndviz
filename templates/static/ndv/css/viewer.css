@@ -13,6 +13,9 @@ html, body, #map {
 .leaflet-container {
   background: #000 !important;
 }
+.hidden {
+  display: none;
+}
 /* hide controls and navbar for mobile */
 @media only screen and (max-width: 768px), only screen and (max-device-width: 768px) {
   .controls, .queryres, .projinfo, .navbar {

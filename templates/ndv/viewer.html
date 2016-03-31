@@ -50,8 +50,9 @@
   <script src="{% static 'ndv/js/spin.min.js' %}"></script>
   <script src="{% static 'ndv/js/easy-button.js' %}"></script>
   <script src="{% static 'ndv/js/ocp-leaflet.js' %}"></script>
-  {# camanjs #}
-  <script type="text/javascript" src="{% static "ndv/js/caman.full.js" %}"></script>
+  {# threejs #}
+  <script src="{% static 'ndv/js/threejs/three.js' %}"></script>
+
 	</head>
 <body>
 
@@ -66,8 +67,52 @@
   {# End Modal Code Includes #}
 
   <div id="map"></div>
+  <script id="vertexShader" type="x-shader/x-vertex">
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  </script>
+
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    varying vec2 vUv;
+
+    uniform vec3 color;
+    uniform sampler2D texture;
+
+    uniform float opacity;
+
+    // remapping
+    uniform float minval;
+    uniform float maxval;
+
+    // gamma
+    uniform float gamma;
+
+    void main() {
+      vec4 tmpColor;
+
+      #ifdef REMAP
+      tmpColor = texture2D(texture, vUv) * vec4(color.x, color.y, color.z, opacity);
+      // remap color to new intensity range
+      tmpColor.x = min( max( (tmpColor.x - minval)/maxval, 0.0), 1.0 );
+      tmpColor.y = min( max( (tmpColor.y - minval)/maxval, 0.0), 1.0 );
+      tmpColor.z = min( max( (tmpColor.z - minval)/maxval, 0.0), 1.0 );
+      #else
+      tmpColor = texture2D(texture, vUv) * vec4(color.x, color.y, color.z, opacity);
+      #endif
+
+      #ifdef GAMMACOR
+      tmpColor.rgb = pow(tmpColor.rgb, vec3(1.0 / gamma));
+      #endif
+
+      gl_FragColor = tmpColor;
+
+    }
+  </script>
   <script>
-  //Caman.DEBUG = true;
+    // AB TODO use strict
 
     // global variables
     var ndv = {};
@@ -140,8 +185,9 @@
         'type': layertype,
         'color': color,
         'opacity': 1.0,
-        'min': 0,
-        'max': 255,
+        'min': 0.0,
+        'max': 1.0,
+        'gamma': 1.0,
       }
 
       var opacity;
@@ -191,85 +237,6 @@
       */
 
       layers[layername].tileLayer.addTo(map);
-    }
-
-    // recoloring
-    // The color value is the argument given by the user when
-    // they call this filter.
-    Caman.Filter.register("recolor", function (color) {
-
-      var rmult = 0;
-      var gmult = 0;
-      var bmult = 0;
-
-      switch (color) {
-        case 'r':
-          rmult = 1;
-          break;
-        case 'g':
-          gmult = 1;
-          break;
-        case 'b':
-          bmult = 1;
-          break;
-        case 'c':
-          bmult = 1;
-          gmult = 1;
-          break;
-        case 'm':
-          rmult = 1;
-          bmult = 1;
-          break;
-        case 'y':
-          rmult = 1;
-          gmult = 1;
-          break;
-      }
-
-      // Our process function that will be called for each pixel.
-      // Note that we pass the name of the filter as the first argument.
-      this.process("recolor", function (rgba) {
-        rgba.r = rgba.r*rmult;
-        rgba.g = rgba.g*gmult;
-        rgba.b = rgba.b*bmult;
-        // Return the modified RGB values
-        return rgba;
-      });
-    });
-
-    Caman.Filter.register("remap", function (min, max) {
-      // Our process function that will be called for each pixel.
-      // Note that we pass the name of the filter as the first argument.
-      if (min > 255) { min = 255; }
-      if (max > 255) { max = 255; }
-      if (min < 0) { min = 0; }
-      if (max < 0) { max = 0; }
-
-      this.process("remap", function (rgba) {
-
-        rgba.r = Math.min( Math.max( 0, Math.round( rgba.r*(255/max) - (255*min)/max ) ), 255);
-        rgba.g = Math.min( Math.max( 0, Math.round( rgba.g*(255/max) - (255*min)/max ) ), 255);
-        rgba.b = Math.min( Math.max( 0, Math.round( rgba.b*(255/max) - (255*min)/max ) ), 255);
-
-        // Return the modified RGB values
-        return rgba;
-      });
-    });
-
-    function recolorTile(tileEvent, layer) {
-      Caman(tileEvent.tile, function () {
-          this.revert(false);
-          this.recolor(layers[layer].color.toLowerCase());
-          this.render(function() {
-            // replace tile with canvas in leaflet
-            var urlSplit = tileEvent.url.split("/");
-            var key = urlSplit[ urlSplit.length - 1 ].split("_")[1] + ":" + urlSplit[ urlSplit.length - 1 ].split("_")[0];
-            layers[layer].tileLayer._tiles[key] = this.canvas;
-
-            // display tile
-            $( this.canvas ).show();
-          });
-      });
     }
 
     function updateLayerUrl(layername, newUrl) {
@@ -360,6 +327,26 @@
     {% endfor %}
 
 
+    function setThreeColor(color) {
+      // given a color tag ('r','g','b','c','m','y') set the appropriate three color
+      switch(color) {
+        case 'R':
+          return new THREE.Color("rgb(255,0,0)");
+        case 'G':
+          return new THREE.Color("rgb(0, 255, 0)");
+        case 'B':
+          return new THREE.Color("rgb(0, 0, 255)");
+        case 'C':
+          return new THREE.Color("rgb(0, 255, 255)");
+        case 'M':
+          return new THREE.Color("rgb(255, 0, 255)");
+        case 'Y':
+          return new THREE.Color("rgb(255, 255, 0)");
+        default:
+          return new THREE.Color("rgb(255, 255, 255)");
+      }
+    }
+
     // add a base canvas layer for blending, etc
     var baseLayer = new L.TileLayer.OCPCanvas({
               zindex: ndv.zindex,
@@ -369,8 +356,11 @@
               maxNativeZoom: ndv.maxres + ndv.maxres,
               tileSize: 512,
               continuousWorld: true,
+              async: false,
     });
+    baseLayer.addTo(map);
 
+    /*
     function updateOpacity( updatelayer, newopacity ) {
       for (var tileKey in baseLayer._tiles) {
         !function updateCaman(tileKey) {
@@ -396,17 +386,152 @@
         }(tileKey);
       }
     }
+    */
 
-    baseLayer.drawTile = function(canvas, tilePoint, zoom, tileSize) {
-      // first, draw the actual canvas
-      var ctx = canvas.getContext('2d');
-      canvas.setAttribute('data-caman-hidpi-disabled','');
-      ctx.fillStyle = 'black';
-      ctx.fillRect(0, 0, tileSize, tileSize);
+    baseLayer.drawTile = function(tile, tilePoint, zoom, tileSize) {
 
-      // then, use caman to blend/recolor reach layer
-      this.reloadTile(canvas, tilePoint, zoom);
+      //tile.scene = new THREE.Scene();
+      var scene = new THREE.Scene();
+
+      var vertexShader = document.getElementById('vertexShader').text;
+      var fragmentShader = document.getElementById('fragmentShader').text;
+
+      function loadTexture(img, color, opacity, minval, maxval, gamma, blending) {
+        // use dom elements
+        console.log(img);
+        console.log('break');
+        var texture = new THREE.Texture({
+          image: img
+        })
+        console.log(texture);
+        var geometry = new THREE.PlaneBufferGeometry(tileSize, tileSize);
+
+        // some default uniforms
+        var uniforms = {
+          color: { type: "c", value: color },
+          texture: { type: "t", value: texture },
+          opacity: { type: "f", value: opacity },
+          minval: { type: "f", value: minval },
+          maxval: { type: "f", value: maxval },
+          gamma: { type: "f", value: gamma },
+        };
+
+        // TODO only enable these when sliders have been moved
+        var defines = {
+          REMAP: true,
+          GAMMACOR: true,
+        }
+
+        var material = new THREE.ShaderMaterial({
+          uniforms: uniforms,
+          defines: defines,
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
+          transparent: true,
+          blending: blending,
+        });
+
+        var plane = new THREE.Mesh( geometry, material );
+        scene.add(plane);
+
+        /*
+        var loader = new THREE.TextureLoader();
+        // load texture resource
+        loader.crossOrigin = 'anonymous';
+        loader.load(
+          // url
+          url,
+          // function to call when complete
+          function( texture ) {
+            var geometry = new THREE.PlaneBufferGeometry(tileSize, tileSize);
+
+            // some default uniforms
+            var uniforms = {
+              color: { type: "c", value: color },
+              texture: { type: "t", value: texture },
+              opacity: { type: "f", value: opacity },
+              minval: { type: "f", value: minval },
+              maxval: { type: "f", value: maxval },
+              gamma: { type: "f", value: gamma },
+            };
+
+            // TODO only enable these when sliders have been moved
+            var defines = {
+              REMAP: true,
+              GAMMACOR: true,
+            }
+
+            var material = new THREE.ShaderMaterial({
+              uniforms: uniforms,
+              defines: defines,
+              vertexShader: vertexShader,
+              fragmentShader: fragmentShader,
+              transparent: true,
+              blending: blending,
+            });
+
+            var plane = new THREE.Mesh( geometry, material );
+            scene.add(plane);
+          },
+          // Function called when download progresses
+          function ( xhr ) {
+            console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+          },
+          // Function called when download errors
+          function ( xhr ) {
+            console.log( 'An error happened' );
+          }
+        )
+        */
+
+        // DEBUG
+        /*
+        var geometry = new THREE.PlaneBufferGeometry(tileSize, tileSize);
+        var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+        var mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        */
+        //tile.scene.add(mesh);
+
+      }
+
+      for (var layer in layers) {
+        //var color = new THREE.Color("rgb(" + layers[layer].color[0] + ", " + layers[layer].color[1] + ", " + layers[layer].color[2] + ")");
+        var color = setThreeColor(layers[layer].color);
+        var img = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
+        //console.log(img);
+        var opacity = layers[layer].opacity;
+        var minval = layers[layer].min;
+        var maxval = layers[layer].max;
+        var gamma = layers[layer].gamma;
+        var blending = THREE.AdditiveBlending;
+        // TODO blending settings by user
+
+        loadTexture(img, color, opacity, minval, maxval, gamma, blending);
+      }
+
+      tile.camera.position.z = 1;
+
+      /*
+      console.log(this);
+      tile.render = function() {
+        //console.log('rendering');
+        //console.log(scene);
+         requestAnimationFrame( tile.render.bind(tile) );
+         this.renderer.render( scene, this.camera );
+      }
+      tile.render();
+      */
+      var render = function() {
+        //console.log('rendering');
+        //console.log(scene);
+         requestAnimationFrame( render );
+         tile.renderer.render( scene, tile.camera );
+      }
+      render();
+
     };
+    /*
     baseLayer.reloadTile = function(canvas, tilePoint, zoom) {
 
       // Caman changes the tile/canvas name
@@ -446,7 +571,8 @@
         });
       });
     }
-    baseLayer.addTo(map);
+    */
+    //baseLayer.addTo(map);
 
     map.on('layeradd', function() {
       baseLayer.reload();

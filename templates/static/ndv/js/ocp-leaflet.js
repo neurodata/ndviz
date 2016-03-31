@@ -38,8 +38,11 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     //Only if we are loading an actual image
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
+			// hide by default
+			//L.DomUtil.addClass(this, 'hidden');
       // mark classes by index
       L.DomUtil.addClass(this, 'index-' + ndv.zindex);
+
 
       layer.fire('tileload', {
         tile: this,
@@ -72,7 +75,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
 	_createTile: function () {
 		var tile = L.DomUtil.create('img', 'leaflet-tile');
-		/* camanjs filtering */
+		/* camanjs filtering TODO do we keep this? */
 		tile.setAttribute('crossOrigin','anonymous');
 
 		tile.style.width = tile.style.height = this._getTileSize() + 'px';
@@ -206,7 +209,7 @@ L.extend(L.DomUtil, {
   },
   setBlendMode: function(el, mode) {
     // TODO validate this somehow?
-    el.style.setProperty('mix-blend-mode', mode);
+    //el.style.setProperty('mix-blend-mode', mode);
   },
 
 });
@@ -215,13 +218,12 @@ L.tileLayer.OCPLayer = function (url, options) {
     return new L.TileLayer.OCPLayer(url, options);
 };
 
-/* build our own canvas layer based on our modified TileLayer class */
+/* build our own THREEJS rendering layer based on our modified TileLayer class */
 L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
 	options: {
-		async: true
+		async: true,
 	},
 
-	/* these methods are copied verbatim from L.TileLayer.Canvas */
 	initialize: function (options) {
 		L.setOptions(this, options);
 	},
@@ -251,12 +253,49 @@ L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
 
 	/* the following methods have been modified from L.TileLayer.Canvas */
 	_createTile: function () {
-		var tile = L.DomUtil.create('canvas', 'leaflet-tile');
+		var tile = L.DomUtil.create('div', 'leaflet-tile');
 		// scale tile size by zoom
 		tile.width = tile.height = this._getTileSize();
+
+		tile.renderer = new THREE.WebGLRenderer();
+		tile.renderer.setSize( tile.width, tile.height );
+		tile.appendChild( tile.renderer.domElement );
+
+		tile.camera = this._getCamera();
+
+		/* TODO remove */
+		//tile.render = function() {}; /* placeholder for render fcn */
+		//tile.scene = null; /* placeholder for scene */
+
+
 		tile.onselectstart = tile.onmousemove = L.Util.falseFn;
 		return tile;
 	},
+
+	// remove hidden tag
+	_tileOnLoad: function () {
+    var layer = this._layer;
+
+    //Only if we are loading an actual image
+    if (this.src !== L.Util.emptyImageUrl) {
+      L.DomUtil.addClass(this, 'leaflet-tile-loaded');
+      // mark classes by index
+      L.DomUtil.addClass(this, 'index-' + ndv.zindex);
+
+
+      layer.fire('tileload', {
+        tile: this,
+        url: this.src
+      });
+    }
+
+    layer._tileLoaded();
+  },
+
+	_getCamera: function() {
+			var curTileSize = this._getTileSize();
+			return new THREE.OrthographicCamera( curTileSize / -2, curTileSize / 2, curTileSize / 2, curTileSize / -2, 1, 1000 );
+		},
 
 	_redrawTile: function (tile) {
 		this.drawTile(tile, tile._tilePoint, this._map._zoom, this._getTileSize());
@@ -279,7 +318,8 @@ L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
 	},
 
 	_reloadTile: function(tile) {
-		this.reloadTile(tile, tile._tilePoint, this._map._zoom);
+		//this.reloadTile(tile, tile._tilePoint, this._map._zoom);
+		this.drawTile(tile, tile._tilePoint, this._map._zoom, this._getTileSize());
 	},
 
 	reloadTile: function(/*tile, tilePoint, zoom*/) {
