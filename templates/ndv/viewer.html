@@ -404,9 +404,15 @@
         var texture = new THREE.Texture();
         texture.image = img;
         console.log(texture);
-        if (tilesToLoad > 0) {
+        img.onload = function() {
           texture.needsUpdate = true;
         }
+        /*
+        if (tilesToLoad > 0) {
+          console.log('needs update!');
+          texture.needsUpdate = true;
+        }
+        */
         //console.log(texture);
         var geometry = new THREE.PlaneBufferGeometry(tileSize, tileSize);
 
