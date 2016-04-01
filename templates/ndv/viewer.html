@@ -43,8 +43,8 @@
     {% include "ndv/analytics.html" %}
   {% endif %}
 
-  {#<script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>#}
-  <script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>
+  {#<script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>#}
   <script src="{% static 'ndv/js/Control.Loading.js' %}"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <script src="{% static 'ndv/js/spin.min.js' %}"></script>
@@ -347,6 +347,150 @@
       }
     }
 
+    // testing the webGL layer interface
+    var glLayer = new L.WebGLLayer({
+      zindex: ndv.zindex,
+      zoomReverse: true,
+      minZoom: ndv.maxres,
+      maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+      maxNativeZoom: ndv.maxres + ndv.maxres,
+      tileSize: 512,
+    }).addTo(map);
+
+    glLayer.draw = function() {
+      /*
+      var size = this._getSize();
+      var scene = new THREE.Scene();
+      var geometry = new THREE.PlaneBufferGeometry(size.x, size.y);
+      var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+      var mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      */
+
+      var scene = new THREE.Scene();
+
+      var worldsize = this._map.getSize();
+      var camera = this._camera;
+
+      // get size from local function since layers may not have loaded
+      var size = this._getTileSize();
+
+      var vertexShader = document.getElementById('vertexShader').text;
+      var fragmentShader = document.getElementById('fragmentShader').text;
+
+      function loadTexture(img, offsetx, offsety, color, opacity, minval, maxval, gamma, blending) {
+
+        // use dom element for textures
+        var texture = new THREE.Texture({
+          repeat: 1,
+        });
+        texture.image = img;
+        img.onload = function() {
+          texture.needsUpdate = true;
+        }
+        var geometry = new THREE.PlaneBufferGeometry(size, size);
+
+        // some default uniforms
+        var uniforms = {
+          color: { type: "c", value: color },
+          texture: { type: "t", value: texture },
+          opacity: { type: "f", value: opacity },
+          minval: { type: "f", value: minval },
+          maxval: { type: "f", value: maxval },
+          gamma: { type: "f", value: gamma },
+        };
+
+        // TODO only enable these when sliders have been moved
+        var defines = {
+          REMAP: true,
+          GAMMACOR: true,
+        }
+
+        var material = new THREE.ShaderMaterial({
+          uniforms: uniforms,
+          defines: defines,
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
+          transparent: true,
+          blending: blending,
+        });
+
+        var plane = new THREE.Mesh( geometry, material );
+        // offset plane by tile coordinate
+        //var worldvector = new THREE.Vector3(offsetx, offsety, 0);
+        /*
+        console.log(offsetx);
+        console.log(offsety);
+        var left = 0;
+        var top = 0;
+        var right = worldsize.x;
+        var bottom = worldsize.y;
+        var near = 1.0;
+        var far = 1024.0;
+        var projectionMat = THREE.Matrix4(left, right, bottom, top, near, far);
+        plane.position.set(offsetx, offsety, 0);
+        */
+        /*
+        console.log(camera);
+        var vector = new THREE.Vector3(offsetx, offsety, 0);
+        console.log(vector);
+        var vector = vector.project(camera);
+        console.log(vector);
+        plane.position.set(vector.x, vector.y, vector.z);
+        console.log(plane.position);
+        */
+        var vector = new THREE.Vector3(offsetx + worldsize.x / 2, offsety + worldsize.y / 2, 0);
+        console.log(vector);
+        vector = vector.project(camera);
+        plane.position.set(vector.x, vector.y, vector.z);
+        console.log(plane.position);
+
+        //plane.position.set(offsetx, offsety, 0);
+        //console.log(plane.position);
+
+        scene.add(plane);
+        //console.log(plane.position.project(camera));
+
+
+      }
+
+      for (var layer in layers) {
+        //var color = new THREE.Color("rgb(" + layers[layer].color[0] + ", " + layers[layer].color[1] + ", " + layers[layer].color[2] + ")");
+        var color = setThreeColor(layers[layer].color);
+        var opacity = layers[layer].opacity;
+        var minval = layers[layer].min;
+        var maxval = layers[layer].max;
+        var gamma = layers[layer].gamma;
+        var blending = THREE.AdditiveBlending;
+
+        for (var tile in layers[layer].tileLayer._tiles) {
+          var img = layers[layer].tileLayer._tiles[tile];
+
+          var offset = this._getTilePos(tile);
+          console.log(tile);
+          console.log('offset');
+          console.log(offset);
+          loadTexture(img, offset.x, offset.y, color, opacity, minval, maxval, gamma, blending);
+
+        }
+        //var img = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
+
+        // TODO blending settings by user
+
+
+      }
+
+      this._camera.position.z = 1;
+
+      function render() {
+        requestAnimationFrame( render.bind(this) );
+        this._renderer.render(scene, this._camera);
+      }
+      render.bind(this)();
+
+    }
+
+
     // add a base canvas layer for blending, etc
     var baseLayer = new L.TileLayer.OCPCanvas({
               zindex: ndv.zindex,
@@ -358,7 +502,7 @@
               continuousWorld: true,
               async: false,
     });
-    baseLayer.addTo(map);
+    //baseLayer.addTo(map);
 
     /*
     function updateOpacity( updatelayer, newopacity ) {
@@ -536,54 +680,12 @@
       var render = function() {
         //console.log('rendering');
         //console.log(scene);
-         requestAnimationFrame( render );
+         //requestAnimationFrame( render );
          tile.renderer.render( scene, tile.camera );
       }
       render();
 
     };
-    /*
-    baseLayer.reloadTile = function(canvas, tilePoint, zoom) {
-
-      // Caman changes the tile/canvas name
-      var oldcanvas = canvas;
-
-      Caman(canvas, function () {
-        // manipulate image here
-        this.revert(false);
-        for (layer in layers) {
-          this.newLayer(function() {
-
-            // TODO allow user to set blending mode
-            this.setBlendingMode('addition');
-
-            var overlayImg = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
-            this.overlayImage(overlayImg);
-
-            // make sure we set min/max before coloring
-            // AB TODO add a switch to turn this on/off
-            if (layers[layer].min > 0 || layers[layer].max < 255) {
-              this.filter.remap(layers[layer].min, layers[layer].max);
-            }
-
-            // all options (min, max, color, opacity, etc) are set in the layers object
-            if (layers[layer].color != '') {
-              this.filter.recolor(layers[layer].color.toLowerCase());
-            }
-
-            this.opacity(layers[layer].opacity*100);
-
-          });
-        }
-
-        this.render(function() {
-          this.canvas.crossOrigin = '';
-          baseLayer.tileDrawn(oldcanvas);
-        });
-      });
-    }
-    */
-    //baseLayer.addTo(map);
 
     map.on('layeradd', function() {
       baseLayer.reload();

@@ -223,7 +223,7 @@ L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
 	options: {
 		async: true,
 	},
-
+	// same as canvas layer
 	initialize: function (options) {
 		L.setOptions(this, options);
 	},
@@ -263,13 +263,30 @@ L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
 
 		tile.camera = this._getCamera();
 
-		/* TODO remove */
-		//tile.render = function() {}; /* placeholder for render fcn */
-		//tile.scene = null; /* placeholder for scene */
-
-
 		tile.onselectstart = tile.onmousemove = L.Util.falseFn;
 		return tile;
+	},
+
+	_removeTile: function (key) {
+		var tile = this._tiles[key];
+
+		this.fire('tileunload', {tile: tile, url: tile.src});
+
+		if (this.options.reuseTiles) {
+			L.DomUtil.removeClass(tile, 'leaflet-tile-loaded');
+			this._unusedTiles.push(tile);
+
+		} else if (tile.parentNode === this._tileContainer) {
+			this._tileContainer.removeChild(tile);
+		}
+
+		// for https://github.com/CloudMade/Leaflet/issues/137
+		if (!L.Browser.android) {
+			tile.onload = null;
+			tile.src = L.Util.emptyImageUrl;
+		}
+
+		delete this._tiles[key];
 	},
 
 	// remove hidden tag
@@ -342,4 +359,145 @@ L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
 
 L.tileLayer.OCPCanvas = function (options) {
 	return new L.TileLayer.OCPCanvas(options);
+};
+
+/* creates a single WebGL rendering context that spans the page */
+L.WebGLLayer = L.Class.extend({
+	options: {
+		minZoom: 0,
+		maxZoom: 18,
+		tileSize: 256,
+		zoomOffset: 0,
+	},
+
+	initialize: function(options) {
+		//this._bounds = L.latLngBounds(bounds);
+
+		L.setOptions(this, options);
+	},
+
+	draw: function() {
+		/* WebGL drawing function */
+	},
+
+	onAdd: function(map) {
+		this._map = map;
+
+		if (!this._renderer) {
+			this._initRenderer();
+			//this._setRendererSize(map.getSize()); // handle in _reset()
+		}
+
+		map._panes.overlayPane.appendChild( this._renderer.domElement );
+
+		map.on({
+			'viewreset': this._reset,
+			'moveend': this._update
+		}, this);
+
+		if (map.options.zoomAnimation) {
+			map.on('zoomanim', this._animateZoom, this);
+			// TODO we could add an end catch here, too, to redraw
+		}
+
+		this._reset();
+		this.draw();
+	},
+
+	onRemove: function(map) {
+		map.getPanes().overlayPane.removeChild( this._renderer.domElement );
+
+		map.off({
+			'viewreset': this._reset,
+			'moveend': this._update
+		}, this);
+		if (map.options.zoomAnimation) {
+			map.off('zoomanim', this._animateZoom, this);
+		}
+	},
+
+	addTo: function(map) {
+		map.addLayer(this);
+		return this;
+	},
+
+	_animateZoom: function(e) {
+		// TODO
+	},
+
+	_reset: function() {
+		this._setRendererSize(this._map.getSize());
+		//this._setupCamera(this._map.getPixelOrigin());
+		this._setupCamera(this._map.getSize());
+	},
+
+	_update: function() {
+		if (!this._map) { return; }
+
+		var map = this._map,
+			bounds = map.getPixelBounds(),
+			origin = map.getPixelOrigin(),
+			size = map.getSize();
+
+		var shift = bounds.min.subtract(origin);
+
+		L.DomUtil.setPosition( this._renderer.domElement, shift );
+		this._reset();
+		this.draw();
+	},
+
+	_getSize: function() {
+		return this._map.getSize();
+	},
+
+	_initRenderer: function() {
+		this._renderer = new THREE.WebGLRenderer();
+		//this._renderer.setClearColor( 0xff0000 );
+	},
+
+	_setRendererSize: function(size) {
+		this._renderer.setSize( size.x, size.y );
+	},
+
+	_setupCamera: function(origin) {
+		this._camera = new THREE.OrthographicCamera( origin.x / -2, origin.x / 2, origin.y / 2, origin.y / -2, 1, 1024.0 );
+		//this._camera = new THREE.OrthographicCamera( bounds.min.x, bounds.max.x, bounds.min.y, bounds.max.y, 1, 1000 );
+
+	},
+
+	_getTileSize: function () {
+		var map = this._map,
+		    zoom = map.getZoom() + this.options.zoomOffset,
+		    zoomN = this.options.maxNativeZoom,
+		    tileSize = this.options.tileSize;
+
+		if (zoomN && zoom > zoomN) {
+      tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
+    }
+    else if ( (zoomN == 0) && (zoom > zoomN) ) {
+      // another quick for the case where maxNativeZoom is 0
+      // AB TODO consider using == undefined in the general case
+      tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
+    }
+
+		return tileSize;
+	},
+
+	// helper function for converting tile key to pixel coords
+	_getTilePos: function(tilePointStr) {
+		var tilePointTmp = tilePointStr.split(":");
+		var tilePoint = new L.Point(tilePointTmp[0], tilePointTmp[1]);
+		var origin = this._map.getPixelOrigin(),
+				bounds = this._map.getPixelBounds(),
+				tileSize = this._getTileSize();
+
+		return tilePoint.multiplyBy(tileSize).subtract(origin);
+		//return tilePoint.multiplyBy(tileSize).subtract(bounds.min);
+	},
+
+
+});
+
+L.webGLLayer = function(options) {
+	return new L.WebGLLayer(options);
 };
