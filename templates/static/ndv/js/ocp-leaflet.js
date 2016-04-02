@@ -435,13 +435,14 @@ L.WebGLLayer = L.Class.extend({
 		if (!this._map) { return; }
 
 		var map = this._map,
-			bounds = map.getPixelBounds(),
+			bounds = map.getPixelBounds(), // TODO don't need these?
 			origin = map.getPixelOrigin(),
 			size = map.getSize();
 
-		var shift = bounds.min.subtract(origin);
+		//var shift = bounds.min.subtract(origin);
+		var position = map._getMapPanePos().multiplyBy(-1);
 
-		L.DomUtil.setPosition( this._renderer.domElement, shift );
+		L.DomUtil.setPosition( this._renderer.domElement, position );
 		this._reset();
 		this.draw();
 	},
@@ -485,16 +486,52 @@ L.WebGLLayer = L.Class.extend({
 
 	// helper function for converting tile key to pixel coords
 	_getTilePos: function(tilePointStr) {
+
+
+
 		var tilePointTmp = tilePointStr.split(":");
 		var tilePoint = new L.Point(tilePointTmp[0], tilePointTmp[1]);
+
+		var tileSize = this._getTileSize(),
+		            nwPoint = tilePoint.multiplyBy(tileSize),
+		            sePoint = nwPoint.add(new L.Point(tileSize, tileSize)),
+		            nw = this._map.unproject(nwPoint),
+		            se = this._map.unproject(sePoint),
+		            bounds = new L.LatLngBounds([nw, se]);
+
+		var tileCenter = map._getCenterOffset( bounds.getCenter() );
+		return map.layerPointToContainerPoint( L.point(tileCenter.x, tileCenter.y*-1 ) );
+		/*
 		var origin = this._map.getPixelOrigin(),
 				bounds = this._map.getPixelBounds(),
 				tileSize = this._getTileSize();
 
-		return tilePoint.multiplyBy(tileSize).subtract(origin);
+		var test = this._map._getCenterLayerPoint();
+
+		// this gives us the coordinates for the nw corner of each tile
+		var tilePointNw = tilePoint.multiplyBy(tileSize); //  .subtract( [tileSize / 2.0, tileSize / 2.0] );
+		var tileCenter = tilePointNw.subtract([tileSize / 2.0, tileSize / 2.0]);
 		//return tilePoint.multiplyBy(tileSize).subtract(bounds.min);
+		return map.latLngToContainerPoint(map.unproject(tilePointNw));
+		*/
 	},
 
+
+	_drawCircle: function(point) {
+		var scene = new THREE.Scene();
+		var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+		var geometry = new THREE.CircleGeometry( 10, 20 );
+		var mesh = new THREE.Mesh(geometry, material);
+		mesh.position.set(point.x, point.y, 0);
+		scene.add(mesh);
+
+		function render() {
+			requestAnimationFrame( render.bind(this) );
+			this._renderer.render(scene, this._camera);
+		}
+		render.bind(this)();
+
+	},
 
 });
 

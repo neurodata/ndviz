@@ -370,6 +370,8 @@
       var scene = new THREE.Scene();
 
       var worldsize = this._map.getSize();
+      var origin = this._map.getPixelOrigin();
+      var shift = this._map.getPixelBounds().min.subtract(origin);
       var camera = this._camera;
 
       // get size from local function since layers may not have loaded
@@ -439,17 +441,43 @@
         plane.position.set(vector.x, vector.y, vector.z);
         console.log(plane.position);
         */
-        var vector = new THREE.Vector3(offsetx + worldsize.x / 2, offsety + worldsize.y / 2, 0);
+
+        //console.log(shift);
+        //console.log('shift:');
+        //console.log(shift);
+        //var vector = new THREE.Vector3((offsetx - worldsize.x)/2, (offsety - worldsize.y)/2, 0);
+
+        //vector = vector.project(camera);
+        //plane.position.set(vector.x, vector.y, vector.z);
+        //plane.updateMatrix();
+        /*
         console.log(vector);
         vector = vector.project(camera);
         plane.position.set(vector.x, vector.y, vector.z);
         console.log(plane.position);
+        */
+
+        // convert 2D coordinates to 3D
+
+        /*
+        var bounds = map.getBounds();
+        var topLeft = new L.LatLng(bounds.getNorth(), bounds.getWest());
+        var offset = LatLongToPixelXY(topLeft.lat, topLeft.lng);
+        */
+
+        plane.position.set(offsetx, offsety, 0);
+        console.log(plane.position);
+        scene.add(plane);
+
 
         //plane.position.set(offsetx, offsety, 0);
         //console.log(plane.position);
+        /*
+        console.log(camera);
+        console.log(vector.project(camera));
+        console.log(vector.unproject(camera));
+        */
 
-        scene.add(plane);
-        //console.log(plane.position.project(camera));
 
 
       }
@@ -468,8 +496,8 @@
 
           var offset = this._getTilePos(tile);
           console.log(tile);
-          console.log('offset');
-          console.log(offset);
+          //console.log('offset');
+          //console.log(offset);
           loadTexture(img, offset.x, offset.y, color, opacity, minval, maxval, gamma, blending);
 
         }
@@ -489,6 +517,65 @@
       render.bind(this)();
 
     }
+
+
+    function coordinatesDebug(event) {
+      // place a leaflet marker and a webgl marker at the click
+
+      var point = map.project(event.latlng);
+      var marker_options = {
+        title: point.x + " " + point.y + " " + ndv.zindex,
+      }
+
+      // add leaflet marker
+      L.marker(event.latlng, marker_options).addTo(map);
+      //console.log(point);
+      //console.log();
+
+      // point coordinate system is global
+      // topLeft and point are from the same coordinate system
+      // if we take topLeft to the center of the map...
+      var projPoint = map._getCenterOffset(event.latlng);
+      //glLayer._drawCircle( projPoint  );
+      glLayer._drawCircle( L.point([projPoint.x, -projPoint.y])  );
+
+
+      /*
+      console.log(L.point([projPoint.x, -projPoint.y]));
+      console.log( map.containerPointToLayerPoint(point).subtract(map._getCenterLayerPoint()));
+      */
+      // try this:
+      //glLayer._drawCircle();
+
+
+      // add gl marker
+
+
+    };
+
+    map.on('click', coordinatesDebug);
+
+
+
+
+    // get coordinates of click
+    /*
+    var mouse = new THREE.Vector2(), INTERSECTED;
+
+  	function onDocumentMouseMove( event ) {
+  		event.preventDefault();
+
+      //mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+      //mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+  		mouse.x = ( event.clientX );
+  		mouse.y = - ( event.clientY  );
+      console.log(mouse);
+  	}
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+    */
+    // end get coordinates of click
 
 
     // add a base canvas layer for blending, etc
@@ -687,9 +774,11 @@
 
     };
 
+    /*
     map.on('layeradd', function() {
       baseLayer.reload();
     });
+    */
 
     // set the initial view
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
