@@ -385,7 +385,7 @@ L.WebGLLayer = L.Class.extend({
 
 		if (!this._renderer) {
 			this._initRenderer();
-			//this._setRendererSize(map.getSize()); // handle in _reset()
+			this._initCamera(map.getSize());
 		}
 
 		map._panes.overlayPane.appendChild( this._renderer.domElement );
@@ -427,11 +427,13 @@ L.WebGLLayer = L.Class.extend({
 
 	_reset: function() {
 		this._setRendererSize(this._map.getSize());
+		this._resizeCamera(this._map.getSize());
 		//this._setupCamera(this._map.getPixelOrigin());
-		this._setupCamera(this._map.getSize());
+		//this._setupCamera(this._map.getSize());
 	},
 
 	_update: function() {
+		console.log('update');
 		if (!this._map) { return; }
 
 		var map = this._map,
@@ -444,7 +446,7 @@ L.WebGLLayer = L.Class.extend({
 
 		L.DomUtil.setPosition( this._renderer.domElement, position );
 		this._reset();
-		this.draw();
+		//this.draw();
 	},
 
 	_getSize: function() {
@@ -456,12 +458,21 @@ L.WebGLLayer = L.Class.extend({
 		//this._renderer.setClearColor( 0xff0000 );
 	},
 
+	_initCamera: function(origin) {
+		this._camera = new THREE.OrthographicCamera( origin.x / -2, origin.x / 2, origin.y / 2, origin.y / -2, 1, 1024.0 );
+	},
+
 	_setRendererSize: function(size) {
 		this._renderer.setSize( size.x, size.y );
 	},
 
-	_setupCamera: function(origin) {
-		this._camera = new THREE.OrthographicCamera( origin.x / -2, origin.x / 2, origin.y / 2, origin.y / -2, 1, 1024.0 );
+	_resizeCamera: function(origin) {
+		this._camera.left = origin.x / -2;
+		this._camera.right = origin.x / 2;
+		this._camera.top = origin.y / 2;
+		this._camera.bottom = origin.y / -2;
+		this._camera.updateProjectionMatrix();
+		//this._camera = new THREE.OrthographicCamera( origin.x / -2, origin.x / 2, origin.y / 2, origin.y / -2, 1, 1024.0 );
 		//this._camera = new THREE.OrthographicCamera( bounds.min.x, bounds.max.x, bounds.min.y, bounds.max.y, 1, 1000 );
 
 	},
