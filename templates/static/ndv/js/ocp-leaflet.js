@@ -253,8 +253,10 @@ L.WebGLLayer = L.Class.extend({
 		}, this);
 
 		if (map.options.zoomAnimation) {
-			map.on('zoomanim', this._animateZoom, this);
-			// TODO we could add an end catch here, too, to redraw
+			map.on({
+				'zoomanim': this._animateZoom,
+				'zoomend': this._endZoomAnim,
+			}, this);
 		}
 
 		this._reset();
@@ -269,7 +271,10 @@ L.WebGLLayer = L.Class.extend({
 			'moveend': this._update
 		}, this);
 		if (map.options.zoomAnimation) {
-			map.off('zoomanim', this._animateZoom, this);
+			map.off({
+				'zoomanim': this._animateZoom,
+				'zoomend': this._endZoomAnim,
+			}, this);
 		}
 	},
 
@@ -279,7 +284,15 @@ L.WebGLLayer = L.Class.extend({
 	},
 
 	_animateZoom: function(e) {
-		// TODO
+		var scale = map.getZoomScale(e.zoom);
+
+		this._camera.zoom = scale;
+		this._camera.updateProjectionMatrix();
+	},
+
+	_endZoomAnim: function() {
+		this._camera.zoom = 1;
+		this._camera.updateProjectionMatrix();
 	},
 
 	_reset: function() {

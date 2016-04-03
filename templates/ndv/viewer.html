@@ -518,9 +518,7 @@
 
     };
 
-    map.on('click', coordinatesDebug);
-
-
+    //map.on('click', coordinatesDebug);
 
 
     // get coordinates of click
@@ -708,7 +706,8 @@
               layers[layer].min = ui.value;
               },
             start: function ( event, ui ) { map.dragging.disable(); },
-            stop: function ( event, ui ) { map.dragging.enable(); baseLayer.reload(); },
+            stop: function ( event, ui ) { map.dragging.enable(); //baseLayer.reload();
+            },
           });
         });
       });// end min controls
@@ -724,7 +723,8 @@
               layers[layer].max = ui.value;
               },
             start: function ( event, ui ) { map.dragging.disable(); },
-            stop: function ( event, ui ) { map.dragging.enable(); baseLayer.reload(); },
+            stop: function ( event, ui ) { map.dragging.enable(); //baseLayer.reload();
+            },
           });
         });
       });// end max controls
@@ -740,7 +740,8 @@
                 layers[layer].opacity = ui.value/100;
               },
             start: function ( event, ui ) { map.dragging.disable(); },
-            stop: function ( event, ui ) { map.dragging.enable(); baseLayer.reload(); },
+            stop: function ( event, ui ) { map.dragging.enable(); //baseLayer.reload();
+            },
           });
         });
       });// end opacity controls
@@ -1104,13 +1105,12 @@
 		function reloadLayers() {
 			map.options.fadeAnimation = false;
       map.eachLayer( function (layer) {
-        if ( layer.hasOwnProperty('_url') && layer != baseLayer ) {
+        if ( layer.hasOwnProperty('_url') ) {
           layer.options.zindex = ndv.zindex;
 					layer.smoothRedraw();
         }
       });
-      baseLayer.smoothRedraw();
-      //baseLayer.redraw();
+      glLayer.draw();
       map.options.fadeAnimation = true;
       coordinatesUpdate();
 		}
