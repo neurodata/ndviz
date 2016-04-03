@@ -39,7 +39,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
 			// hide by default
-			//L.DomUtil.addClass(this, 'hidden');
+			L.DomUtil.addClass(this, 'hidden');
       // mark classes by index
       L.DomUtil.addClass(this, 'index-' + ndv.zindex);
 
@@ -367,7 +367,8 @@ L.WebGLLayer = L.Class.extend({
 		            bounds = new L.LatLngBounds([nw, se]);
 
 		var tileCenter = map._getCenterOffset( bounds.getCenter() );
-		return map.layerPointToContainerPoint( L.point(tileCenter.x, tileCenter.y*-1 ) );
+		//return map.layerPointToContainerPoint( L.point(tileCenter.x, tileCenter.y*-1 ) );
+		return L.point(tileCenter.x, tileCenter.y*-1);
 		/*
 		var origin = this._map.getPixelOrigin(),
 				bounds = this._map.getPixelBounds(),
