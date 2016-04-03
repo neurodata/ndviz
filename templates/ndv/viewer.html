@@ -691,7 +691,7 @@
     function updateImageControlSliders() {
       $( "#image-sliders" ).empty();
       for (layer in layers) {
-        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div class="controls-slider-name">Min</div><div id="slider"><span class="minslider">' + layer + '</span></div><br /><div class="controls-slider-name">Max</div><div id="slider"><span class="maxslider">' + layer + '</span></div><br /></div>';
+        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div class="controls-slider-name">Min</div><div id="slider"><span class="minslider">' + layer + '</span></div><br /><div class="controls-slider-name">Max</div><div id="slider"><span class="maxslider">' + layer + '</span></div><br /><div class="controls-slider-name">Gamma</div><div id="slider"><span class="gammaslider">' + layer + '</span></div><br /></div>';
         $( "#image-sliders" ).append(tmphtml);
       }
       // min controls
@@ -726,6 +726,23 @@
           });
         });
       });// end max controls
+      // gamma controls
+      $(function() {
+        $( "#slider > .gammaslider" ).each(function() {
+          var layer = $( this ).text();
+          $( this ).empty().slider({
+            min: 0,
+            max: 2,
+            value: 1,
+            step: 0.1,
+            slide: function ( event, ui ) {
+              layers[layer].gamma = ui.value;
+              },
+            start: function ( event, ui ) { map.dragging.disable(); },
+            stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
+          });
+        });
+      });// end gamma controls
       // opacity controls
       $(function() {
         $( "#slider > .opacity" ).each(function() {

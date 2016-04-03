@@ -82,6 +82,11 @@ html, body, #map {
   width: 60%;
   margin: 5px;
 }
+#slider > .gammaslider  {
+  float: right;
+  width: 60%;
+  margin: 5px;
+}
 #slider > .opacity {
   float: right;
   width: 60%;
