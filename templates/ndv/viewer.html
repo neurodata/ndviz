@@ -380,7 +380,7 @@
       var vertexShader = document.getElementById('vertexShader').text;
       var fragmentShader = document.getElementById('fragmentShader').text;
 
-      function loadTexture(img, offsetx, offsety, color, opacity, minval, maxval, gamma, blending) {
+      function loadTexture(img, layer, offsetx, offsety, color, opacity, minval, maxval, gamma, blending) {
 
         // use dom element for textures
         var texture = new THREE.Texture({
@@ -390,7 +390,21 @@
         texture.image = img;
         if ( $(img).hasClass('leaflet-tile-loaded') ) {
           texture.needsUpdate = true;
+        } else {
+          layer.on('tileload', function(e) {
+            if (e.tile == texture.image) {
+              texture.needsUpdate = true;
+            }
+          }, this);
         }
+
+        /*
+        if ($(img).hasClass('leaflet-tile-loaded') && e && e.hard) {
+          texture.needsUpdate = true;
+        } else {
+
+        }
+        */
 
         var geometry = new THREE.PlaneBufferGeometry(size, size);
 
@@ -437,10 +451,12 @@
         var gamma = layers[layer].gamma;
         var blending = THREE.AdditiveBlending;
 
-        // set an event to redraw on tile load
+        // set an event to redraw on tile load TODO needed?
+        /*
         layers[layer].tileLayer.on('load', function() {
           this.draw();
         }, this);
+        */
 
         for (var tile in layers[layer].tileLayer._tiles) {
 
@@ -449,7 +465,7 @@
           var offset = this._getTilePos(tile);
           //console.log(tile);
 
-          loadTexture(img, offset.x, offset.y, color, opacity, minval, maxval, gamma, blending);
+          loadTexture(img, layers[layer].tileLayer, offset.x, offset.y, color, opacity, minval, maxval, gamma, blending);
 
         }
         // TODO blending settings by user

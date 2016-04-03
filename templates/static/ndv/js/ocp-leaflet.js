@@ -36,9 +36,6 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     var layer = this._layer;
 
     //Only if we are loading an actual image
-		console.log('hi!');
-		console.log(this.src);
-		console.log(L.Util.emptyImageUrl);
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
 			// hide by default
@@ -293,7 +290,6 @@ L.WebGLLayer = L.Class.extend({
 	},
 
 	_update: function() {
-		console.log('update');
 		if (!this._map) { return; }
 
 		var map = this._map,
