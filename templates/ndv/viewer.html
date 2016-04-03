@@ -474,7 +474,10 @@
       this._camera.position.z = 1;
 
       function render() {
-        requestAnimationFrame( render.bind(this) );
+        if (this._repeater) {
+          cancelAnimationFrame(this._repeater);
+        }
+        this._repeater = requestAnimationFrame( render.bind(this) );
         this._renderer.render(scene, this._camera);
       }
       render.bind(this)();
