@@ -36,6 +36,9 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     var layer = this._layer;
 
     //Only if we are loading an actual image
+		console.log('hi!');
+		console.log(this.src);
+		console.log(L.Util.emptyImageUrl);
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
 			// hide by default
@@ -65,7 +68,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
       tile.src = L.Util.emptyImageUrl
     }
     else {
-      tile.src     = this.getTileUrl(tilePoint);
+      tile.src = this.getTileUrl(tilePoint);
     }
 		this.fire('tileloadstart', {
 			tile: tile,
@@ -75,7 +78,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
 	_createTile: function () {
 		var tile = L.DomUtil.create('img', 'leaflet-tile');
-		/* camanjs filtering TODO do we keep this? */
+		/* required to load tiles as textures */
 		tile.setAttribute('crossOrigin','anonymous');
 
 		tile.style.width = tile.style.height = this._getTileSize() + 'px';
@@ -218,149 +221,6 @@ L.tileLayer.OCPLayer = function (url, options) {
     return new L.TileLayer.OCPLayer(url, options);
 };
 
-/* build our own THREEJS rendering layer based on our modified TileLayer class */
-L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
-	options: {
-		async: true,
-	},
-	// same as canvas layer
-	initialize: function (options) {
-		L.setOptions(this, options);
-	},
-
-	redraw: function () {
-		if (this._map) {
-			this._reset({hard: true});
-			this._update();
-		}
-
-		for (var i in this._tiles) {
-			this._redrawTile(this._tiles[i]);
-		}
-		return this;
-	},
-
-	_loadTile: function (tile, tilePoint) {
-		tile._layer = this;
-		tile._tilePoint = tilePoint;
-
-		this._redrawTile(tile);
-
-		if (!this.options.async) {
-			this.tileDrawn(tile);
-		}
-	},
-
-	/* the following methods have been modified from L.TileLayer.Canvas */
-	_createTile: function () {
-		var tile = L.DomUtil.create('div', 'leaflet-tile');
-		// scale tile size by zoom
-		tile.width = tile.height = this._getTileSize();
-
-		tile.renderer = new THREE.WebGLRenderer();
-		tile.renderer.setSize( tile.width, tile.height );
-		tile.appendChild( tile.renderer.domElement );
-
-		tile.camera = this._getCamera();
-
-		tile.onselectstart = tile.onmousemove = L.Util.falseFn;
-		return tile;
-	},
-
-	_removeTile: function (key) {
-		var tile = this._tiles[key];
-
-		this.fire('tileunload', {tile: tile, url: tile.src});
-
-		if (this.options.reuseTiles) {
-			L.DomUtil.removeClass(tile, 'leaflet-tile-loaded');
-			this._unusedTiles.push(tile);
-
-		} else if (tile.parentNode === this._tileContainer) {
-			this._tileContainer.removeChild(tile);
-		}
-
-		// for https://github.com/CloudMade/Leaflet/issues/137
-		if (!L.Browser.android) {
-			tile.onload = null;
-			tile.src = L.Util.emptyImageUrl;
-		}
-
-		delete this._tiles[key];
-	},
-
-	// remove hidden tag
-	_tileOnLoad: function () {
-    var layer = this._layer;
-
-    //Only if we are loading an actual image
-    if (this.src !== L.Util.emptyImageUrl) {
-      L.DomUtil.addClass(this, 'leaflet-tile-loaded');
-      // mark classes by index
-      L.DomUtil.addClass(this, 'index-' + ndv.zindex);
-
-
-      layer.fire('tileload', {
-        tile: this,
-        url: this.src
-      });
-    }
-
-    layer._tileLoaded();
-  },
-
-	_getCamera: function() {
-			var curTileSize = this._getTileSize();
-			return new THREE.OrthographicCamera( curTileSize / -2, curTileSize / 2, curTileSize / 2, curTileSize / -2, 1, 1000 );
-		},
-
-	_redrawTile: function (tile) {
-		this.drawTile(tile, tile._tilePoint, this._map._zoom, this._getTileSize());
-	},
-
-	drawTile: function (/*tile, tilePoint, zoom, tileSize*/) {
-		// override with rendering code
-	},
-
-	/* the following methods have been added */
-	tileDrawn: function (tile) {
-		this._tileOnLoad.call(tile);
-	},
-
-	/* reblends tiles */
-	reload: function() {
-		for (var i in this._tiles) {
-			this._reloadTile(this._tiles[i]);
-		}
-	},
-
-	_reloadTile: function(tile) {
-		//this.reloadTile(tile, tile._tilePoint, this._map._zoom);
-		this.drawTile(tile, tile._tilePoint, this._map._zoom, this._getTileSize());
-	},
-
-	reloadTile: function(/*tile, tilePoint, zoom*/) {
-		// override with tile rendering code
-	},
-
-	// compatability with OCPLayer above (for panning)
-	smoothRedraw: function() {
-		if (this._map) {
-			this._update();
-		}
-
-		for (var i in this._tiles) {
-			this._reloadTile(this._tiles[i]);
-		}
-		return this;
-	},
-
-});
-
-L.tileLayer.OCPCanvas = function (options) {
-	return new L.TileLayer.OCPCanvas(options);
-};
-
 /* creates a single WebGL rendering context that spans the page */
 L.WebGLLayer = L.Class.extend({
 	options: {
@@ -446,7 +306,7 @@ L.WebGLLayer = L.Class.extend({
 
 		L.DomUtil.setPosition( this._renderer.domElement, position );
 		this._reset();
-		//this.draw();
+		this.draw();
 	},
 
 	_getSize: function() {
