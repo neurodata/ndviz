@@ -104,7 +104,9 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
       function unloadTiles() {
         for (key in old_tiles) {
-          this._tileContainer.removeChild(old_tiles[key]);
+					var tile = old_tiles[key];
+					this.fire('tileunload', {tile: tile, url: tile.src});
+          //this._tileContainer.removeChild(old_tiles[key]);
         }
         old_tiles = {};
       };

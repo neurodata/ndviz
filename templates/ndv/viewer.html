@@ -433,7 +433,23 @@
           blending: blending,
         });
 
+
         var plane = new THREE.Mesh( geometry, material );
+
+        // dispose of material, geometry, and mesh on unload
+        layer.on('tileunload', function(e) {
+          if (e.tile == texture.image) {
+            texture.dispose();
+            geometry.dispose();
+            geometry = undefined;
+            material.dispose();
+            material = undefined;
+            scene.remove(plane);
+            plane = undefined;
+            //plane.dispose();
+            console.log('unloading!');
+          }
+        }, this);
 
         // offset tile
         plane.position.set(offsetx, offsety, 0);
