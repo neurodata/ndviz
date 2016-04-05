@@ -166,3 +166,47 @@ html, body, #map {
   color: #555;
   border-radius: 4px;
 }
+
+.colorbox {
+  padding-top: 15px;
+}
+
+.btn-color:hover {
+  background-color: #f5f5f5;
+}
+
+.btn-r {
+  color: #000;
+  background-color: #ff0000;
+  border-color: #ff0000;
+}
+
+.btn-g {
+  color: #000;
+  background-color: #00ff00;
+  border-color: #00ff00;
+}
+
+.btn-b {
+  color: #fff;
+  background-color: #0000ff;
+  border-color: #0000ff;
+}
+
+.btn-c {
+  color: #000;
+  background-color: #00ffff;
+  border-color: #00ffff;
+}
+
+.btn-m {
+  color: #000;
+  background-color: #ff00ff;
+  border-color: #ff00ff;
+}
+
+.btn-y {
+  color: #000;
+  background-color: #ffff00;
+  border-color: #ffff00;
+}

@@ -695,7 +695,7 @@
     function updateImageControlSliders() {
       $( "#image-sliders" ).empty();
       for (layer in layers) {
-        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div class="controls-slider-name">Min</div><div id="slider"><span class="minslider">' + layer + '</span></div><br /><div class="controls-slider-name">Max</div><div id="slider"><span class="maxslider">' + layer + '</span></div><br /><div class="controls-slider-name">Gamma</div><div id="slider"><span class="gammaslider">' + layer + '</span></div><br /></div>';
+        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div class="controls-slider-name">Min</div><div id="slider"><span class="minslider">' + layer + '</span></div><br /><div class="controls-slider-name">Max</div><div id="slider"><span class="maxslider">' + layer + '</span></div><br /><div class="controls-slider-name">Gamma</div><div id="slider"><span class="gammaslider">' + layer + '</span></div><br /><div id="' + layer + '" class="colorbox"><div class="controls-slider-name">Color</div><div class="btn-group btn-group-xs"><button class="btn btn-default btn-color btn-r" value="R">R</button><button class="btn btn-default btn-color btn-g " value="G">G</button><button class="btn btn-default btn-color btn-b" value="B">B</button><button class="btn btn-default btn-color btn-c" value="C">C</button><button class="btn btn-default btn-color btn-m" value="M">M</button><button class="btn btn-default btn-color btn-y" value="Y">Y</button><button class="btn btn-default btn-color" value=""><span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span></button></div></div><br /> </div>';
         $( "#image-sliders" ).append(tmphtml);
       }
       // min controls
@@ -763,6 +763,21 @@
           });
         });
       });// end opacity controls
+      // color controls
+      $(function () {
+        $( ".colorbox" ).each( function() {
+          var layer = $( this ).attr('id');
+          console.log(layer);
+          $( this ).children('.btn-group').children( '.btn' ).each(function() {
+            $( this ).click(function() {
+              layers[layer].color = $(this).val();
+              glLayer.draw();
+            });
+          });
+        });
+      });
+
+      // end color controls
     };
     updateImageControlSliders();
     // toggle image controls
