@@ -188,6 +188,7 @@
         'min': 0.0,
         'max': 1.0,
         'gamma': 1.0,
+        'blending': THREE.NormalBlending,
       }
 
       var opacity;
@@ -286,7 +287,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
         {% endif %}
     {% endfor %}
 
@@ -381,7 +382,6 @@
       var fragmentShader = document.getElementById('fragmentShader').text;
 
       function loadTexture(img, layer, offsetx, offsety, color, opacity, minval, maxval, gamma, blending) {
-
         // use dom element for textures
         var texture = new THREE.Texture({
           repeat: 1,
@@ -465,26 +465,15 @@
         var minval = layers[layer].min;
         var maxval = layers[layer].max;
         var gamma = layers[layer].gamma;
-        var blending = THREE.AdditiveBlending;
-
-        // set an event to redraw on tile load TODO needed?
-        /*
-        layers[layer].tileLayer.on('load', function() {
-          this.draw();
-        }, this);
-        */
+        var blending = parseInt(layers[layer].blending);
 
         for (var tile in layers[layer].tileLayer._tiles) {
-
           var img = layers[layer].tileLayer._tiles[tile];
 
           var offset = this._getTilePos(tile);
-          //console.log(tile);
 
           loadTexture(img, layers[layer].tileLayer, offset.x, offset.y, color, opacity, minval, maxval, gamma, blending);
-
         }
-        // TODO blending settings by user
       }
 
       this._camera.position.z = 1;
@@ -497,9 +486,6 @@
         this._renderer.render(scene, this._camera);
       }
       render.bind(this)();
-
-      //this.render(scene);
-
     }
 
 
@@ -697,8 +683,7 @@
 
       var imgsliderdiv = '<div id="image-sliders"></div>'
 
-      //var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select><span style="float: right;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
-      var blendmode = ''; // TODO tmp disabled
+      var blendmode = '<br /><div id="blendmode">Blending: <select name="blendmode"><option value="1">Normal</option><option value="2">Additive</option><option value="3">Subtractive</option><option value="4">Multiply</option><option value="0">None</option></select><span style="float: right;"><a href="#"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
 
       var hiddendivend = '</div>';
 
@@ -1335,8 +1320,9 @@
 
         if (changed.is('select[name="blendmode"]')) {
           for (layer in layers) {
-            layers[layer].tileLayer.setBlendMode(changed.val());
+            layers[layer].blending = changed.val();
           }
+          glLayer.draw(); // redraw
         }
       });
     }); // blend mode
@@ -1558,8 +1544,9 @@
       // set select box to display correct value
       $( "select[name='blendmode']" ).val("{{ blendmode }}");
       for (layer in layers) {
-        layers[layer].tileLayer.setBlendMode("{{ blendmode }}");
+        layers[layer].blending = "{{ blendmode }}";
       }
+      glLayer.draw();
     </script>
     {% endif %}
   {# end parse options #}

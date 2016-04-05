@@ -54,21 +54,14 @@ VALID_SERVERS = {
 
 QUERY_TYPES = ['ANNOS']
 
-BLENDOPTS = [
-    'normal',
-    'multiply',
-    'screen',
-    'overlay',
-    'darken',
-    'lighten',
-    'color-dodge',
-    'color-burn',
-    'exclusion',
-    'hue',
-    'saturation',
-    'color',
-    'luminosity'
-]
+BLENDOPTS = {
+    'normal' : 1,
+    'additive' : 2,
+    'screen' : 2, # backwards compatibility
+    'subtractive': 3,
+    'multiply' : 4,
+    'none' : 0
+}
 
 def default(request):
   context = {
@@ -264,12 +257,12 @@ def tokenview(request, webargs):
     res = scalinglevels
 
   # process template options
-  blendmode = 'normal'
+  blendmode = BLENDOPTS['normal']
   if options is not None:
     if 'marker' in options.keys():
       marker = True
-    if 'blend' in options.keys() and options['blend'] in BLENDOPTS:
-      blendmode = options['blend']
+    if 'blend' in options.keys() and options['blend'] in BLENDOPTS.keys():
+      blendmode = BLENDOPTS[ options['blend'].lower() ]
 
   context = {
       'layers': layers,
@@ -371,12 +364,12 @@ def projectview(request, webargs):
   dvi = DataViewItem.objects.filter(vizproject = project_name)
   dv = DataView.objects.filter(items = dvi)
 
-  blendmode = 'normal'
+  blendmode = BLENDOPTS['normal']
   if options is not None:
     if 'marker' in options.keys():
       marker = True
-    if 'blend' in options.keys() and options['blend'] in BLENDOPTS:
-      blendmode = options['blend']
+    if 'blend' in options.keys() and options['blend'] in BLENDOPTS.keys():
+      blendmode = BLENDOPTS[ options['blend'].lower() ]
 
   context = {
       'layers': layers,
@@ -497,13 +490,13 @@ def renderDataview(request, webargs):
   # get dataview from database
   dv = get_object_or_404( DataView, token = token )
 
-  # build URLs 
+  # build URLs
   if (request.META['SCRIPT_NAME'] == ''):
     vizprojecturl = "http://{}/project/".format( request.META['HTTP_HOST'] )
-    dv_url = "http://{}/dataview/{}".format( request.META['HTTP_HOST'], token ) 
+    dv_url = "http://{}/dataview/{}".format( request.META['HTTP_HOST'], token )
   else:
     vizprojecturl = "http://{}{}/project/".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'] )
-    dv_url = "http://{}{}/dataview/{}".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'], token ) 
+    dv_url = "http://{}{}/dataview/{}".format( request.META['HTTP_HOST'], request.META['SCRIPT_NAME'], token )
 
   dv_items = dv.items.all()
 
