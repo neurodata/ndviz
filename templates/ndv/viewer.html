@@ -257,13 +257,7 @@
         {% endif %}
 
         {% if layer.tilecache %}
-          {% if layer.color %}
-            {% if layer.tilecache_server %}
-              var url = 'http://{{ layer.tilecache_server }}/ocptilecache/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
-            {% else %}
-              var url = 'http://{{ layer.server }}/ocptilecache/tilecache/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
-            {% endif %}
-          {% elif layer.layertype == 'timeseries' %}
+          {% if layer.layertype == 'timeseries' %}
             {% if layer.tilecache_server %}
               var url = 'http://{{ layer.tilecache_server }}/ocptilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
             {% else %}
