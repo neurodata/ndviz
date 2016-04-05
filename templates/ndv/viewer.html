@@ -51,7 +51,7 @@
   <script src="{% static 'ndv/js/easy-button.js' %}"></script>
   <script src="{% static 'ndv/js/ocp-leaflet.js' %}"></script>
   {# threejs #}
-  <script src="{% static 'ndv/js/threejs/three.js' %}"></script>
+  <script src="{% static 'ndv/js/threejs/three.min.js' %}"></script>
 
 	</head>
 <body>
@@ -225,18 +225,6 @@
         }
       );
 
-      /*
-      if (color != '') {
-        layers[layername].tileLayer.on('tileloadstart', function(event) {
-          $( event.tile ).hide();
-        });
-        layers[layername].tileLayer.on('tileload', function(event) {
-          //recolorTile(event, layername);
-          $( event.tile ).show();
-        });
-      }
-      */
-
       layers[layername].tileLayer.addTo(map);
     }
 
@@ -353,15 +341,6 @@
     }).addTo(map);
 
     glLayer.draw = function() {
-      /*
-      var size = this._getSize();
-      var scene = new THREE.Scene();
-      var geometry = new THREE.PlaneBufferGeometry(size.x, size.y);
-      var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
-      var mesh = new THREE.Mesh(geometry, material);
-      scene.add(mesh);
-      */
-
       var scene = new THREE.Scene();
 
       var worldsize = this._map.getSize();
@@ -391,14 +370,6 @@
             }
           }, this);
         }
-
-        /*
-        if ($(img).hasClass('leaflet-tile-loaded') && e && e.hard) {
-          texture.needsUpdate = true;
-        } else {
-
-        }
-        */
 
         var geometry = new THREE.PlaneBufferGeometry(size, size);
 
@@ -452,8 +423,6 @@
       }
 
       for (var layer in layers) {
-        //var color = new THREE.Color("rgb(" + layers[layer].color[0] + ", " + layers[layer].color[1] + ", " + layers[layer].color[2] + ")");
-
         var color = setThreeColor(layers[layer].color);
         var opacity = layers[layer].opacity;
         var minval = layers[layer].min;
@@ -493,79 +462,13 @@
 
       // add leaflet marker
       L.marker(event.latlng, marker_options).addTo(map);
-      //console.log(point);
-      //console.log();
 
-      // point coordinate system is global
-      // topLeft and point are from the same coordinate system
-      // if we take topLeft to the center of the map...
       var projPoint = map._getCenterOffset(event.latlng);
-      //glLayer._drawCircle( projPoint  );
+      // add GL marker
       glLayer._drawCircle( L.point([projPoint.x, -projPoint.y])  );
-
-
-      /*
-      console.log(L.point([projPoint.x, -projPoint.y]));
-      console.log( map.containerPointToLayerPoint(point).subtract(map._getCenterLayerPoint()));
-      */
-      // try this:
-      //glLayer._drawCircle();
-
-
-      // add gl marker
-
-
     };
 
     //map.on('click', coordinatesDebug);
-
-
-    // get coordinates of click
-    /*
-    var mouse = new THREE.Vector2(), INTERSECTED;
-
-  	function onDocumentMouseMove( event ) {
-  		event.preventDefault();
-
-      //mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-      //mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-  		mouse.x = ( event.clientX );
-  		mouse.y = - ( event.clientY  );
-      console.log(mouse);
-  	}
-    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-
-    */
-    // end get coordinates of click
-
-    /*
-    function updateOpacity( updatelayer, newopacity ) {
-      for (var tileKey in baseLayer._tiles) {
-        !function updateCaman(tileKey) {
-          Caman(baseLayer._tiles[tileKey], function() {
-            this.revert(false); // revert to base, don't update
-            for (layer in layers) {
-              this.newLayer(function() {
-                //this.setBlendingMode('screen');
-                //var overlayImg = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
-                var overlayImg = layers.em.tileLayer._tiles[tileKey];
-                this.overlayImage(overlayImg);
-
-                if (layers[layer].color != '') {
-                  this.filter.recolor(layers[layer].color.toLowerCase());
-                }
-
-                this.opacity(newopacity*100);
-
-              });
-            }
-            this.render();
-          });
-        }(tileKey);
-      }
-    }
-    */
 
     // set the initial view
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
@@ -870,7 +773,6 @@
     // END add data button palette
 
     // update current coordinates in nav box
-
     function coordinatesUpdate() {
       $( "#x" ).parent().removeClass("has-error");
       $( "#y" ).parent().removeClass("has-error");
