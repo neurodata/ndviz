@@ -17,7 +17,7 @@
                 <input type="checkbox" id="addCheckbox {{channel}}" value="{{ channel }}">{{ channel }}
               </label>
             </div>
-            {% endfor %} 
+            {% endfor %}
             <button type="submit" class="btn btn-primary">Add Channels</button>
           </form>
           <div class="add_channels_info">
@@ -30,7 +30,7 @@
           <h4>Add Data from Remote Server</h4>
           <p>Use the form below to add a additional layer to the current view. Layers can be removed by using the <i class="fa fa-times-circle"></i> next to the layer name in the <em>Image Controls</em> palette.</p>
           <div class="alert alert-danger" role="alert">
-            <p><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> 
+            <p><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
             <span class="sr-only">Error:</span>
             <em>Note:</em> Adding timeseries data using this form is currently <strong>not</strong> supported!</p>
           </div>
@@ -68,7 +68,7 @@
        </div>
      </div>
   </div>
-    <script> 
+    <script>
     $(function() {
       $('#serverSelect').change(function(e) {
         e.preventDefault();
@@ -88,9 +88,9 @@
     $(function() {
       $( '#add_channels_form' ).submit(function(e) {
         e.preventDefault();
-        // clear previous info / errors 
+        // clear previous info / errors
         $( '.add_channels_info' ).empty();
-        
+
         var token = '{{ project_name }}';
         var server = '{{ tokenserver }}';
         var script_name = '{{ request.META.SCRIPT_NAME }}';
@@ -100,9 +100,9 @@
         else {
           var urlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/validate/";
         }
-        // for each checkbox, add layer 
+        // for each checkbox, add layer
         $('#add_channels_form :input:checked').each(function() {
-          
+
           var channel = $(this).val();
           var args = token + "/" + channel + "/" + server + "/";
           var url = urlBase.concat(args);
@@ -112,17 +112,36 @@
             type: 'GET',
             success: function(response) {
               var url = 'http://' + server + '/ocp/catmaid/' + token + '/' + channel + '/xy/{zindex}/{y}_{x}_{z}.png';
-              console.log(url); 
-              layers[token + '_' + channel] = L.tileLayer.OCPLayer(
+              console.log(url);
+              // TODO: refactor this per https://github.com/neurodata/NeuroDataViz/issues/93
+              layers[token + '_' + channel] = {
+                'tileLayer': null,
+                'server': server,
+                'token': token,
+                'channel': channel,
+                'type': 'image',
+                'color': '',
+                'opacity': 1.0,
+                'min': 0.0,
+                'max': 1.0,
+                'gamma': 1.0,
+                'blending': THREE.NormalBlending,
+              }
+              layers[token + '_' + channel].tileLayer = L.tileLayer.OCPLayer(
                 url,
-              {
+                {
                 zindex: ndv.zindex,
                 zoomReverse: true,
                 minZoom: ndv.maxres,
-                maxZoom: ndv.maxres + ndv.maxres,
+                maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+                maxNativeZoom: ndv.maxres + ndv.maxres,
                 tileSize: 512,
+                opacity: 1,
+                propagate: 2,
+                //curtime: curtime,
                 continuousWorld: true,
               }).addTo(map);
+
               updateImageControlSliders();
               var html = '<div class="bg-info"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="sr-only">Success:</span> Added new layer for channel ' + channel + '.';
               $( '.add_channels_info' ).append(html);
@@ -138,12 +157,12 @@
         });
       });
     });
-    
-    // intercept form submission, validate url, and add to map 
+
+    // intercept form submission, validate url, and add to map
     $(function() {
       $( '#add_data_form' ).submit(function(e) {
         e.preventDefault();
-        // clear previous info / errors 
+        // clear previous info / errors
         $( '.add_data_info' ).empty();
 
         var script_name = '{{ request.META.SCRIPT_NAME }}';
@@ -176,15 +195,32 @@
           type: 'GET',
           success: function(response) {
             var url = 'http://' + server + '/ocp/catmaid/' + token + '/' + channel + '/xy/{zindex}/{y}_{x}_{z}.png';
-            
-            layers[token + '_' + channel] = L.tileLayer.OCPLayer(
+            // TODO: refactor this per https://github.com/neurodata/NeuroDataViz/issues/93
+            layers[token + '_' + channel] = {
+              'tileLayer': null,
+              'server': server,
+              'token': token,
+              'channel': channel,
+              'type': 'image',
+              'color': '',
+              'opacity': 1.0,
+              'min': 0.0,
+              'max': 1.0,
+              'gamma': 1.0,
+              'blending': THREE.NormalBlending,
+            }
+            layers[token + '_' + channel].tileLayer = L.tileLayer.OCPLayer(
               url,
-            {
+              {
               zindex: ndv.zindex,
               zoomReverse: true,
               minZoom: ndv.maxres,
-              maxZoom: ndv.maxres + ndv.maxres,
+              maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+              maxNativeZoom: ndv.maxres + ndv.maxres,
               tileSize: 512,
+              opacity: 1,
+              propagate: 2,
+              //curtime: curtime,
               continuousWorld: true,
             }).addTo(map);
             updateImageControlSliders();
@@ -202,5 +238,4 @@
       });
     });
   </script>
-  {# end add-data modal #} 
-
+  {# end add-data modal #}
