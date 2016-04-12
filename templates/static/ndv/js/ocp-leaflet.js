@@ -38,8 +38,11 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
     //Only if we are loading an actual image
     if (this.src !== L.Util.emptyImageUrl) {
       L.DomUtil.addClass(this, 'leaflet-tile-loaded');
+			// hide by default
+			L.DomUtil.addClass(this, 'hidden');
       // mark classes by index
       L.DomUtil.addClass(this, 'index-' + ndv.zindex);
+
 
       layer.fire('tileload', {
         tile: this,
@@ -62,7 +65,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
       tile.src = L.Util.emptyImageUrl
     }
     else {
-      tile.src     = this.getTileUrl(tilePoint);
+      tile.src = this.getTileUrl(tilePoint);
     }
 		this.fire('tileloadstart', {
 			tile: tile,
@@ -72,7 +75,7 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
 	_createTile: function () {
 		var tile = L.DomUtil.create('img', 'leaflet-tile');
-		/* camanjs filtering */
+		/* required to load tiles as textures */
 		tile.setAttribute('crossOrigin','anonymous');
 
 		tile.style.width = tile.style.height = this._getTileSize() + 'px';
@@ -101,7 +104,9 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 
       function unloadTiles() {
         for (key in old_tiles) {
-          this._tileContainer.removeChild(old_tiles[key]);
+					var tile = old_tiles[key];
+					this.fire('tileunload', {tile: tile, url: tile.src});
+          //this._tileContainer.removeChild(old_tiles[key]);
         }
         old_tiles = {};
       };
@@ -206,7 +211,7 @@ L.extend(L.DomUtil, {
   },
   setBlendMode: function(el, mode) {
     // TODO validate this somehow?
-    el.style.setProperty('mix-blend-mode', mode);
+    //el.style.setProperty('mix-blend-mode', mode);
   },
 
 });
@@ -215,91 +220,233 @@ L.tileLayer.OCPLayer = function (url, options) {
     return new L.TileLayer.OCPLayer(url, options);
 };
 
-/* build our own canvas layer based on our modified TileLayer class */
-L.TileLayer.OCPCanvas = L.TileLayer.OCPLayer.extend({
+/* creates a single WebGL rendering context that spans the page */
+L.WebGLLayer = L.Class.extend({
 	options: {
-		async: true
+		minZoom: 0,
+		maxZoom: 18,
+		tileSize: 256,
+		zoomOffset: 0,
+		disableScreenRender: false,
 	},
 
-	/* these methods are copied verbatim from L.TileLayer.Canvas */
-	initialize: function (options) {
+	initialize: function(options) {
+		//this._bounds = L.latLngBounds(bounds);
+
 		L.setOptions(this, options);
 	},
 
-	redraw: function () {
-		if (this._map) {
-			this._reset({hard: true});
-			this._update();
+	draw: function() {
+		/* WebGL drawing function */
+	},
+
+	onAdd: function(map) {
+		this._map = map;
+
+		if (!this._renderer) {
+			this._initRenderer();
+			this._initCamera(map.getSize());
 		}
 
-		for (var i in this._tiles) {
-			this._redrawTile(this._tiles[i]);
+		map._panes.overlayPane.appendChild( this._renderer.domElement );
+
+		map.on({
+			'viewreset': this._reset,
+			'moveend': this._update
+		}, this);
+
+		if (map.options.zoomAnimation) {
+			map.on({
+				'zoomanim': this._animateZoom,
+				'zoomend': this._endZoomAnim,
+			}, this);
 		}
+
+		this._reset();
+		this.draw();
+	},
+
+	onRemove: function(map) {
+		map.getPanes().overlayPane.removeChild( this._renderer.domElement );
+
+		map.off({
+			'viewreset': this._reset,
+			'moveend': this._update
+		}, this);
+		if (map.options.zoomAnimation) {
+			map.off({
+				'zoomanim': this._animateZoom,
+				'zoomend': this._endZoomAnim,
+			}, this);
+		}
+	},
+
+	addTo: function(map) {
+		map.addLayer(this);
 		return this;
 	},
 
-	_loadTile: function (tile, tilePoint) {
-		tile._layer = this;
-		tile._tilePoint = tilePoint;
+	_animateZoom: function(e) {
+		var scale = map.getZoomScale(e.zoom);
+		console.log(scale);
+		this._camera.zoom = scale;
+		this._camera.updateProjectionMatrix();
+		this._renderToScreen();
+		this.disableScreenRender();
+	},
 
-		this._redrawTile(tile);
+	_endZoomAnim: function() {
+		this._camera.zoom = 1;
+		this._camera.updateProjectionMatrix();
+		setTimeout(this.enableScreenRender.bind(this), 200);
+	},
 
-		if (!this.options.async) {
-			this.tileDrawn(tile);
+	_reset: function() {
+		this._setRendererSize(this._map.getSize());
+		this._resizeCamera(this._map.getSize());
+		//this._setupCamera(this._map.getPixelOrigin());
+		//this._setupCamera(this._map.getSize());
+	},
+
+	_update: function() {
+		if (!this._map) { return; }
+
+		var map = this._map,
+			bounds = map.getPixelBounds(), // TODO don't need these?
+			origin = map.getPixelOrigin(),
+			size = map.getSize();
+
+		//var shift = bounds.min.subtract(origin);
+		var position = map._getMapPanePos().multiplyBy(-1);
+
+		L.DomUtil.setPosition( this._renderer.domElement, position );
+		this._reset();
+		this.draw();
+		this._renderToScreen();
+	},
+
+	disableScreenRender: function() {
+		this.options.disableScreenRender = true;
+	},
+
+	enableScreenRender: function() {
+		this.options.disableScreenRender = false;
+	},
+
+	_renderToScreen: function() {
+		if (this._renderTarget && !this.options.disableScreenRender) {
+			if (this._screenScene) {
+				// clean up existing scene
+				this._screenScene.children[0].geometry.dispose();
+				this._screenScene.children[0].material.dispose();
+				this._screenScene.remove( this._screenScene.children[0] );
+			}
+
+			var worldSize = this._map.getSize();
+			var geo = new THREE.PlaneBufferGeometry( worldSize.x, worldSize.y );
+			var mat = new THREE.MeshBasicMaterial({map: this._renderTarget});
+			var mesh = new THREE.Mesh( geo, mat );
+			this._screenScene = new THREE.Scene();
+			this._screenScene.add(mesh);
+
+			this._renderer.render(this._screenScene, this._camera)
 		}
 	},
 
-	/* the following methods have been modified from L.TileLayer.Canvas */
-	_createTile: function () {
-		var tile = L.DomUtil.create('canvas', 'leaflet-tile');
-		// scale tile size by zoom
-		tile.width = tile.height = this._getTileSize();
-		tile.onselectstart = tile.onmousemove = L.Util.falseFn;
-		return tile;
+	_getSize: function() {
+		return this._map.getSize();
 	},
 
-	_redrawTile: function (tile) {
-		this.drawTile(tile, tile._tilePoint, this._map._zoom, this._getTileSize());
+	_initRenderer: function() {
+		this._renderer = new THREE.WebGLRenderer();
 	},
 
-	drawTile: function (/*tile, tilePoint, zoom, tileSize*/) {
-		// override with rendering code
+	_initCamera: function(origin) {
+		this._camera = new THREE.OrthographicCamera( origin.x / -2, origin.x / 2, origin.y / 2, origin.y / -2, 1, 1024.0 );
 	},
 
-	/* the following methods have been added */
-	tileDrawn: function (tile) {
-		this._tileOnLoad.call(tile);
+	_setRendererSize: function(size) {
+		this._renderer.setSize( size.x, size.y );
 	},
 
-	/* reblends tiles */
-	reload: function() {
-		for (var i in this._tiles) {
-			this._reloadTile(this._tiles[i]);
+	_resizeCamera: function(origin) {
+		this._camera.left = origin.x / -2;
+		this._camera.right = origin.x / 2;
+		this._camera.top = origin.y / 2;
+		this._camera.bottom = origin.y / -2;
+		this._camera.updateProjectionMatrix();
+	},
+
+	_getTileSize: function () {
+		var map = this._map,
+		    zoom = map.getZoom() + this.options.zoomOffset,
+		    zoomN = this.options.maxNativeZoom,
+		    tileSize = this.options.tileSize;
+
+		if (zoomN && zoom > zoomN) {
+      tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
+    }
+    else if ( (zoomN == 0) && (zoom > zoomN) ) {
+      // another quick for the case where maxNativeZoom is 0
+      // AB TODO consider using == undefined in the general case
+      tileSize = Math.round(map.getZoomScale(zoom) / map.getZoomScale(zoomN) * tileSize);
+    }
+
+		return tileSize;
+	},
+
+	// helper function for converting tile key to pixel coords
+	_getTilePos: function(tilePointStr) {
+
+
+
+		var tilePointTmp = tilePointStr.split(":");
+		var tilePoint = new L.Point(tilePointTmp[0], tilePointTmp[1]);
+
+		var tileSize = this._getTileSize(),
+		            nwPoint = tilePoint.multiplyBy(tileSize),
+		            sePoint = nwPoint.add(new L.Point(tileSize, tileSize)),
+		            nw = this._map.unproject(nwPoint),
+		            se = this._map.unproject(sePoint),
+		            bounds = new L.LatLngBounds([nw, se]);
+
+		var tileCenter = map._getCenterOffset( bounds.getCenter() );
+		//return map.layerPointToContainerPoint( L.point(tileCenter.x, tileCenter.y*-1 ) );
+		return L.point(tileCenter.x, tileCenter.y*-1);
+		/*
+		var origin = this._map.getPixelOrigin(),
+				bounds = this._map.getPixelBounds(),
+				tileSize = this._getTileSize();
+
+		var test = this._map._getCenterLayerPoint();
+
+		// this gives us the coordinates for the nw corner of each tile
+		var tilePointNw = tilePoint.multiplyBy(tileSize); //  .subtract( [tileSize / 2.0, tileSize / 2.0] );
+		var tileCenter = tilePointNw.subtract([tileSize / 2.0, tileSize / 2.0]);
+		//return tilePoint.multiplyBy(tileSize).subtract(bounds.min);
+		return map.latLngToContainerPoint(map.unproject(tilePointNw));
+		*/
+	},
+
+
+	_drawCircle: function(point) {
+		var scene = new THREE.Scene();
+		var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+		var geometry = new THREE.CircleGeometry( 10, 20 );
+		var mesh = new THREE.Mesh(geometry, material);
+		mesh.position.set(point.x, point.y, 0);
+		scene.add(mesh);
+
+		function render() {
+			requestAnimationFrame( render.bind(this) );
+			this._renderer.render(scene, this._camera);
 		}
-	},
+		render.bind(this)();
 
-	_reloadTile: function(tile) {
-		this.reloadTile(tile, tile._tilePoint, this._map._zoom);
-	},
-
-	reloadTile: function(/*tile, tilePoint, zoom*/) {
-		// override with tile rendering code
-	},
-
-	// compatability with OCPLayer above (for panning)
-	smoothRedraw: function() {
-		if (this._map) {
-			this._update();
-		}
-
-		for (var i in this._tiles) {
-			this._reloadTile(this._tiles[i]);
-		}
-		return this;
 	},
 
 });
 
-L.tileLayer.OCPCanvas = function (options) {
-	return new L.TileLayer.OCPCanvas(options);
+L.webGLLayer = function(options) {
+	return new L.WebGLLayer(options);
 };

@@ -43,15 +43,16 @@
     {% include "ndv/analytics.html" %}
   {% endif %}
 
-  {#<script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>#}
-  <script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>
+  {#<script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>#}
   <script src="{% static 'ndv/js/Control.Loading.js' %}"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <script src="{% static 'ndv/js/spin.min.js' %}"></script>
   <script src="{% static 'ndv/js/easy-button.js' %}"></script>
   <script src="{% static 'ndv/js/ocp-leaflet.js' %}"></script>
-  {# camanjs #}
-  <script type="text/javascript" src="{% static "ndv/js/caman.full.js" %}"></script>
+  {# threejs #}
+  <script src="{% static 'ndv/js/threejs/three.min.js' %}"></script>
+
 	</head>
 <body>
 
@@ -66,8 +67,52 @@
   {# End Modal Code Includes #}
 
   <div id="map"></div>
+  <script id="vertexShader" type="x-shader/x-vertex">
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  </script>
+
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    varying vec2 vUv;
+
+    uniform vec3 color;
+    uniform sampler2D texture;
+
+    uniform float opacity;
+
+    // remapping
+    uniform float minval;
+    uniform float maxval;
+
+    // gamma
+    uniform float gamma;
+
+    void main() {
+      vec4 tmpColor;
+
+      #ifdef REMAP
+      tmpColor = texture2D(texture, vUv) * vec4(color.x, color.y, color.z, opacity);
+      // remap color to new intensity range
+      tmpColor.x = min( max( (tmpColor.x - minval)/maxval, 0.0), 1.0 );
+      tmpColor.y = min( max( (tmpColor.y - minval)/maxval, 0.0), 1.0 );
+      tmpColor.z = min( max( (tmpColor.z - minval)/maxval, 0.0), 1.0 );
+      #else
+      tmpColor = texture2D(texture, vUv) * vec4(color.x, color.y, color.z, opacity);
+      #endif
+
+      #ifdef GAMMACOR
+      tmpColor.rgb = pow(tmpColor.rgb, vec3(1.0 / gamma));
+      #endif
+
+      gl_FragColor = tmpColor;
+
+    }
+  </script>
   <script>
-  //Caman.DEBUG = true;
+    // AB TODO use strict
 
     // global variables
     var ndv = {};
@@ -140,8 +185,10 @@
         'type': layertype,
         'color': color,
         'opacity': 1.0,
-        'min': 0,
-        'max': 255,
+        'min': 0.0,
+        'max': 1.0,
+        'gamma': 1.0,
+        'blending': THREE.NormalBlending,
       }
 
       var opacity;
@@ -178,98 +225,7 @@
         }
       );
 
-      /*
-      if (color != '') {
-        layers[layername].tileLayer.on('tileloadstart', function(event) {
-          $( event.tile ).hide();
-        });
-        layers[layername].tileLayer.on('tileload', function(event) {
-          //recolorTile(event, layername);
-          $( event.tile ).show();
-        });
-      }
-      */
-
       layers[layername].tileLayer.addTo(map);
-    }
-
-    // recoloring
-    // The color value is the argument given by the user when
-    // they call this filter.
-    Caman.Filter.register("recolor", function (color) {
-
-      var rmult = 0;
-      var gmult = 0;
-      var bmult = 0;
-
-      switch (color) {
-        case 'r':
-          rmult = 1;
-          break;
-        case 'g':
-          gmult = 1;
-          break;
-        case 'b':
-          bmult = 1;
-          break;
-        case 'c':
-          bmult = 1;
-          gmult = 1;
-          break;
-        case 'm':
-          rmult = 1;
-          bmult = 1;
-          break;
-        case 'y':
-          rmult = 1;
-          gmult = 1;
-          break;
-      }
-
-      // Our process function that will be called for each pixel.
-      // Note that we pass the name of the filter as the first argument.
-      this.process("recolor", function (rgba) {
-        rgba.r = rgba.r*rmult;
-        rgba.g = rgba.g*gmult;
-        rgba.b = rgba.b*bmult;
-        // Return the modified RGB values
-        return rgba;
-      });
-    });
-
-    Caman.Filter.register("remap", function (min, max) {
-      // Our process function that will be called for each pixel.
-      // Note that we pass the name of the filter as the first argument.
-      if (min > 255) { min = 255; }
-      if (max > 255) { max = 255; }
-      if (min < 0) { min = 0; }
-      if (max < 0) { max = 0; }
-
-      this.process("remap", function (rgba) {
-
-        rgba.r = Math.min( Math.max( 0, Math.round( rgba.r*(255/max) - (255*min)/max ) ), 255);
-        rgba.g = Math.min( Math.max( 0, Math.round( rgba.g*(255/max) - (255*min)/max ) ), 255);
-        rgba.b = Math.min( Math.max( 0, Math.round( rgba.b*(255/max) - (255*min)/max ) ), 255);
-
-        // Return the modified RGB values
-        return rgba;
-      });
-    });
-
-    function recolorTile(tileEvent, layer) {
-      Caman(tileEvent.tile, function () {
-          this.revert(false);
-          this.recolor(layers[layer].color.toLowerCase());
-          this.render(function() {
-            // replace tile with canvas in leaflet
-            var urlSplit = tileEvent.url.split("/");
-            var key = urlSplit[ urlSplit.length - 1 ].split("_")[1] + ":" + urlSplit[ urlSplit.length - 1 ].split("_")[0];
-            layers[layer].tileLayer._tiles[key] = this.canvas;
-
-            // display tile
-            $( this.canvas ).show();
-          });
-      });
     }
 
     function updateLayerUrl(layername, newUrl) {
@@ -289,13 +245,7 @@
         {% endif %}
 
         {% if layer.tilecache %}
-          {% if layer.color %}
-            {% if layer.tilecache_server %}
-              var url = 'http://{{ layer.tilecache_server }}/ocptilecache/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
-            {% else %}
-              var url = 'http://{{ layer.server }}/ocptilecache/tilecache/mcfc/' + webtoken + '/xy/{zindex}/{y}_{x}_{z}.png';
-            {% endif %}
-          {% elif layer.layertype == 'timeseries' %}
+          {% if layer.layertype == 'timeseries' %}
             {% if layer.tilecache_server %}
               var url = 'http://{{ layer.tilecache_server }}/ocptilecache/' + webtoken + '/xy/{{ starttime }}/{zindex}/{y}_{x}_{z}.png';
             {% else %}
@@ -319,7 +269,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
         {% endif %}
     {% endfor %}
 
@@ -360,97 +310,167 @@
     {% endfor %}
 
 
-    // add a base canvas layer for blending, etc
-    var baseLayer = new L.TileLayer.OCPCanvas({
-              zindex: ndv.zindex,
-              zoomReverse: true,
-              minZoom: ndv.maxres,
-              maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
-              maxNativeZoom: ndv.maxres + ndv.maxres,
-              tileSize: 512,
-              continuousWorld: true,
-    });
-
-    function updateOpacity( updatelayer, newopacity ) {
-      for (var tileKey in baseLayer._tiles) {
-        !function updateCaman(tileKey) {
-          Caman(baseLayer._tiles[tileKey], function() {
-            this.revert(false); // revert to base, don't update
-            for (layer in layers) {
-              this.newLayer(function() {
-                //this.setBlendingMode('screen');
-                //var overlayImg = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
-                var overlayImg = layers.em.tileLayer._tiles[tileKey];
-                this.overlayImage(overlayImg);
-
-                if (layers[layer].color != '') {
-                  this.filter.recolor(layers[layer].color.toLowerCase());
-                }
-
-                this.opacity(newopacity*100);
-
-              });
-            }
-            this.render();
-          });
-        }(tileKey);
+    function setThreeColor(color) {
+      // given a color tag ('r','g','b','c','m','y') set the appropriate three color
+      switch(color) {
+        case 'R':
+          return new THREE.Color("rgb(255,0,0)");
+        case 'G':
+          return new THREE.Color("rgb(0, 255, 0)");
+        case 'B':
+          return new THREE.Color("rgb(0, 0, 255)");
+        case 'C':
+          return new THREE.Color("rgb(0, 255, 255)");
+        case 'M':
+          return new THREE.Color("rgb(255, 0, 255)");
+        case 'Y':
+          return new THREE.Color("rgb(255, 255, 0)");
+        default:
+          return new THREE.Color("rgb(255, 255, 255)");
       }
     }
 
-    baseLayer.drawTile = function(canvas, tilePoint, zoom, tileSize) {
-      // first, draw the actual canvas
-      var ctx = canvas.getContext('2d');
-      canvas.setAttribute('data-caman-hidpi-disabled','');
-      ctx.fillStyle = 'black';
-      ctx.fillRect(0, 0, tileSize, tileSize);
+    // testing the webGL layer interface
+    var glLayer = new L.WebGLLayer({
+      zindex: ndv.zindex,
+      zoomReverse: true,
+      minZoom: ndv.maxres,
+      maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+      maxNativeZoom: ndv.maxres + ndv.maxres,
+      tileSize: 512,
+    }).addTo(map);
 
-      // then, use caman to blend/recolor reach layer
-      this.reloadTile(canvas, tilePoint, zoom);
-    };
-    baseLayer.reloadTile = function(canvas, tilePoint, zoom) {
+    glLayer.draw = function() {
+      var scene = new THREE.Scene();
 
-      // Caman changes the tile/canvas name
-      var oldcanvas = canvas;
+      var worldsize = this._map.getSize();
+      var origin = this._map.getPixelOrigin();
+      var shift = this._map.getPixelBounds().min.subtract(origin);
+      var camera = this._camera;
 
-      Caman(canvas, function () {
-        // manipulate image here
-        this.revert(false);
-        for (layer in layers) {
-          this.newLayer(function() {
+      // get size from local function since layers may not have loaded
+      var size = this._getTileSize();
 
-            // TODO allow user to set blending mode
-            this.setBlendingMode('addition');
+      var vertexShader = document.getElementById('vertexShader').text;
+      var fragmentShader = document.getElementById('fragmentShader').text;
 
-            var overlayImg = layers[layer].tileLayer._tiles[tilePoint.x + ':' + tilePoint.y];
-            this.overlayImage(overlayImg);
+      function loadTexture(img, layer, offsetx, offsety, color, opacity, minval, maxval, gamma, blending) {
+        // use dom element for textures
+        var texture = new THREE.Texture({
+          repeat: 1,
+        });
 
-            // make sure we set min/max before coloring
-            // AB TODO add a switch to turn this on/off
-            if (layers[layer].min > 0 || layers[layer].max < 255) {
-              this.filter.remap(layers[layer].min, layers[layer].max);
+        texture.image = img;
+        texture.name = layer;
+        if ( $(img).hasClass('leaflet-tile-loaded') ) {
+          texture.needsUpdate = true;
+        } else {
+          layer.on('tileload', function(e) {
+            if (e.tile == texture.image) {
+              texture.needsUpdate = true;
             }
-
-            // all options (min, max, color, opacity, etc) are set in the layers object
-            if (layers[layer].color != '') {
-              this.filter.recolor(layers[layer].color.toLowerCase());
-            }
-
-            this.opacity(layers[layer].opacity*100);
-
-          });
+          }, this);
         }
 
-        this.render(function() {
-          this.canvas.crossOrigin = '';
-          baseLayer.tileDrawn(oldcanvas);
-        });
-      });
-    }
-    baseLayer.addTo(map);
+        var geometry = new THREE.PlaneBufferGeometry(size, size);
 
-    map.on('layeradd', function() {
-      baseLayer.reload();
-    });
+        // some default uniforms
+        var uniforms = {
+          color: { type: "c", value: color },
+          texture: { type: "t", value: texture },
+          opacity: { type: "f", value: opacity },
+          minval: { type: "f", value: minval },
+          maxval: { type: "f", value: maxval },
+          gamma: { type: "f", value: gamma },
+        };
+
+        // TODO only enable these when sliders have been moved
+        var defines = {
+          REMAP: true,
+          GAMMACOR: true,
+        }
+
+        var material = new THREE.ShaderMaterial({
+          uniforms: uniforms,
+          defines: defines,
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
+          transparent: true,
+          blending: blending,
+        });
+
+        var plane = new THREE.Mesh( geometry, material );
+
+        // dispose of material, geometry, and mesh on unload
+        layer.on('tileunload', function(e) {
+          if (e.tile == texture.image) {
+            texture.dispose();
+            geometry.dispose();
+            geometry = undefined;
+            material.dispose();
+            material = undefined;
+            scene.remove(plane);
+            plane = undefined;
+          }
+        }, this);
+
+        // offset tile
+        plane.position.set(offsetx, offsety, 0);
+
+        scene.add(plane);
+      }
+
+      for (var layer in layers) {
+        var color = setThreeColor(layers[layer].color);
+        var opacity = layers[layer].opacity;
+        var minval = layers[layer].min;
+        var maxval = layers[layer].max;
+        var gamma = layers[layer].gamma;
+        var blending = parseInt(layers[layer].blending);
+
+        for (var tile in layers[layer].tileLayer._tiles) {
+          var img = layers[layer].tileLayer._tiles[tile];
+
+          var offset = this._getTilePos(tile);
+
+          loadTexture(img, layers[layer].tileLayer, offset.x, offset.y, color, opacity, minval, maxval, gamma, blending);
+        }
+      }
+
+      this._camera.position.z = 1;
+
+      this._renderTarget = new THREE.WebGLRenderTarget( worldsize.x, worldsize.y );
+
+      function render() {
+        if (this._repeater) {
+          cancelAnimationFrame(this._repeater);
+        }
+        this._repeater = requestAnimationFrame( render.bind(this) );
+        this._renderer.render(scene, this._camera, this._renderTarget);
+        this._renderToScreen();
+      }
+      render.bind(this)();
+
+      //this._renderToScreen();
+    }
+
+    function coordinatesDebug(event) {
+      // place a leaflet marker and a webgl marker at the click
+
+      var point = map.project(event.latlng);
+      var marker_options = {
+        title: point.x + " " + point.y + " " + ndv.zindex,
+      }
+
+      // add leaflet marker
+      L.marker(event.latlng, marker_options).addTo(map);
+
+      var projPoint = map._getCenterOffset(event.latlng);
+      // add GL marker
+      glLayer._drawCircle( L.point([projPoint.x, -projPoint.y])  );
+    };
+
+    //map.on('click', coordinatesDebug);
 
     // set the initial view
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
@@ -562,8 +582,7 @@
 
       var imgsliderdiv = '<div id="image-sliders"></div>'
 
-      //var blendmode = '<br /><div id="blendmode">Blend Mode: <select name="blendmode"><option value="normal">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="darken">Darken</option><option value="lighten">Ligten</option><option value="color-dodge">Color Dodge</option><option value="color-burn">Color Burn</option><option value="exclusion">Exclusion</option><option value="difference">Difference</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option></select><span style="float: right;"><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/blend-mode" target="_blank"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
-      var blendmode = ''; // TODO tmp disabled
+      var blendmode = '<br /><div id="blendmode">Blending: <select name="blendmode"><option value="1">Normal</option><option value="2">Additive</option><option value="3">Subtractive</option><option value="4">Multiply</option><option value="0">None</option></select><span style="float: right;"><a href="#"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
 
       var hiddendivend = '</div>';
 
@@ -575,7 +594,7 @@
     function updateImageControlSliders() {
       $( "#image-sliders" ).empty();
       for (layer in layers) {
-        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div class="controls-slider-name">Min</div><div id="slider"><span class="minslider">' + layer + '</span></div><br /><div class="controls-slider-name">Max</div><div id="slider"><span class="maxslider">' + layer + '</span></div><br /></div>';
+        var tmphtml = '<div class="controls-' + layer + '"><div class="controls-layer-name"><a href="#" class="remove-layer ' + layer + '"><i class="fa fa-times-circle"></i></a><a href="#">' + layer + '</a></div><div class="controls-slider-name">Opacity</div><div id="slider"><span class="opacity">' + layer + '</span></div><br /><div class="controls-slider-name">Min</div><div id="slider"><span class="minslider">' + layer + '</span></div><br /><div class="controls-slider-name">Max</div><div id="slider"><span class="maxslider">' + layer + '</span></div><br /><div class="controls-slider-name">Gamma</div><div id="slider"><span class="gammaslider">' + layer + '</span></div><br /><div id="' + layer + '" class="colorbox"><div class="controls-slider-name">Color</div><div class="btn-group btn-group-xs"><button class="btn btn-default btn-color btn-r" value="R">R</button><button class="btn btn-default btn-color btn-g " value="G">G</button><button class="btn btn-default btn-color btn-b" value="B">B</button><button class="btn btn-default btn-color btn-c" value="C">C</button><button class="btn btn-default btn-color btn-m" value="M">M</button><button class="btn btn-default btn-color btn-y" value="Y">Y</button><button class="btn btn-default btn-color" value=""><span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span></button></div></div><br /> </div>';
         $( "#image-sliders" ).append(tmphtml);
       }
       // min controls
@@ -587,10 +606,10 @@
             max: 255,
             value: 0,
             slide: function ( event, ui ) {
-              layers[layer].min = ui.value;
+              layers[layer].min = ui.value/255.0;
               },
             start: function ( event, ui ) { map.dragging.disable(); },
-            stop: function ( event, ui ) { map.dragging.enable(); baseLayer.reload(); },
+            stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
           });
         });
       });// end min controls
@@ -603,13 +622,30 @@
             max: 255,
             value: 255,
             slide: function ( event, ui ) {
-              layers[layer].max = ui.value;
+              layers[layer].max = ui.value/255.0;
               },
             start: function ( event, ui ) { map.dragging.disable(); },
-            stop: function ( event, ui ) { map.dragging.enable(); baseLayer.reload(); },
+            stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
           });
         });
       });// end max controls
+      // gamma controls
+      $(function() {
+        $( "#slider > .gammaslider" ).each(function() {
+          var layer = $( this ).text();
+          $( this ).empty().slider({
+            min: 0,
+            max: 2,
+            value: 1,
+            step: 0.1,
+            slide: function ( event, ui ) {
+              layers[layer].gamma = ui.value;
+              },
+            start: function ( event, ui ) { map.dragging.disable(); },
+            stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
+          });
+        });
+      });// end gamma controls
       // opacity controls
       $(function() {
         $( "#slider > .opacity" ).each(function() {
@@ -622,10 +658,24 @@
                 layers[layer].opacity = ui.value/100;
               },
             start: function ( event, ui ) { map.dragging.disable(); },
-            stop: function ( event, ui ) { map.dragging.enable(); baseLayer.reload(); },
+            stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
           });
         });
       });// end opacity controls
+      // color controls
+      $(function () {
+        $( ".colorbox" ).each( function() {
+          var layer = $( this ).attr('id');
+          $( this ).children('.btn-group').children( '.btn' ).each(function() {
+            $( this ).click(function() {
+              layers[layer].color = $(this).val();
+              glLayer.draw();
+            });
+          });
+        });
+      });
+
+      // end color controls
     };
     updateImageControlSliders();
     // toggle image controls
@@ -821,7 +871,6 @@
     // END add data button palette
 
     // update current coordinates in nav box
-
     function coordinatesUpdate() {
       $( "#x" ).parent().removeClass("has-error");
       $( "#y" ).parent().removeClass("has-error");
@@ -1082,15 +1131,17 @@
 
 		function reloadLayers() {
 			map.options.fadeAnimation = false;
+      glLayer.disableScreenRender();
+      //glLayer.draw();
       map.eachLayer( function (layer) {
-        if ( layer.hasOwnProperty('_url') && layer != baseLayer ) {
+        if ( layer.hasOwnProperty('_url') ) {
           layer.options.zindex = ndv.zindex;
 					layer.smoothRedraw();
         }
       });
-      baseLayer.smoothRedraw();
-      //baseLayer.redraw();
       map.options.fadeAnimation = true;
+      glLayer.draw();
+      setTimeout(glLayer.enableScreenRender.bind(glLayer), 300);
       coordinatesUpdate();
 		}
 
@@ -1281,8 +1332,9 @@
 
         if (changed.is('select[name="blendmode"]')) {
           for (layer in layers) {
-            layers[layer].tileLayer.setBlendMode(changed.val());
+            layers[layer].blending = changed.val();
           }
+          glLayer.draw(); // redraw
         }
       });
     }); // blend mode
@@ -1504,8 +1556,9 @@
       // set select box to display correct value
       $( "select[name='blendmode']" ).val("{{ blendmode }}");
       for (layer in layers) {
-        layers[layer].tileLayer.setBlendMode("{{ blendmode }}");
+        layers[layer].blending = "{{ blendmode }}";
       }
+      glLayer.draw();
     </script>
     {% endif %}
   {# end parse options #}
