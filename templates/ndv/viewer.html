@@ -416,7 +416,7 @@
 
         // offset tile
         plane.position.set(offsetx, offsety, 0);
-        //console.log(plane.position);
+
         scene.add(plane);
       }
 
@@ -438,22 +438,21 @@
       }
 
       this._camera.position.z = 1;
-      //this._renderer.autoClear = false;
 
-      var rendertarget = new THREE.WebGLRenderTarget( worldsize.x, worldsize.y );
-
-
+      this._renderTarget = new THREE.WebGLRenderTarget( worldsize.x, worldsize.y );
 
       function render() {
         if (this._repeater) {
           cancelAnimationFrame(this._repeater);
         }
         this._repeater = requestAnimationFrame( render.bind(this) );
-        this._renderer.render(scene, this._camera);
+        this._renderer.render(scene, this._camera, this._renderTarget);
+        this._renderToScreen();
       }
       render.bind(this)();
-    }
 
+      //this._renderToScreen();
+    }
 
     function coordinatesDebug(event) {
       // place a leaflet marker and a webgl marker at the click
@@ -1035,6 +1034,8 @@
 
 		function reloadLayers() {
 			map.options.fadeAnimation = false;
+      glLayer.disableScreenRender();
+      //glLayer.draw();
       map.eachLayer( function (layer) {
         if ( layer.hasOwnProperty('_url') ) {
           layer.options.zindex = ndv.zindex;
@@ -1043,6 +1044,7 @@
       });
       map.options.fadeAnimation = true;
       glLayer.draw();
+      setTimeout(glLayer.enableScreenRender.bind(glLayer), 300);
       coordinatesUpdate();
 		}
 

@@ -227,7 +227,7 @@ L.WebGLLayer = L.Class.extend({
 		maxZoom: 18,
 		tileSize: 256,
 		zoomOffset: 0,
-		useBackBuffer: false,
+		disableScreenRender: false,
 	},
 
 	initialize: function(options) {
@@ -319,6 +319,39 @@ L.WebGLLayer = L.Class.extend({
 		L.DomUtil.setPosition( this._renderer.domElement, position );
 		this._reset();
 		this.draw();
+		this._renderToScreen();
+	},
+
+	disableScreenRender: function() {
+		this.options.disableScreenRender = true;
+	},
+
+	enableScreenRender: function() {
+		this.options.disableScreenRender = false;
+	},
+
+	_renderToScreen: function() {
+		if (this._renderTarget && !this.options.disableScreenRender) {
+			var worldSize = this._map.getSize();
+
+			var geo = new THREE.PlaneBufferGeometry( worldSize.x, worldSize.y );
+			var mat = new THREE.MeshBasicMaterial({map: this._renderTarget});
+			var mesh = new THREE.Mesh( geo, mat );
+			var scene = new THREE.Scene();
+			scene.add(mesh);
+
+			this._renderer.render(scene, this._camera)
+
+			/*
+			function render() {
+				if (this._screenRepeater) {
+					cancelAnimationFrame( this._screenRepeater );
+				}
+				this._screenRepeater = requestAnimationFrame( render.bind(this) );
+			}
+			render.bind(this)();
+			*/
+		}
 	},
 
 	_getSize: function() {
@@ -327,7 +360,6 @@ L.WebGLLayer = L.Class.extend({
 
 	_initRenderer: function() {
 		this._renderer = new THREE.WebGLRenderer();
-		//this._renderer.setClearColor( 0xff0000 );
 	},
 
 	_initCamera: function(origin) {
