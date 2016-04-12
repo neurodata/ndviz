@@ -739,16 +739,11 @@
       var width = $( "#projectModeWidthInput" ).val();
 
       for (var layername in layers) {
-        if (layers[layername].color == '') {
-          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
-        }
-        else {
-          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + ':' + layers[layername].color + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
-        }
+        var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + '/width:' + width + '/xy/{zindex}/{y}_{x}_{z}.png';
         updateLayerUrl( layername, url )
       }
 
-      baseLayer.reload();
+      glLayer.draw();
     });
 
     // END projection service palette
