@@ -335,16 +335,21 @@ L.WebGLLayer = L.Class.extend({
 
 	_renderToScreen: function() {
 		if (this._renderTarget && !this.options.disableScreenRender) {
-			var worldSize = this._map.getSize();
+			if (this._screenScene) {
+				// clean up existing scene
+				this._screenScene.children[0].geometry.dispose();
+				this._screenScene.children[0].material.dispose();
+				this._screenScene.remove( this._screenScene.children[0] );
+			}
 
+			var worldSize = this._map.getSize();
 			var geo = new THREE.PlaneBufferGeometry( worldSize.x, worldSize.y );
 			var mat = new THREE.MeshBasicMaterial({map: this._renderTarget});
 			var mesh = new THREE.Mesh( geo, mat );
-			var scene = new THREE.Scene();
-			scene.add(mesh);
+			this._screenScene = new THREE.Scene();
+			this._screenScene.add(mesh);
 
-			this._renderer.render(scene, this._camera)
-
+			this._renderer.render(this._screenScene, this._camera)
 		}
 	},
 
