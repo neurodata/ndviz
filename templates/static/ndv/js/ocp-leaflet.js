@@ -288,14 +288,17 @@ L.WebGLLayer = L.Class.extend({
 
 	_animateZoom: function(e) {
 		var scale = map.getZoomScale(e.zoom);
-
+		console.log(scale);
 		this._camera.zoom = scale;
 		this._camera.updateProjectionMatrix();
+		this._renderToScreen();
+		this.disableScreenRender();
 	},
 
 	_endZoomAnim: function() {
 		this._camera.zoom = 1;
 		this._camera.updateProjectionMatrix();
+		setTimeout(this.enableScreenRender.bind(this), 200);
 	},
 
 	_reset: function() {
@@ -342,15 +345,6 @@ L.WebGLLayer = L.Class.extend({
 
 			this._renderer.render(scene, this._camera)
 
-			/*
-			function render() {
-				if (this._screenRepeater) {
-					cancelAnimationFrame( this._screenRepeater );
-				}
-				this._screenRepeater = requestAnimationFrame( render.bind(this) );
-			}
-			render.bind(this)();
-			*/
 		}
 	},
 
@@ -376,9 +370,6 @@ L.WebGLLayer = L.Class.extend({
 		this._camera.top = origin.y / 2;
 		this._camera.bottom = origin.y / -2;
 		this._camera.updateProjectionMatrix();
-		//this._camera = new THREE.OrthographicCamera( origin.x / -2, origin.x / 2, origin.y / 2, origin.y / -2, 1, 1024.0 );
-		//this._camera = new THREE.OrthographicCamera( bounds.min.x, bounds.max.x, bounds.min.y, bounds.max.y, 1, 1000 );
-
 	},
 
 	_getTileSize: function () {
