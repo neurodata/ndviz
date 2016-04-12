@@ -227,6 +227,7 @@ L.WebGLLayer = L.Class.extend({
 		maxZoom: 18,
 		tileSize: 256,
 		zoomOffset: 0,
+		useBackBuffer: false,
 	},
 
 	initialize: function(options) {

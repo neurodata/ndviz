@@ -361,6 +361,7 @@
         });
 
         texture.image = img;
+        texture.name = layer;
         if ( $(img).hasClass('leaflet-tile-loaded') ) {
           texture.needsUpdate = true;
         } else {
@@ -398,7 +399,6 @@
           blending: blending,
         });
 
-
         var plane = new THREE.Mesh( geometry, material );
 
         // dispose of material, geometry, and mesh on unload
@@ -411,8 +411,6 @@
             material = undefined;
             scene.remove(plane);
             plane = undefined;
-            //plane.dispose();
-            console.log('unloading!');
           }
         }, this);
 
@@ -440,6 +438,11 @@
       }
 
       this._camera.position.z = 1;
+      //this._renderer.autoClear = false;
+
+      var rendertarget = new THREE.WebGLRenderTarget( worldsize.x, worldsize.y );
+
+
 
       function render() {
         if (this._repeater) {
@@ -664,7 +667,6 @@
       $(function () {
         $( ".colorbox" ).each( function() {
           var layer = $( this ).attr('id');
-          console.log(layer);
           $( this ).children('.btn-group').children( '.btn' ).each(function() {
             $( this ).click(function() {
               layers[layer].color = $(this).val();
@@ -1039,8 +1041,8 @@
 					layer.smoothRedraw();
         }
       });
-      glLayer.draw();
       map.options.fadeAnimation = true;
+      glLayer.draw();
       coordinatesUpdate();
 		}
 
