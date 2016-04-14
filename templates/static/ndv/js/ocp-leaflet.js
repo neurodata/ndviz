@@ -12,8 +12,6 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		zoomOffset: 0,
 		opacity: 1,
     /* begin ocpviz added */
-    brightness: 100,
-    contrast: 100,
     curtime: 0,
     propagate: 0,
     /* end ocpviz added */
@@ -162,58 +160,6 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		//return options.maxNativeZoom ? Math.min(zoom, options.maxNativeZoom) : zoom;
     return Math.max(0, zoom);
 	},
-
-  setBrightness: function (brightness) {
-		this.options.brightness = brightness;
-
-		if (this._map) {
-			this._updateBrightness();
-		}
-
-		return this;
-	},
-
-  _updateBrightness: function () {
-    L.DomUtil.setBrightnessContrast(this._container, this.options.brightness, this.options.contrast);
-  },
-
-  setContrast: function (contrast) {
-		this.options.contrast = contrast;
-
-		if (this._map) {
-			this._updateContrast();
-		}
-
-		return this;
-	},
-
-  _updateContrast: function () {
-    L.DomUtil.setBrightnessContrast(this._container, this.options.brightness, this.options.contrast);
-
-  },
-
-  setBlendMode: function (blendmode) {
-    if (this._map) {
-      L.DomUtil.setBlendMode(this._container, blendmode);
-    }
-    return this;
-  },
-
-});
-
-// add updateBrightness and updateContrast methods
-// TODO support for Fx
-L.extend(L.DomUtil, {
-  setBrightnessContrast: function(el, brightness, contrast) {
-    if ('filter' in el.style) {
-      el.style.setProperty('-webkit-filter', 'brightness(' + brightness + '%) ' + 'contrast(' + contrast + '%)')
-    }
-  },
-  setBlendMode: function(el, mode) {
-    // TODO validate this somehow?
-    //el.style.setProperty('mix-blend-mode', mode);
-  },
-
 });
 
 L.tileLayer.OCPLayer = function (url, options) {
