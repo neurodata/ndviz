@@ -1256,7 +1256,15 @@
         var class_arr = this.className.split(' ');
         var layer_name = $.trim(class_arr[1]);
         // remove layer from the map
-        map.removeLayer( layers[layer_name] );
+        console.log(layer_name);
+        console.log(layers[layer_name])
+        // remove from map
+        map.removeLayer( layers[layer_name].tileLayer  );
+        // remove from layers array
+        delete layers[layer_name]
+        // redraw 
+        glLayer.draw()
+
         // remove layer from control panel
         $( ".controls-" + layer_name ).remove();
       });
