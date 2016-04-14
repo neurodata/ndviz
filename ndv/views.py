@@ -50,6 +50,8 @@ VALID_SERVERS = {
     'braingraph1dev':'braingraph1dev.cs.jhu.edu',
     'braingraph2':'braingraph2.cs.jhu.edu',
     'brainviz1':'brainviz1.cs.jhu.edu',
+    'brainviz1.cs.jhu.edu':'brainviz1.cs.jhu.edu',
+    'synaptomes.neurodata.io':'synaptomes.neurodata.io',
 }
 
 QUERY_TYPES = ['ANNOS']
@@ -61,6 +63,18 @@ BLENDOPTS = {
     'subtractive': 3,
     'multiply' : 4,
     'none' : 0
+}
+
+ANNO_TYPES = {
+    1 : 'Annotation',
+    2 : 'Synapse',
+    3 : 'Seed',
+    4 : 'Segment',
+    5 : 'Neuron',
+    6 : 'Organelle',
+    7 : 'Node',
+    8 : 'Skeleton',
+    9 : 'ROI',
 }
 
 def default(request):
@@ -593,19 +607,23 @@ def ramoninfo(request, webargs):
   for obj in objids.split(','):
     if obj not in ramonjson.keys():
       continue
-
-    html += '<h5>{} #{}</h5>'.format( ramonjson[obj]['type'], obj )
+    # AB 20160414 -- psuedo-updated for microns 
+    html += '<h5>{} #{}</h5>'.format( ANNO_TYPES[ramonjson[obj]['ann_type']], obj )
     html += '<table class="table table-condensed">'
-    for item in ramonjson[obj]['metadata']:
+    for item in ramonjson[obj]:
+      # all items are kvpairs
+      html += '<tr><td>{}</td><td>{}</td></tr>'.format( item.replace('_', ' ').capitalize(), ramonjson[obj][item] ) 
+
+      """
       if item == 'kvpairs':
         kvhtml = ''
         for kvpair in ramonjson[obj]['metadata']['kvpairs'].keys():
           kvhtml += '<tr><td>{}</td><td>{}</td></tr>'.format( kvpair.capitalize(),  ramonjson[obj]['metadata']['kvpairs'][kvpair] )
       else:
         html += '<tr><td>{}</td><td>{}</td></tr>'.format( item.replace('_',' ').capitalize(),  ramonjson[obj]['metadata'][item] )
+      """
 
-
-    html += kvhtml # kvpairs at the bottom
+    #html += kvhtml # kvpairs at the bottom
     html += '</table>'
   return HttpResponse(html)
 

@@ -28,6 +28,7 @@ class VizLayer ( models.Model ):
   SERVER_CHOICES = (
         ('openconnecto.me', 'openconnecto.me'),
         ('brainviz1.cs.jhu.edu', 'brainviz1'),
+        ('synaptomes.neurodata.io', 'synaptomes'),
         ('braingraph1.cs.jhu.edu', 'braingraph1'),
         ('braingraph1dev.cs.jhu.edu', 'braingraph1dev'),
         ('braingraph2.cs.jhu.edu', 'braingraph2'),
