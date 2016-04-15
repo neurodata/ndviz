@@ -419,9 +419,11 @@
         scene.add(plane);
       }
 
+
       if (Object.keys(layers).length == 0) {
         return;
       }
+
 
       for (var layer in layers) {
         var color = setThreeColor(layers[layer].color);
@@ -850,7 +852,7 @@
     var queryToolControl = L.control();
     queryToolControl.options.position = 'topright';
     queryToolControl.onAdd = function (map) {
-      this._div = L.DomUtil.create('div', 'addDataButton');
+      this._div = L.DomUtil.create('div', 'queryToolControl');
       var showicon = '<div id="queryToolControlIcon" style="float: left;"><a id="showQueryToolBox" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-search fa-stack-1x"></i></span></a></div>';
 
       var hiddendivstart = '<div id="queryToolBox" style="display:none;">';
@@ -935,20 +937,15 @@
 
       var title = '<div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-map-marker fa-stack-1x"></i></span></div><div class="headertext">Markers</div></div>';
 
-      // use the form class to get bootstrap formatting
-      var formstart = '<form>';
-
       var click = '<div class="form-group"><button id="markerModeClick" class="btn btn-primary btn-block">On Click</button></div>';
 
       var center = '<div class="form-group"><button id="markerModeCenter" class="btn btn-primary btn-block">Center</button></div>';
 
       var clear = '<div class="form-group"><button id="clearmarkers" class="btn btn-danger btn-block">Clear Markers</button></div>';
 
-      var formend = '</form>';
-
       var hiddendivend = '</div>'
 
-      this._div.innerHTML = showicon + hiddendivstart + title + formstart + click + center + clear + formend + hiddendivend;
+      this._div.innerHTML = showicon + hiddendivstart + title + click + center + clear + hiddendivend;
       return this._div;
     };
     markerToolControl.addTo(map);
@@ -969,6 +966,8 @@
     // marker controls
     var enableMarkerOnClick = function() {
       map.on('click', markerOnClick);
+      // turn off query tool
+      map.off('click', onMapClick);
     }
 
     // button actions
@@ -977,8 +976,6 @@
         // enable marker tool on click
         //map.on('click', markerOnClick);
         setTimeout(enableMarkerOnClick, 300);
-        // turn off query tool
-        map.off('click', onMapClick);
         // change button
         $( "#markerModeClick" ).removeClass('btn-primary');
         $( "#markerModeClick" ).addClass('btn-success');
@@ -999,7 +996,6 @@
       var index;
       for (index = 0; index < ndv.markers.length; index++) {
         map.removeLayer(ndv.markers[index]);
-
       }
     });
     //end button actions
@@ -1025,7 +1021,7 @@
       ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
     }
     {% if marker == True %}
-      // add a marker to the center
+      // add a marker to the center on page load
       addMarkerCenter();
     {% endif %}
 
