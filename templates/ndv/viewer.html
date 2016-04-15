@@ -419,6 +419,10 @@
         scene.add(plane);
       }
 
+      if (Object.keys(layers).length == 0) {
+        return;
+      }
+
       for (var layer in layers) {
         var color = setThreeColor(layers[layer].color);
         var opacity = layers[layer].opacity;
@@ -1185,7 +1189,6 @@
 		function reloadLayers() {
 			map.options.fadeAnimation = false;
       glLayer.disableScreenRender();
-      //glLayer.draw();
       map.eachLayer( function (layer) {
         if ( layer.hasOwnProperty('_url') ) {
           layer.options.zindex = ndv.zindex;
