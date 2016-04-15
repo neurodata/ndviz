@@ -31,26 +31,6 @@
       </form>
       <ul class="nav navbar-nav navbar-left">
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Query<span class="caret"></span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li><a href="#" id="query_none"><i class="fa fa-check" id="query_none_check"></i><span style="padding-left: 10px;">None</span></a></li>
-            {% for layer in layers %}
-            {% if layer.layertype == 'annotation' %}
-            <li><a href="#" id="query_{{ layer.token }}_{{ layer.channel }}"><i class="fa fa-check" style="visibility: hidden;" id="query_{{ layer.token }}_{{ layer.channel }}_check"></i><span style="padding-left: 10px;">{{ layer.token }} / {{ layer.channel }}</span></a></li>
-            {% endif %}
-            {% endfor %}
-          </ul>
-        </li>
-
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Markers<span class="caret"></span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li><a href="#" id="addmarkercenter">Add Marker (to current center)</a></li>
-            <li><a href="#" id="addmarkermouse">Add Marker (with mouse click)</a></li>
-            <li><a href="#" id="clearmarkers">Clear All Markers</a></li>
-          </ul>
-        </li>
-        <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Dataviews<span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
             {% for dv in dataviews %}

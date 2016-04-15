@@ -117,7 +117,6 @@
     // global variables
     var ndv = {};
     ndv.querytool = false;
-    ndv.querylayer = 'none';
     ndv.querytoken = 'none';
     ndv.querychannel = 'none';
     ndv.queryserver = 'none';
@@ -751,6 +750,272 @@
 
     // END projection service palette
     */
+
+    // BEGIN query tool palette
+    var queryToolControl = L.control();
+    queryToolControl.options.position = 'topright';
+    queryToolControl.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'addDataButton');
+      var showicon = '<div id="queryToolControlIcon" style="float: left;"><a id="showQueryToolBox" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-search fa-stack-1x"></i></span></a></div>';
+
+      var hiddendivstart = '<div id="queryToolBox" style="display:none;">';
+
+      var title = '<div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-map-marker fa-stack-1x"></i></span></div><div class="headertext">Query Tool</div></div>';
+
+      var formdiv = '<div id="queryToolForm">';
+
+      var endformdiv = '</div>';
+
+      var hiddendivend = '</div>'
+
+      this._div.innerHTML = showicon + hiddendivstart + title + formdiv + endformdiv + hiddendivend;
+      return this._div;
+    };
+		queryToolControl.addTo(map);
+
+    var updateQueryToolOptions = function() {
+      $( "#queryToolForm").empty();
+
+      // use the form class to get bootstrap formatting
+      var formstart = '<form><div class="form-group"><select class="form-control" id="queryLayerSelect">';
+
+      var layerDropdown = '<option value="none" selected>None</option>';
+      for (layer in layers) {
+        if (layers[layer].type == 'annotation') {
+          var newOpt =  '<option value="' + layer + '">' + layer + '</option>';
+          layerDropdown += newOpt;
+        }
+      }
+
+      var formend = '</select></div></form>';
+
+      $( "#queryToolForm" ).html(formstart + layerDropdown + formend);
+    }
+    updateQueryToolOptions();
+
+    $(function() {
+      $( "#queryLayerSelect" ).change(function(e) {
+        var changed = $(e.target).val();
+        if (changed == 'none') {
+          // disable query tool
+          ndv.querytool = false;
+          ndv.querytoken = 'none';
+          ndv.querychannel = 'none';
+          ndv.queryserver = 'none';
+          return;
+        }
+        ndv.querytoken = layers[changed].token;
+        ndv.querychannel = layers[changed].channel;
+        ndv.queryserver = layers[changed].server;
+        ndv.querytool = true;
+      });
+    })
+
+
+
+    // disable (and then re-enable) clicking on mouseover
+    queryToolControl.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      $( "#queryToolBox" ).show();
+      $( "#queryToolControlIcon" ).hide();
+    });
+
+    queryToolControl.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      $( "#queryToolControlIcon" ).show();
+      $( "#queryToolBox" ).hide();
+    });
+
+    // END query tool palette
+
+    // BEGIN marker tool palette
+    var markerToolControl = L.control();
+    markerToolControl.options.position = 'topright';
+    markerToolControl.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'markerToolControl');
+
+      var showicon = '<div id="markerToolControlIcon" style="float: left;"><a id="showMarkerControlBox" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-map-marker fa-stack-1x"></i></span></a></div>';
+
+      var hiddendivstart = '<div id="markerToolBox" style="display:none;">';
+
+      var title = '<div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-map-marker fa-stack-1x"></i></span></div><div class="headertext">Markers</div></div>';
+
+      // use the form class to get bootstrap formatting
+      var formstart = '<form>';
+
+      var click = '<div class="form-group"><button id="markerModeClick" class="btn btn-primary btn-block">On Click</button></div>';
+
+      var center = '<div class="form-group"><button id="markerModeCenter" class="btn btn-primary btn-block">Center</button></div>';
+
+      var clear = '<div class="form-group"><button id="clearmarkers" class="btn btn-danger btn-block">Clear Markers</button></div>';
+
+      var formend = '</form>';
+
+      var hiddendivend = '</div>'
+
+      this._div.innerHTML = showicon + hiddendivstart + title + formstart + click + center + clear + formend + hiddendivend;
+      return this._div;
+    };
+    markerToolControl.addTo(map);
+
+    // disable (and then re-enable) clicking on mouseover
+    markerToolControl.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      $( "#markerToolBox" ).show();
+      $( "#markerToolControlIcon" ).hide();
+    });
+
+    markerToolControl.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      $( "#markerToolBox" ).hide();
+      $( "#markerToolControlIcon" ).show();
+    });
+
+    // marker controls
+    var enableMarkerOnClick = function() {
+      map.on('click', markerOnClick);
+    }
+
+    // button actions
+    $( "#markerModeClick" ).on('click', function() {
+      if ( $( "#markerModeClick").hasClass('btn-primary') ) {
+        // enable marker tool on click
+        //map.on('click', markerOnClick);
+        setTimeout(enableMarkerOnClick, 300);
+        // turn off query tool
+        map.off('click', onMapClick);
+        // change button
+        $( "#markerModeClick" ).removeClass('btn-primary');
+        $( "#markerModeClick" ).addClass('btn-success');
+      }
+      else {
+        // disable marker tool on click
+        map.off('click', markerOnClick);
+        // change button
+        $( "#markerModeClick" ).removeClass('btn-success');
+        $( "#markerModeClick" ).addClass('btn-primary');
+      }
+    });
+
+    $( "#markerModeCenter" ).on('click', function() {
+      addMarkerCenter();
+    });
+    $( "#clearmarkers" ).click(function( event ) {
+      var index;
+      for (index = 0; index < ndv.markers.length; index++) {
+        map.removeLayer(ndv.markers[index]);
+
+      }
+    });
+    //end button actions
+
+    var addMarkerCenter = function() {
+      // place a marker at the current map center
+      var center = map.getCenter();
+      var point = map.project(center);
+      var marker_options = {
+        title: point.x + " " + point.y + " " + ndv.zindex,
+      }
+
+      // keep track of markers by storing in an array
+      ndv.markers.push(L.marker(center, marker_options).addTo(map));
+
+      // get current url
+      var markerUrl = getCurrentURL(point);
+
+      var popup_options = {
+        maxWidth: 750,
+      }
+
+      ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
+    }
+    {% if marker == True %}
+      // add a marker to the center
+      addMarkerCenter();
+    {% endif %}
+
+    function markerOnClick(event) {
+      // place a marker at the click
+
+      var point = map.project(event.latlng);
+      var marker_options = {
+        title: point.x + " " + point.y + " " + ndv.zindex,
+      }
+
+      // keep track of markers by storing in an array
+      ndv.markers.push(L.marker(event.latlng, marker_options).addTo(map));
+
+      // get current url
+      var markerUrl = getCurrentURL(point);
+      var popup_options = {
+        maxWidth: 750,
+      }
+
+      ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
+
+      // markerOnClick causes lots of problems with controls, so only one marker per click!
+      map.off('click', markerOnClick);
+      // change button
+      $( "#markerModeClick" ).removeClass('btn-success');
+      $( "#markerModeClick" ).addClass('btn-primary');
+      // turn query tool back on
+      map.on('click', onMapClick);
+
+    };
+
+    function getCurrentURL(point) {
+      var script_name = '{{ request.META.SCRIPT_NAME }}';
+      var pathRaw = '{{ request.path }}';
+      var pathArr = pathRaw.split('/');
+      var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+
+      if (script_name == '') {
+        var token = pathArr[1];
+        var channels = '';
+        // handle the case where we are in project view mode
+        if (token == 'project') {
+          token = 'project/' + pathArr[2];
+          channels = '';
+        }
+        else {
+          if (pathArr.length > 3 && !(pathArr[2] == 'xy' || pathArr[2] == 'yz' || pathRaw[2] == 'xz')) {
+            channels = pathArr[2];
+          }
+        }
+
+        if (channels == '') {
+          var markerUrl = "http://{{ request.get_host }}/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
+        else {
+          var markerUrl = "http://{{ request.get_host }}/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
+      }
+      else {
+        var token = pathArr[2];
+        var channels = '';
+        // handle the case where we are in project view mode
+        if (token == 'project') {
+          token = 'project/' + pathArr[3];
+          channels = '';
+        }
+        else {
+          if (pathArr.length > 3 && !(pathArr[3] == 'xy' || pathArr[3] == 'yz' || pathRaw[3] == 'xz')) {
+            channels = pathArr[3];
+          }
+        }
+
+        if (channels == '') {
+          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
+        else {
+          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+        }
+      }
+      return markerUrl;
+    };
+
+    // END marker tool palette
+
     // BEGIN add data button
     var addDataButton = L.control();
     addDataButton.options.position = 'topright';
@@ -872,121 +1137,6 @@
       {% if timeseries == True %}
         loadTimeStep( $( "#timestep" ).val() );
       {% endif %}
-    });
-
-    $( "#addmarkercenter" ).click(function( event ) {
-      // place a marker at the current map center
-      var center = map.getCenter();
-      var point = map.project(center);
-      var marker_options = {
-        title: point.x + " " + point.y + " " + ndv.zindex,
-      }
-
-      // keep track of markers by storing in an array
-      ndv.markers.push(L.marker(center, marker_options).addTo(map));
-
-      // get current url
-      var markerUrl = getCurrentURL(point);
-
-      var popup_options = {
-        maxWidth: 750,
-      }
-
-      ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
-    });
-
-    {% if marker == True %}
-      // add a marker to the center
-      //L.marker(center).addTo(map);
-      $( "#addmarkercenter" ).trigger('click');
-    {% endif %}
-
-    function markerOnClick(event) {
-      // place a marker at the click
-
-      var point = map.project(event.latlng);
-      var marker_options = {
-        title: point.x + " " + point.y + " " + ndv.zindex,
-      }
-
-      // keep track of markers by storing in an array
-      ndv.markers.push(L.marker(event.latlng, marker_options).addTo(map));
-
-      // get current url
-      var markerUrl = getCurrentURL(point);
-      var popup_options = {
-        maxWidth: 750,
-      }
-
-      ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
-      map.off('click', markerOnClick);
-      // turn query tool back on
-      map.on('click', onMapClick);
-    };
-
-    function getCurrentURL(point) {
-      var script_name = '{{ request.META.SCRIPT_NAME }}';
-      var pathRaw = '{{ request.path }}';
-      var pathArr = pathRaw.split('/');
-      var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
-
-      if (script_name == '') {
-        var token = pathArr[1];
-        var channels = '';
-        // handle the case where we are in project view mode
-        if (token == 'project') {
-          token = 'project/' + pathArr[2];
-          channels = '';
-        }
-        else {
-          if (pathArr.length > 3 && !(pathArr[2] == 'xy' || pathArr[2] == 'yz' || pathRaw[2] == 'xz')) {
-            channels = pathArr[2];
-          }
-        }
-
-        if (channels == '') {
-          var markerUrl = "http://{{ request.get_host }}/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
-        }
-        else {
-          var markerUrl = "http://{{ request.get_host }}/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
-        }
-      }
-      else {
-        var token = pathArr[2];
-        var channels = '';
-        // handle the case where we are in project view mode
-        if (token == 'project') {
-          token = 'project/' + pathArr[3];
-          channels = '';
-        }
-        else {
-          if (pathArr.length > 3 && !(pathArr[3] == 'xy' || pathArr[3] == 'yz' || pathRaw[3] == 'xz')) {
-            channels = pathArr[3];
-          }
-        }
-
-        if (channels == '') {
-          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
-        }
-        else {
-          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
-        }
-      }
-      return markerUrl;
-    };
-
-    $( "#addmarkermouse" ).click(function( event ) {
-      map.on('click', markerOnClick);
-      // turn off query tool
-      map.off('click', onMapClick);
-    });
-
-    $( "#clearmarkers" ).click(function( event ) {
-      var index;
-      for (index = 0; index < ndv.markers.length; index++) {
-        map.removeLayer(ndv.markers[index]);
-
-      }
     });
 
 		// z-index arrows
@@ -1172,40 +1322,6 @@
       }
     }
 
-    // tools
-    // query tool
-
-    // disable querying
-    $( '#query_none' ).click(function(event) {
-      if (ndv.querytool) {
-        $( '#query_' + ndv.querylayer + '_check' ).css("visibility","hidden");
-        $( '#query_none_check' ).css("visibility","");
-        ndv.querytool = false;
-        ndv.querylayer = 'none';
-        ndv.querytoken = 'none';
-        ndv.querychannel = 'none';
-        ndv.queryserver = 'none';
-      }
-    });
-
-    {% for layer in layers %}
-    {% if layer.layertype == 'annotation' %}
-    $( '#query_{{ layer.token }}_{{ layer.channel }}' ).click(function(event) {
-    //$( '#querybutton' ).toggleClass('active');
-      var curlayer = "{{ layer.token }}_{{ layer.channel }}";
-      if (ndv.querylayer != curlayer) {
-        $( '#query_' + ndv.querylayer + '_check' ).css("visibility","hidden");
-        $( '#query_{{ layer.token }}_{{ layer.channel }}_check' ).css("visibility","");
-        ndv.querylayer = curlayer;
-        ndv.querytoken = '{{ layer.token }}';
-        ndv.querychannel = '{{ layer.channel }}';
-        ndv.queryserver = '{{ layer.server }}';
-        ndv.querytool = true;
-      }
-    });
-    {% endif %}
-    {% endfor %}
-
     // add keyboard help to map
 		var keyhelp = L.control();
 		keyhelp.options.position = 'bottomleft';
@@ -1262,7 +1378,7 @@
         map.removeLayer( layers[layer_name].tileLayer  );
         // remove from layers array
         delete layers[layer_name]
-        // redraw 
+        // redraw
         glLayer.draw()
 
         // remove layer from control panel
