@@ -105,7 +105,7 @@
 
           // uncheck the input box
           $( this ).attr('checked', false);
-          
+
           var channel = $(this).val();
           var args = token + "/" + channel + "/" + server + "/";
           var url = urlBase.concat(args);
@@ -146,6 +146,7 @@
               }).addTo(map);
 
               updateImageControlSliders();
+              updateQueryToolOptions();
               glLayer.draw();
               var html = '<div class="bg-info"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="sr-only">Success:</span> Added new layer for channel ' + channel + '.';
               $( '.add_channels_info' ).append(html);
@@ -228,6 +229,7 @@
               continuousWorld: true,
             }).addTo(map);
             updateImageControlSliders();
+            updateQueryToolOptions();
             glLayer.draw();
             var html = '<div class="bg-info"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="sr-only">Success:</span> Added new layer for channel ' + channel + '.';
             $( '.add_data_info' ).append(html);

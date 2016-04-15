@@ -358,7 +358,9 @@
   $( ".deleteLayer" ).click(function(event) {
     //console.log( $(this).parent().parent().parent().parent() );
     var layer_id = $(this).parent().parent().parent().parent().attr('id');
-    var layer_name = $( "#hidden_" + layer_id ).val();
+    console.log(layer_id);
+    var layer_name = $( "#layerName_" + layer_id ).val();
+    console.log(layer_name);
     $.confirm({
       title: "Confirmation Required",
       confirmButton: "Yes, Delete",

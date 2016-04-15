@@ -48,6 +48,24 @@ html, body, #map {
   box-shadow: 0 0 15px rbga(0,0,0,0.2);
   border-radius: 2px;
 }
+#markerToolBox {
+  padding: 4px 4px;
+  width: 150px;
+  font-size: 13px !important;
+  background: white;
+  background: rbga(255,255,255,0.8);
+  box-shadow: 0 0 15px rbga(0,0,0,0.2);
+  border-radius: 2px;
+}
+#queryToolBox {
+  padding: 4px 4px;
+  width: 250px;
+  font-size: 13px !important;
+  background: white;
+  background: rbga(255,255,255,0.8);
+  box-shadow: 0 0 15px rbga(0,0,0,0.2);
+  border-radius: 2px;
+}
 .controls, .queryres {
   padding: 8px 8px;
   width: 300px;
