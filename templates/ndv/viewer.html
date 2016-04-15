@@ -419,11 +419,9 @@
         scene.add(plane);
       }
 
-
       if (Object.keys(layers).length == 0) {
         return;
       }
-
 
       for (var layer in layers) {
         var color = setThreeColor(layers[layer].color);
@@ -959,9 +957,12 @@
       $( "#markerModeClick" ).removeClass('btn-success');
       $( "#markerModeClick" ).addClass('btn-primary');
       // turn query tool back on
-      map.on('click', onMapClick);
-
+      setTimeout(reEnableQueryTool, 300);
     };
+
+    var reEnableQueryTool = function() {
+      map.on('click', onMapClick);
+    }
 
     function getCurrentURL(point) {
       var script_name = '{{ request.META.SCRIPT_NAME }}';
