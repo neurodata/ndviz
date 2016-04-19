@@ -64,6 +64,8 @@
   {% include "ndv/add_data.html" %}
 
   {% include "ndv/login.html" %}
+
+  {% include "ndv/blendmodes.html" %}
   {# End Modal Code Includes #}
 
   <div id="map"></div>
@@ -591,7 +593,7 @@
 
       var imgsliderdiv = '<div id="image-sliders"></div>'
 
-      var blendmode = '<br /><div id="blendmode">Blending: <select name="blendmode"><option value="1">Normal</option><option value="2">Additive</option><option value="3">Subtractive</option><option value="4">Multiply</option><option value="0">None</option></select><span style="float: right;"><a href="#"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
+      var blendmode = '<br /><div id="blendmode">Blending: <select name="blendmode"><option value="1">Normal</option><option value="2">Additive</option><option value="3">Subtractive</option><option value="4">Multiply</option><option value="0">None</option></select><span style="float: right;"><a href="#" data-toggle="modal" data-target="#blendModeHelp"><i class="fa fa-info-circle fa-lg"></i></a></span></div>';
 
       var hiddendivend = '</div>';
 
@@ -683,7 +685,6 @@
           });
         });
       });
-
       // end color controls
     };
     updateImageControlSliders();

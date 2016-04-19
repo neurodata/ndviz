@@ -8,7 +8,7 @@
         </div>
         <div class="modal-body">
           <h2>Welcome to NeuroDataViz!</h2>
-            <p>NeuroDataViz is a web tool for viewing datasets stored using Open Connectome Project (OCP) software. All OCP datatypes are supported. NeuroDataViz also supports data interaction, included object querying for annotation layers and the ability to place markers and share their locations with collaborators. We also support keyboard shortcuts for navigation, layer opacity controls, and false coloring.</p>
+            <p>NeuroDataViz is a web tool for viewing datasets stored using NeuroData Database Store software. All NeuroData datatypes, including images, annotations, and time-series data, are supported. NeuroDataViz also supports data interaction, included object querying for annotation layers and the ability to place markers and share their locations with collaborators. We also support keyboard shortcuts for navigation, layer opacity controls, and dynamic false coloring.</p>
           <h3>URLs</h3>
             <p>The primary way to access a project in NeuroDataViz is by entering a token in the URL. NeuroDataViz uses the following URL format: <br /><code>/viz/token/channel1,channel2/res/x/y/z/</code></p>
             <table class="table table-condensed">
@@ -25,10 +25,10 @@
                 <td>Similar to an OCP cutout, these arguments center the map at the coordinator <samp>(x, y, z)</samp> for a given resolution <samp>(res)</samp>.<p class="bg-danger">Note: When specifying an initial center, all four arguments must be specified!</p></td>
               </tr>
             </table>
-            The order of the channels in the URL is the order channels will be displayed on the map. However, all annotation channels will be loaded before all image channels, so that annotations are always overlaid on images. 
+            The order of the channels in the URL is the order channels will be displayed on the map. However, all annotation channels will be loaded before all image channels, so that annotations are always overlaid on images.
             <h4>False Coloring (color masks)</h4>
             <p>Some channels can be masked with a false color by adding a color argument to the URL. Color arguments are added after the channel name in the following format:<br /><code>channel1:B</code><br />
-            <p class="text-info"><i class="fa fa-info-circle" style="padding-right: 5px;"></i>False coloring requires the user to enter channels in the URL, if they do not already exist. Channel names can be found in the <em>Control Panel</em>. See section above for URL syntax.</p> 
+            <p class="text-info"><i class="fa fa-info-circle" style="padding-right: 5px;"></i>Colors can also be changed dynamically in the image processing palette.</p>
             Supported colors are:</p>
 
             <table class="table table-condensed">
@@ -57,7 +57,7 @@
                 <td>blue</td>
               </tr>
             </table>
-            <p class="text-danger"><i class="fa fa-info-circle" style="padding-right: 5px;"></i>Color codes in the URL must match the character above, but are not case sensitive.</p> 
+            <p class="text-danger"><i class="fa fa-info-circle" style="padding-right: 5px;"></i>Color codes in the URL must match the character above, but are not case sensitive.</p>
           <h3>Tools</h3>
             <h4>Navigation</h4>
             <p>On the left side of the screen, the <kbd>+</kbd> and <kbd>-</kbd> buttons allow you to zoom in and out on the map. Zooming unloads the current resolution, and then loads the next resolution stored in the OCP spatial database.</p>
@@ -92,12 +92,12 @@
                 <td>step for last (farthest forward) time step</td>
               </tr>
             </table>
-            <p>The <i class="fa fa-play"></i> button automatically advances forward in time every <em>play delay</em> seconds. The play delay can be changed by entering a new value in the box at the bottom of the control panel. Make sure to press the <i class="fa fa-clone"></i> button after entering a new value to ensure it is saved.</p> 
+            <p>The <i class="fa fa-play"></i> button automatically advances forward in time every <em>play delay</em> seconds. The play delay can be changed by entering a new value in the box at the bottom of the control panel. Make sure to press the <i class="fa fa-clone"></i> button after entering a new value to ensure it is saved.</p>
             <h4>Interaction</h4>
             <p>The <strong>Query</strong> dropdown allows the user to enable or disable the query system, and specify an annotation token / channel to query. When enabled, clicking on a location in the map will query the OCP database for the object ID at that location. Note that you must have an annotation channel loaded for the query tool to operate.</p>
             <p>The <strong>Markers</strong> dropdown controls markers on the map, allowng the user to add a marker (either at the current map center or with a mouse click) and clear all markers. Clicking on a marker creates a popup with a URL to that marker's current location on the map.</p>
-            <p class="text-danger"><i class="fa fa-info-circle" style="padding-right: 5px;"></i>Markers currently persist across Z slices. Clicking on a marker will send that markers location for the current Z slice.</p> 
-          
+            <p class="text-danger"><i class="fa fa-info-circle" style="padding-right: 5px;"></i>Markers currently persist across Z slices. Clicking on a marker will send that markers location for the current Z slice.</p>
+
           <h3>Keyboard Shortcuts</h3>
           For a list of keyboard shortcuts, press the <kbd>h</kbd> key.
           <h3>Acknowledgements</h3>
@@ -105,6 +105,7 @@
           <ul>
             <li><a href="http://leafletjs.com/" target="_blank">LeafletJS</a>: An open-source Javascript library for mobile-friendly interactive maps.</li>
             <li><a href="https://jquery.com/" target="_blank">jQuery</a> and <a href="https://jqueryui.com/" target="_blank">jQuery UI</a></li>
+            <li><a href="http://http://threejs.org/" target="_blank">three.js</a></li>
             <li><a href="https://www.djangoproject.com/" target="_blank">django</a></li>
           </ul>
         </div>
@@ -115,5 +116,4 @@
      </div>
   </div>
 
-  {# end help modal #} 
-
+  {# end help modal #}
