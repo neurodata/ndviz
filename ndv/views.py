@@ -364,7 +364,7 @@ def projectview(request, webargs):
   dvi = DataViewItem.objects.filter(vizproject = project_name)
   dv = DataView.objects.filter(items = dvi)
 
-  blendmode = BLENDOPTS['normal']
+  blendmode = BLENDOPTS[project.blendmode]
   if options is not None:
     if 'marker' in options.keys():
       marker = True
@@ -728,6 +728,7 @@ def editVizProject(request, project):
       'serverOptions': VizLayer.SERVER_CHOICES,
       'layerOptions': VizLayer.LAYER_CHOICES,
       'colorOptions' : VizLayer.COLOR_CHOICES,
+      'blendOptions' : VizProject.BLEND_CHOICES,
     }
     return render(request, 'manage/editvizproject.html', context)
   else:
@@ -798,6 +799,7 @@ def addVizProject(request):
 
     proj.minres = response['minres']
     proj.scalinglevels = response['scalinglevels']
+    proj.blendmode = response['blendmode']
 
     layers = []
     # add new layers
@@ -847,6 +849,7 @@ def addVizProject(request):
       'serverOptions': VizLayer.SERVER_CHOICES,
       'layerOptions': VizLayer.LAYER_CHOICES,
       'colorOptions': VizLayer.COLOR_CHOICES,
+      'blendOptions': VizProject.BLEND_CHOICES,
     }
     return render(request, 'manage/addvizproject.html', context)
 
@@ -920,6 +923,7 @@ def editVizProjectSubmit(request):
 
     proj.minres = response['minres']
     proj.scalinglevels = response['scalinglevels']
+    proj.blendmode = response['blendmode']
 
     # apply changes to layers
 
