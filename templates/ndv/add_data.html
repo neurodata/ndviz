@@ -116,34 +116,12 @@
             success: function(response) {
               var url = 'http://' + server + '/ocp/catmaid/' + token + '/' + channel + '/xy/{zindex}/{y}_{x}_{z}.png';
               console.log(url);
-              // TODO: refactor this per https://github.com/neurodata/NeuroDataViz/issues/93
-              layers[token + '_' + channel] = {
-                'tileLayer': null,
-                'server': server,
-                'token': token,
-                'channel': channel,
-                'type': 'image',
-                'color': '',
-                'opacity': 1.0,
-                'min': 0.0,
-                'max': 1.0,
-                'gamma': 1.0,
-                'blending': THREE.NormalBlending,
-              }
-              layers[token + '_' + channel].tileLayer = L.tileLayer.OCPLayer(
-                url,
-                {
-                zindex: ndv.zindex,
-                zoomReverse: true,
-                minZoom: ndv.maxres,
-                maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
-                maxNativeZoom: ndv.maxres + ndv.maxres,
-                tileSize: 512,
-                opacity: 1,
-                propagate: 2,
-                //curtime: curtime,
-                continuousWorld: true,
-              }).addTo(map);
+
+              var layerName = token + '_' + channel;
+              var layerType = 'image';
+              var layerPropagate = 2;
+
+              addLayer(layerName, layerType, layerPropagate, url, server, token, channel, '');
 
               updateImageControlSliders();
               updateQueryToolOptions();
@@ -200,34 +178,13 @@
           type: 'GET',
           success: function(response) {
             var url = 'http://' + server + '/ocp/catmaid/' + token + '/' + channel + '/xy/{zindex}/{y}_{x}_{z}.png';
-            // TODO: refactor this per https://github.com/neurodata/NeuroDataViz/issues/93
-            layers[token + '_' + channel] = {
-              'tileLayer': null,
-              'server': server,
-              'token': token,
-              'channel': channel,
-              'type': 'image',
-              'color': '',
-              'opacity': 1.0,
-              'min': 0.0,
-              'max': 1.0,
-              'gamma': 1.0,
-              'blending': THREE.NormalBlending,
-            }
-            layers[token + '_' + channel].tileLayer = L.tileLayer.OCPLayer(
-              url,
-              {
-              zindex: ndv.zindex,
-              zoomReverse: true,
-              minZoom: ndv.maxres,
-              maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
-              maxNativeZoom: ndv.maxres + ndv.maxres,
-              tileSize: 512,
-              opacity: 1,
-              propagate: 2,
-              //curtime: curtime,
-              continuousWorld: true,
-            }).addTo(map);
+
+            var layerName = token + '_' + channel;
+            var layerType = 'image';
+            var layerPropagate = 2;
+
+            addLayer(layerName, layerType, layerPropagate, url, server, token, channel, '');
+
             updateImageControlSliders();
             updateQueryToolOptions();
             glLayer.draw();
