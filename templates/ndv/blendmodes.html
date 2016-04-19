@@ -1,0 +1,50 @@
+  {# Blend Mode Help modal #}
+  <div class="modal fade" id="blendModeHelp" tabindex="-1" role="dialog" aria-labelledby="blendModeHelpModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="blendModeHelpLabel">Blend Modes <span class="small">(ndv {{ version }})</span></h4>
+        </div>
+        <div class="modal-body">
+          <h2>Blend Modes Help</h2>
+          <table class="table table-condensed">
+            <caption>The following table describes the available blend modes, their blending functions, and recommended uses.</caption>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Pixels are colored by...</th>
+                <th>Recommended Use</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Normal</td>
+                <td>The depth of each layer is stored, and each pixel is colored by the layer closest to the camera. "Closer" layers completely block out "farther" layers. Normal blending also takes transarency into account.</td>
+                <td>EM Data</td>
+              </tr>
+              <tr>
+                <td>Additive</td>
+                <td>RGB values for each layer are first multiplied by that layer's alpha value, then summed.</td>
+                <td>IF and LM (e.g. AT)</td>
+              </tr>
+              <tr>
+                <td>Subtractive</td>
+                <td>RGB values for each layer are first multiplied by that layer's alpha value, then the sum of 1-(each color) is computed and used as the pixel value.</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Multiply</td>
+                <td>Colors obtained by multiplying RGB values across each layer.</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+       </div>
+     </div>
+  </div>
+
+  {# end Blend Mode Help modal #}
