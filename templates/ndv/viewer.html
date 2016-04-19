@@ -148,6 +148,9 @@
     // set zindex to some default (we pick the lowest slice)
     ndv.zindex = {{ zstart }};
 
+    // blend mode
+    ndv.blendmode = THREE.NormalBlending;
+
      // create the map first
 		var map = L.map('map', {
       crs: L.CRS.Simple,
@@ -187,15 +190,18 @@
         'min': 0.0,
         'max': 1.0,
         'gamma': 1.0,
-        'blending': THREE.NormalBlending,
+        'blending': ndv.blendmode,
       }
 
       var opacity;
       var propagate;
+
       if (layertype == 'annotation') {
+
+        propagate = 2; // annotations propagation status doesn't matter
         opacity = 0.4; // annotations loaded at 40% opacity by default
         layers[layername].opacity = 0.4;
-        propagate = 2; // annotations propagation status doesn't matter
+        layers[layername].blending = THREE.NormalBlending; // annotations have normal blending
       }
       else
       {
@@ -1442,8 +1448,11 @@
 
         if (changed.is('select[name="blendmode"]')) {
           for (layer in layers) {
-            layers[layer].blending = changed.val();
+            if (layers[layer].type != 'annotation') {
+              layers[layer].blending = changed.val();
+            }
           }
+          ndv.blendmode = changed.val();
           glLayer.draw(); // redraw
         }
       });
@@ -1674,8 +1683,12 @@
       // set select box to display correct value
       $( "select[name='blendmode']" ).val("{{ blendmode }}");
       for (layer in layers) {
-        layers[layer].blending = "{{ blendmode }}";
+        if (layers[layer].type != 'annotation') {
+          layers[layer].blending = "{{ blendmode }}";
+        }
       }
+      // track the current blend mode for adding new layers
+      ndv.blendmode = "{{ blendmode }}";
       glLayer.draw();
     </script>
     {% endif %}

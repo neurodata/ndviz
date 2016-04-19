@@ -82,6 +82,14 @@ class VizProject ( models.Model ):
 
   layers = models.ManyToManyField(VizLayer, related_name='project')
 
+  BLEND_CHOICES = (
+    ('normal', 'Normal'),
+    ('additive', 'Additive'),
+    ('subtractive', 'Subtractive'),
+    ('multiply', 'Multiply'),
+    ('none', 'None')
+  )
+  blendmode = models.CharField(max_length=255, choices=BLEND_CHOICES, default='normal')
 
   xoffset = models.IntegerField(default=0)
   ximagesize = models.IntegerField()
