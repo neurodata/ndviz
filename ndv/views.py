@@ -50,6 +50,8 @@ VALID_SERVERS = {
     'braingraph1dev':'braingraph1dev.cs.jhu.edu',
     'braingraph2':'braingraph2.cs.jhu.edu',
     'brainviz1':'brainviz1.cs.jhu.edu',
+    'brainviz1.cs.jhu.edu': 'brainviz1.cs.jhu.edu',
+    'synaptomes': 'synaptomes.neurodata.io',
 }
 
 QUERY_TYPES = ['ANNOS']
