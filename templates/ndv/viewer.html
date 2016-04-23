@@ -701,10 +701,12 @@
     // disable (and then re-enable) clicking on mouseover
     imagecontrols.getContainer().addEventListener('mouseover', function() {
       map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
     });
 
     imagecontrols.getContainer().addEventListener('mouseout', function() {
       map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
     });
     // END image control palette
 
