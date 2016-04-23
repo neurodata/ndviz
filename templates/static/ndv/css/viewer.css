@@ -38,6 +38,10 @@ html, body, #map {
 .propwarnbox {
   font-size: 13px !important;
 }
+.imagecontrols {
+  overflow: auto;
+  max-height: 600px;
+}
 #imagecontrolshide, #projinfobox, #projectModeBox {
   padding: 8px 8px;
   width: 300px;
