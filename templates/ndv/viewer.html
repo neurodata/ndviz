@@ -179,7 +179,7 @@
     var layers = {};
 
     // add layer function
-    function addLayer(layername, layertype, layerpropagate, url, server, token, channel, color) {
+    function addLayer(layername, layertype, layerpropagate, url, server, token, channel, color, tilecache) {
 
       layers[layername] = {
         'tileLayer': null,
@@ -193,6 +193,7 @@
         'max': 1.0,
         'gamma': 1.0,
         'blending': ndv.blendmode,
+        'tilecache': tilecache,
       }
 
       var opacity;
@@ -276,7 +277,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
         {% endif %}
     {% endfor %}
 
@@ -312,7 +313,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
         {% endif %}
     {% endfor %}
 
@@ -1416,110 +1417,125 @@
       }
       else {
         $( "#timestep" ).parent().removeClass("has-error");
-        {% for layer in layers %}
-        {% if layer.layertype == "timeseries" %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
-          var newTimeStr = newTime.toString();
-          {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
-        {% endif %}
-        {% endfor %}
+        for (layer in layers) {
+          if (layers[layer].type == 'timeseries') {
+            var server = layers[layer].server;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw()();
+          }
+        }
+        glLayer.draw();
       }
     }
 
     function timeStepForward() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.options.curtime);
-        if (curTime + 1 <= parseInt({{ endtime }})) {
-          $( "#timestep" ).parent().removeClass("has-error");
-          var newTime = curTime + 1;
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
-          var newTimeStr = newTime.toString();
-          {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var curTime = parseInt(layers[layer].tileLayer.options.curtime);
+          if (curTime + 1 <= parseInt({{ endtime }})) {
+            $( "#timestep" ).parent().removeClass("has-error");
+            var newTime = curTime + 1;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw();
+          }
+          else {
+            $( "#timestep" ).parent().addClass("has-error");
+          }
         }
-        else {
-          $( "#timestep" ).parent().addClass("has-error");
-        }
-      {% endif %}
-      {% endfor %}
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
-		}
+	  }
 
 		function timeStepBack() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime);
-        if (curTime - 1 >= parseInt({{ starttime }})) {
-          $( "#timestep" ).parent().removeClass("has-error");
-          var newTime = curTime - 1;
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
-          var newTimeStr = newTime.toString();
-          {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var curTime = parseInt(layers[layer].tileLayer.options.curtime);
+          if (curTime - 1 >= parseInt({{ starttime }})) {
+            $( "#timestep" ).parent().removeClass("has-error");
+            var newTime = curTime - 1;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw();
+          }
+          else {
+            $( "#timestep" ).parent().addClass("has-error");
+          }
         }
-        else {
-          $( "#timestep" ).parent().addClass("has-error");
-        }
-      {% endif %}
-      {% endfor %}
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
 		}
 
     function timeBeginning() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var newTimeStr = {{ starttime }};
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTimeStr;
-        {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-        {% else %}
-        var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-        {% endif %}
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
-      {% endif %}
-      {% endfor %}
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var newTimeStr = {{ starttime }};
+          layers[layer].tileLayer.options.curtime = newTimeStr;
+          if (layers[layer].tilecache) {
+            var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          else {
+            var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          layers[layer].tileLayer.setUrl(newUrl, true);
+          layers[layer].tileLayer.smoothRedraw();
+        }
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
     }
 
     function timeEnd() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var newTimeStr = {{ endtime }};
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTimeStr;
-        {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
-      {% endif %}
-      {% endfor %}
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var newTimeStr = {{ endtime }};
+          layers[layer].tileLayer.options.curtime = newTimeStr;
+          if (layers[layer].tilecache) {
+            var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          else {
+            var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          layers[layer].tileLayer.setUrl(newUrl, true);
+          layers[layer].tileLayer.smoothRedraw();
+        }
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
 		}
