@@ -830,8 +830,8 @@ def addVizProject(request):
         layer.layer_description = layerInfo['desc']
         layer.server = layerInfo['server']
         layer.layertype = layerInfo['type']
-        layer.token = layerInfo['token']
-        layer.channel = layerInfo['channel']
+        layer.token = layerInfo['token'].strip()
+        layer.channel = layerInfo['channel'].strip()
         layer.color = layerInfo['color']
 
         if 'tilecache' in layerInfo.keys():
@@ -952,8 +952,8 @@ def editVizProjectSubmit(request):
         layer.layer_description = layerInfo['desc']
         layer.server = layerInfo['server']
         layer.layertype = layerInfo['type']
-        layer.token = layerInfo['token']
-        layer.channel = layerInfo['channel']
+        layer.token = layerInfo['token'].strip()
+        layer.channel = layerInfo['channel'].strip()
         layer.color = layerInfo['color']
 
         if 'tilecache' in layerInfo.keys():
@@ -978,8 +978,8 @@ def editVizProjectSubmit(request):
         layer.layer_description = layerInfo['desc']
         layer.server = layerInfo['server']
         layer.layertype = layerInfo['type']
-        layer.token = layerInfo['token']
-        layer.channel = layerInfo['channel']
+        layer.token = layerInfo['token'].strip()
+        layer.channel = layerInfo['channel'].strip()
         layer.color = layerInfo['color']
 
         if 'tilecache' in layerInfo.keys():

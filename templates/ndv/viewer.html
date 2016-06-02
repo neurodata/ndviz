@@ -179,7 +179,7 @@
     var layers = {};
 
     // add layer function
-    function addLayer(layername, layertype, layerpropagate, url, server, token, channel, color) {
+    function addLayer(layername, layertype, layerpropagate, url, server, token, channel, color, tilecache) {
 
       layers[layername] = {
         'tileLayer': null,
@@ -193,6 +193,7 @@
         'max': 1.0,
         'gamma': 1.0,
         'blending': ndv.blendmode,
+        'tilecache': tilecache,
       }
 
       var opacity;
@@ -276,7 +277,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
         {% endif %}
     {% endfor %}
 
@@ -312,7 +313,7 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}");
+        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
         {% endif %}
     {% endfor %}
 
@@ -348,6 +349,10 @@
     }).addTo(map);
 
     glLayer.draw = function() {
+
+      // set layer to not idle so we actually render!
+      this.isIdle = false;
+
       var scene = new THREE.Scene();
 
       var worldsize = this._map.getSize();
@@ -457,13 +462,21 @@
           cancelAnimationFrame(this._repeater);
         }
         this._repeater = requestAnimationFrame( render.bind(this) );
-        this._renderer.render(scene, this._camera, this._renderTarget);
-        this._renderToScreen();
+        if (!glLayer.isIdle) {
+          this._renderer.render(scene, this._camera, this._renderTarget);
+          this._renderToScreen();
+        }
       }
       render.bind(this)();
-
-      //this._renderToScreen();
     }
+
+    // cancel the render loop by setting the map to be idle every second
+    $(function() {
+      setInterval(function() { glLayer.isIdle = true; console.log('setting to idle'); }, 5000); // set idle after 5 seconds
+    })
+    // cancel idle on user interaction
+    map.on('viewreset', function() { glLayer.isIdle = false; });
+
 
     function coordinatesDebug(event) {
       // place a leaflet marker and a webgl marker at the click
@@ -864,7 +877,7 @@
 
       var hiddendivstart = '<div id="queryToolBox" style="display:none;">';
 
-      var title = '<div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-map-marker fa-stack-1x"></i></span></div><div class="headertext">Query Tool</div></div>';
+      var title = '<div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-search fa-stack-1x"></i></span></div><div class="headertext">Query Tool</div></div>';
 
       var formdiv = '<div id="queryToolForm">';
 
@@ -1295,6 +1308,7 @@
       map.options.fadeAnimation = true;
       glLayer.draw();
       setTimeout(glLayer.enableScreenRender.bind(glLayer), 300);
+      glLayer.isIdle = false; // enable render loop
       coordinatesUpdate();
 		}
 
@@ -1507,110 +1521,125 @@
       }
       else {
         $( "#timestep" ).parent().removeClass("has-error");
-        {% for layer in layers %}
-        {% if layer.layertype == "timeseries" %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
-          var newTimeStr = newTime.toString();
-          {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
-        {% endif %}
-        {% endfor %}
+        for (layer in layers) {
+          if (layers[layer].type == 'timeseries') {
+            var server = layers[layer].server;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw()();
+          }
+        }
+        glLayer.draw();
       }
     }
 
     function timeStepForward() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.options.curtime);
-        if (curTime + 1 <= parseInt({{ endtime }})) {
-          $( "#timestep" ).parent().removeClass("has-error");
-          var newTime = curTime + 1;
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
-          var newTimeStr = newTime.toString();
-          {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var curTime = parseInt(layers[layer].tileLayer.options.curtime);
+          if (curTime + 1 <= parseInt({{ endtime }})) {
+            $( "#timestep" ).parent().removeClass("has-error");
+            var newTime = curTime + 1;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw();
+          }
+          else {
+            $( "#timestep" ).parent().addClass("has-error");
+          }
         }
-        else {
-          $( "#timestep" ).parent().addClass("has-error");
-        }
-      {% endif %}
-      {% endfor %}
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
-		}
+	  }
 
 		function timeStepBack() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var curTime = parseInt(layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime);
-        if (curTime - 1 >= parseInt({{ starttime }})) {
-          $( "#timestep" ).parent().removeClass("has-error");
-          var newTime = curTime - 1;
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTime;
-          var newTimeStr = newTime.toString();
-          {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var curTime = parseInt(layers[layer].tileLayer.options.curtime);
+          if (curTime - 1 >= parseInt({{ starttime }})) {
+            $( "#timestep" ).parent().removeClass("has-error");
+            var newTime = curTime - 1;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw();
+          }
+          else {
+            $( "#timestep" ).parent().addClass("has-error");
+          }
         }
-        else {
-          $( "#timestep" ).parent().addClass("has-error");
-        }
-      {% endif %}
-      {% endfor %}
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
 		}
 
     function timeBeginning() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var newTimeStr = {{ starttime }};
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTimeStr;
-        {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-        {% else %}
-        var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-        {% endif %}
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
-      {% endif %}
-      {% endfor %}
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var newTimeStr = {{ starttime }};
+          layers[layer].tileLayer.options.curtime = newTimeStr;
+          if (layers[layer].tilecache) {
+            var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          else {
+            var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          layers[layer].tileLayer.setUrl(newUrl, true);
+          layers[layer].tileLayer.smoothRedraw();
+        }
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
     }
 
     function timeEnd() {
       map.closePopup();
-      {% for layer in layers %}
-      {% if layer.layertype == "timeseries" %}
-        var newTimeStr = {{ endtime }};
-        layers.{{ layer.layer_name|cut:" " }}.tileLayer.options.curtime = newTimeStr;
-        {% if layer.tilecache %}
-            var newUrl = 'http://{{ layer.server }}/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% else %}
-          var newUrl = 'http://{{ layer.server }}/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
-          {% endif %}
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.setUrl(newUrl, true);
-          layers.{{ layer.layer_name|cut:" " }}.tileLayer.smoothRedraw();
-      {% endif %}
-      {% endfor %}
+      for (layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var newTimeStr = {{ endtime }};
+          layers[layer].tileLayer.options.curtime = newTimeStr;
+          if (layers[layer].tilecache) {
+            var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          else {
+            var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          layers[layer].tileLayer.setUrl(newUrl, true);
+          layers[layer].tileLayer.smoothRedraw();
+        }
+      }
+      glLayer.draw();
       // update timestep box
       $( "#timestep" ).val(newTimeStr);
 		}
