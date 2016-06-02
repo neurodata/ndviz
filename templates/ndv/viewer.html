@@ -1645,12 +1645,20 @@
     </script>
   {% endif %}
   {% if manage %}
+    {% if user.is_authenticated %}
     <script>
       $(window).load(function() {
         $( "#remoteModal" ).load("{% url 'viewProjects' %}");
         $( "#remoteModal" ).modal('show');
       });
     </script>
+    {% else %}
+    <script>
+      $(window).load(function() {
+        $( "#login" ).modal('show');
+      });
+    </script>
+    {% endif %}
   {% endif %}
 
 </body>
