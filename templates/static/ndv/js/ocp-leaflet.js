@@ -174,7 +174,10 @@ L.WebGLLayer = L.Class.extend({
 		tileSize: 256,
 		zoomOffset: 0,
 		disableScreenRender: false,
+		isIdle: false,
 	},
+
+	isIdle: false,
 
 	initialize: function(options) {
 		//this._bounds = L.latLngBounds(bounds);

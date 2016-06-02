@@ -349,6 +349,10 @@
     }).addTo(map);
 
     glLayer.draw = function() {
+
+      // set layer to not idle so we actually render!
+      this.isIdle = false;
+
       var scene = new THREE.Scene();
 
       var worldsize = this._map.getSize();
@@ -458,13 +462,21 @@
           cancelAnimationFrame(this._repeater);
         }
         this._repeater = requestAnimationFrame( render.bind(this) );
-        this._renderer.render(scene, this._camera, this._renderTarget);
-        this._renderToScreen();
+        if (!glLayer.isIdle) {
+          this._renderer.render(scene, this._camera, this._renderTarget);
+          this._renderToScreen();
+        }
       }
       render.bind(this)();
-
-      //this._renderToScreen();
     }
+
+    // cancel the render loop by setting the map to be idle every second
+    $(function() {
+      setInterval(function() { glLayer.isIdle = true; console.log('setting to idle'); }, 5000); // set idle after 5 seconds
+    })
+    // cancel idle on user interaction
+    map.on('viewreset', function() { glLayer.isIdle = false; });
+
 
     function coordinatesDebug(event) {
       // place a leaflet marker and a webgl marker at the click
@@ -1205,6 +1217,7 @@
       map.options.fadeAnimation = true;
       glLayer.draw();
       setTimeout(glLayer.enableScreenRender.bind(glLayer), 300);
+      glLayer.isIdle = false; // enable render loop
       coordinatesUpdate();
 		}
 
