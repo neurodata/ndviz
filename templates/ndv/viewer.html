@@ -43,6 +43,13 @@
     {% include "ndv/analytics.html" %}
   {% endif %}
 
+  {# react #}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+
+  {# react dev -- add ".min" before ".js" for production #}
+  <script src="{% static 'ndv/js/react-with-addons.js' %}"></script>
+  <script src="{% static 'ndv/js/react-dom.js' %}"></script>
+
   <script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>
   {#<script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>#}
   <script src="{% static 'ndv/js/Control.Loading.js' %}"></script>
@@ -338,7 +345,7 @@
       }
     }
 
-    // testing the webGL layer interface
+    // add the webgl layer
     var glLayer = new L.WebGLLayer({
       zindex: ndv.zindex,
       zoomReverse: true,
@@ -472,7 +479,7 @@
 
     // cancel the render loop by setting the map to be idle every second
     $(function() {
-      setInterval(function() { glLayer.isIdle = true; console.log('setting to idle'); }, 5000); // set idle after 5 seconds
+      setInterval(function() { glLayer.isIdle = true; }, 5000); // set idle after 5 seconds
     })
     // cancel idle on user interaction
     map.on('viewreset', function() { glLayer.isIdle = false; });
@@ -549,50 +556,173 @@
     });
     // END query result palette
 
-    // BEGIN project info palette
+
     var projinfo = L.control();
     projinfo.options.position = 'topright';
     projinfo.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'projinfo');
-      var showicon = '<div id="projinfoicon" style="float:left;"><a id="showprojinfo" href="#"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-info fa-stack-1x"></i></span></a></div>';
-
-      var hiddendivstart = '<div id="projinfobox" style="display:none;">';
-      var title = '<div style="float:right;"><a id="hideprojinfo" href="#"><i class="fa fa-times fa-lg"></a></i></div><div id="controlpanelheader"><div style="float:left;"><span class="fa-stack fa-2x" style="padding-bottom: 5px;"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-info fa-stack-1x"></i></span></div><div class="headertext">Project Info</div></div>';
-      var projinfodiv = '<div id="projinfotxt"></div>'
-      var hiddendivend = '</div>'
-      this._div.innerHTML = showicon + hiddendivstart + title  + projinfodiv + hiddendivend;
-			return this._div;
+      this._div.innerHTML = '';
+      return this._div;
     };
-		projinfo.addTo(map);
-    $( "#showprojinfo" ).on('click', function () {
-      $( "#projinfobox" ).toggle( "slow", function () {
-        $( "#projinfoicon" ).toggle( );
-      });
-    });
-    $( "#hideprojinfo" ).on('click', function () {
-      $( "#projinfobox" ).toggle( "slow" , function () {
-        $( "#projinfoicon" ).toggle( );
-      });
-    });
-    // disable (and then re-enable) clicking on mouseover
-    projinfo.getContainer().addEventListener('mouseover', function() {
-      map.off('click', onMapClick);
+    projinfo.addTo(map);
+
+    </script>
+
+
+
+    <script type="text/babel">
+    /* Testing React */
+
+    // don't render react code as template tags
+    {% verbatim %}
+
+    /* Project Info Toolbox Components */
+    var ProjectInfoController = React.createClass({
+      getInitialState: function() {
+        return {
+          projinfo: ''
+        };
+      },
+      componentDidMount: function() {
+        var url = "http://" + this.props.server + "/ocp/ca/" + this.props.token + "/info/";
+        this.serverRequest = $.get(url, function( result ) {
+          var projinfo = result;
+          this.setState({
+            projinfo: projinfo,
+          });
+        }.bind(this));
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      render: function() {
+        return (
+          <div>
+            <ProjectInfoDisplay projinfo={this.state.projinfo} />
+          </div>
+        );
+      }
     });
 
-    projinfo.getContainer().addEventListener('mouseout', function() {
-      map.on('click', onMapClick);
+    var ProjectInfoDisplay = React.createClass({
+      render: function() {
+        return (
+          <div>
+            {JSON.stringify(this.props.projinfo)}
+          </div>
+        );
+      }
     });
-    function getProjInfo() {
-      // we use the token from the first layer (for now)
-      var infoToken = "{{ layers.0.token }}";
-      var infoUrl = "http://{{ request.get_host }}{% url 'projinfo' queryargs='placeholder' %}";
-      infoUrl = infoUrl.replace('placeholder', 'localhost/' + infoToken + '/')
 
-      $( "#projinfotxt" ).load(infoUrl);
-		}
-    getProjInfo();
+    /* Generic Toolbox Components */
+    var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
-    // END project info palette
+    var ToolboxShowIcon = React.createClass({
+      render: function() {
+        var iconClassString = "fa fa-stack-1x " + this.props.iconClassName;
+
+        return (
+          <div className="showToolboxIcon" style={{float: "left"}}>
+            <span className="fa-stack fa-2x">
+              <a href="#" onClick={this.props.onClick}>
+                <i className="fa fa-square fa-stack-2x fa-inverse"></i>
+                <i className={iconClassString}></i>
+              </a>
+            </span>
+          </div>
+        );
+      }
+    });
+
+    var ToolboxHideIcon = React.createClass({
+      render: function() {
+        return (
+          <div style={{float: 'right'}}>
+            <a href="#" onClick={this.props.onClick}>
+              <i className="fa fa-times fa-lg"></i>
+            </a>
+          </div>
+        );
+      }
+    })
+
+    var Toolbox = React.createClass({
+      render: function() {
+        var iconClassString = "fa fa-stack-1x " + this.props.iconClassName;
+        return (
+          <div className="toolbox">
+            <ToolboxHideIcon onClick={this.props.onClick} />
+            <div id="controlpanelheader">
+              <div style={{float:"left"}}>
+                <span className="fa-stack fa-2x" style={{paddingBottom: 5 + "px"}}>
+                  <i className="fa fa-square fa-stack-2x fa-inverse"></i>
+                  <i className={iconClassString}></i>
+                </span>
+              </div>
+              <div className="headertext">{this.props.toolboxName}</div>
+            </div>
+            <div>
+              {this.props.toolboxComponent}
+            </div>
+          </div>
+        );
+      }
+    });
+
+    var ToolboxController = React.createClass({
+      getInitialState: function() {
+        return {
+          showToolbox: false,
+        };
+      },
+
+      handleClick: function() {
+        this.setState({ showToolbox: !this.state.showToolbox });
+      },
+
+      render: function() {
+        var toolboxComponent = <ProjectInfoController token="kharris15apical" server="brainviz1.cs.jhu.edu" />;
+        return (
+          <div>
+            { /* Transition group for the toolbox icon */ }
+            <ReactCSSTransitionGroup transitionName="toolboxIconAnimate" transitionEnterTimeout={1} transitionLeaveTimeout={1} >
+              { this.state.showToolbox
+                ?
+                null
+                :
+                <ToolboxShowIcon
+                  iconClassName="fa-info"
+                  onClick={this.handleClick}
+                  key="showToolboxIcon"
+                  /> }
+            </ReactCSSTransitionGroup>
+
+            { /* Transition group for the toolbox */ }
+            <ReactCSSTransitionGroup transitionName="showToolbox" transitionEnterTimeout={500} transitionLeaveTimeout={1} component="div">
+              { this.state.showToolbox
+                ?
+                <Toolbox
+                  iconClassName="fa-info"
+                  toolboxName="Project Info"
+                  toolboxComponent = {toolboxComponent}
+                  onClick={this.handleClick}
+                  key="showToolbox" />
+                :
+                null }
+            </ReactCSSTransitionGroup>
+          </div>
+        );
+      }
+    });
+
+    ReactDOM.render( <ToolboxController iconClass="fa-info" />, document.getElementsByClassName('projinfo')[0]);
+
+    {% endverbatim %}
+
+    </script>
+    <script>
+
+    /* Commenting out for now...
 
     // BEGIN image control palette
     var imagecontrols = L.control();
@@ -690,6 +820,7 @@
       $(function () {
         $( ".colorbox" ).each( function() {
           var layer = $( this ).attr('id');
+          // show current color
           $( this ).children('.btn-group').children( '.btn' ).each(function() {
             $( this ).click(function() {
               layers[layer].color = $(this).val();
@@ -864,7 +995,6 @@
         updateLayerUrl( layername, url )
       }
     });
-    */
 
     // END synaptogram service palette
 
@@ -1076,6 +1206,8 @@
     var reEnableQueryTool = function() {
       map.on('click', onMapClick);
     }
+
+    */
 
     function getCurrentURL(point) {
       var script_name = '{{ request.META.SCRIPT_NAME }}';

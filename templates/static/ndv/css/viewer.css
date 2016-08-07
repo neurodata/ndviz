@@ -42,6 +42,25 @@ html, body, #map {
   overflow: auto;
   max-height: 600px;
 }
+
+.toolbox {
+  padding: 8px 8px;
+  width: 300px;
+  font-size: 13px !important;
+  background: white;
+  /* background: rgba(255, 255, 255, 0.8); */
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  border-radius: 2px;
+  overflow: auto;
+  max-height: 600px;
+}
+
+
+.toolboxContent {
+  overflow: auto;
+  max-height: 600px;
+}
+
 #imagecontrolshide, #projinfobox, #projectModeBox, #synaptogramModeBox {
   padding: 8px 8px;
   width: 300px;
@@ -52,6 +71,59 @@ html, body, #map {
   box-shadow: 0 0 15px rbga(0,0,0,0.2);
   border-radius: 2px;
 }
+/* added to play nice with react */
+.toolboxHeaderIcon {
+  padding-bottom: 5px;
+}
+.toolboxCloseButton {
+  float: right;
+}
+.toolboxIconOpen {
+  float: left;
+}
+
+/* react animation */
+.showToolbox-enter {
+  opacity: 0;
+}
+
+.showToolbox-enter.showToolbox-enter-active {
+  opacity: 1;
+  transition: opacity 500ms ease-in;
+  transition-delay: 10ms;
+}
+
+.showToolbox-leave {
+  opacity: 1;
+}
+
+.showToolbox-leave.showToolbox-leave-active {
+  opacity: 0;
+  transition: opacity 0ms ease-in;
+}
+
+.toolboxIconAnimate-enter {
+  opacity: 0;
+}
+
+.toolboxIconAnimate-enter.toolboxIconAnimate-enter-active {
+  opacity: 1;
+  /*transition: opacity 0ms ease-in;*/
+}
+
+.toolboxIconAnimate-leave {
+  opacity: 1;
+}
+
+.toolboxIconAnimate-leave.toolboxIconAnimate-leave-active {
+  opacity: 0;
+  /*transition: opacity 0ms ease-in;*/
+}
+
+
+
+
+
 #markerToolBox {
   padding: 4px 4px;
   width: 150px;
