@@ -607,12 +607,12 @@ def ramoninfo(request, webargs):
   for obj in objids.split(','):
     if obj not in ramonjson.keys():
       continue
-    # AB 20160414 -- psuedo-updated for microns 
+    # AB 20160414 -- psuedo-updated for microns
     html += '<h5>{} #{}</h5>'.format( ANNO_TYPES[ramonjson[obj]['ann_type']], obj )
     html += '<table class="table table-condensed">'
     for item in ramonjson[obj]:
       # all items are kvpairs
-      html += '<tr><td>{}</td><td>{}</td></tr>'.format( item.replace('_', ' ').capitalize(), ramonjson[obj][item] ) 
+      html += '<tr><td>{}</td><td>{}</td></tr>'.format( item.replace('_', ' ').capitalize(), ramonjson[obj][item] )
 
       """
       if item == 'kvpairs':
@@ -626,53 +626,6 @@ def ramoninfo(request, webargs):
     #html += kvhtml # kvpairs at the bottom
     html += '</table>'
   return HttpResponse(html)
-
-def projinfo(request, queryargs):
-  # gets the projinfo from ocp
-  # expected syntax is:
-  # ndv/projinfo/<<server>>/<<token>>/
-  # e.g. ndv/projinfo/dsp061/kharris15apical/
-  [server, token_raw] = queryargs.split('/', 1)
-  token = token_raw.split('/')[0]
-  if server not in VALID_SERVERS.keys():
-    return HttpResponse("Error: Server not valid.")
-
-  # make get request
-
-  if server == 'localhost':
-    #addr = Site.objects.get_current().domain + '/ocp/' + oquery
-    if settings.OCP_SERVER == None:
-      addr = 'http://' + request.META['HTTP_HOST'] + '/ocp/ca/' + token + '/info/'
-    else:
-      addr = 'http://' + settings.OCP_SERVER + '/ocp/ca/' + token + '/info/'
-  else:
-    addr = 'http://' + VALID_SERVERS[server] + '/ocp/ca/' + token + '/info/'
-  try:
-    r = urllib2.urlopen(addr)
-  except urllib2.HTTPError, e:
-    r = '[ERROR]: ' + str(e.getcode())
-    return HttpResponse(r)
-
-  jsoninfo = json.loads(r.read())
-
-  # metadata
-  if len(jsoninfo['metadata'].keys()) == 0:
-    metadatahtml = '<p>No LIMS metadata for this project.</p>'
-  else:
-    metadatahtml = '<p>LIMS Metadata support coming soon</p>'
-
-  context = {
-    'projectname': jsoninfo['project']['name'],
-    'projectdesc': jsoninfo['project']['description'],
-    'channels': jsoninfo['channels'],
-    'metadata': metadatahtml,
-    'offset': jsoninfo['dataset']['offset']['0'],
-    'imagesize': jsoninfo['dataset']['imagesize']['0'],
-    'resolutions': jsoninfo['dataset']['resolutions'],
-    'timerange': jsoninfo['dataset']['timerange'],
-  }
-
-  return render(request, 'ndv/projinfo.html', context)
 
 def validate(request, webargs):
   # redirects a query to the specified server
