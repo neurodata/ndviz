@@ -52,7 +52,7 @@ html, body, #map {
   box-shadow: 0 0 15px rgba(0,0,0,0.2);
   border-radius: 2px;
   overflow: auto;
-  max-height: 600px;
+  max-height: 500px;
 }
 
 
@@ -89,8 +89,8 @@ html, body, #map {
 
 .showToolbox-enter.showToolbox-enter-active {
   opacity: 1;
-  transition: opacity 500ms ease-in;
-  transition-delay: 10ms;
+  transition: opacity 250ms ease-in;
+  transition-delay: 500ms;
 }
 
 .showToolbox-leave {
@@ -99,8 +99,9 @@ html, body, #map {
 
 .showToolbox-leave.showToolbox-leave-active {
   opacity: 0;
-  transition: opacity 0ms ease-in;
+  transition: opacity 250ms ease-in;
 }
+
 
 .toolboxIconAnimate-enter {
   opacity: 0;
@@ -108,7 +109,8 @@ html, body, #map {
 
 .toolboxIconAnimate-enter.toolboxIconAnimate-enter-active {
   opacity: 1;
-  /*transition: opacity 0ms ease-in;*/
+  transition: opacity 250ms ease-in;
+  /*transition-delay: 450ms;*/
 }
 
 .toolboxIconAnimate-leave {
@@ -118,9 +120,29 @@ html, body, #map {
 .toolboxIconAnimate-leave.toolboxIconAnimate-leave-active {
   opacity: 0;
   /*transition: opacity 0ms ease-in;*/
+  transition: opacity 0ms ease-in;
 }
 
 
+.toolboxTransition-enter {
+  opacity: 0;
+}
+
+.toolboxTransition-enter.toolboxTransition-enter-active {
+  opacity: 1;
+  transition: opacity 0ms ease-in;
+  /*transition-delay: 450ms;*/
+}
+
+.toolboxTransition-leave {
+  opacity: 1;
+}
+
+.toolboxTransition-leave.toolboxTransition-leave-active {
+  opacity: 0;
+  /*transition: opacity 0ms ease-in;*/
+  transition: opacity 0ms ease-in;
+}
 
 
 

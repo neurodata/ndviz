@@ -566,6 +566,17 @@
     };
     projinfo.addTo(map);
 
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    projinfo.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    projinfo.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+
     </script>
 
 
@@ -745,21 +756,7 @@
         var toolboxComponent = <ProjectInfoController token="kharris15apical" server="brainviz1.cs.jhu.edu" />;
         return (
           <div>
-            { /* Transition group for the toolbox icon */ }
-            <ReactCSSTransitionGroup transitionName="toolboxIconAnimate" transitionEnterTimeout={1} transitionLeaveTimeout={1} >
-              { this.state.showToolbox
-                ?
-                null
-                :
-                <ToolboxShowIcon
-                  iconClassName="fa-info"
-                  onClick={this.handleClick}
-                  key="showToolboxIcon"
-                  /> }
-            </ReactCSSTransitionGroup>
-
-            { /* Transition group for the toolbox */ }
-            <ReactCSSTransitionGroup transitionName="showToolbox" transitionEnterTimeout={500} transitionLeaveTimeout={1} component="div">
+            <ReactCSSTransitionGroup transitionName="toolboxTransition" transitionEnterTimeout={1} transitionLeaveTimeout={1} >
               { this.state.showToolbox
                 ?
                 <Toolbox
@@ -769,7 +766,11 @@
                   onClick={this.handleClick}
                   key="showToolbox" />
                 :
-                null }
+                <ToolboxShowIcon
+                  iconClassName="fa-info"
+                  onClick={this.handleClick}
+                  key="showToolboxIcon"
+                  /> }
             </ReactCSSTransitionGroup>
           </div>
         );
