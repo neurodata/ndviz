@@ -826,7 +826,7 @@
       render: function() {
         return (
           <div>
-            <ImageSlidersController />
+            <ImageControlsController />
             <br />
             <div id="blendmode">
               Blending:
@@ -851,8 +851,181 @@
       }
     });
 
-    // TODO: try and encapsulate all slider functionality in ImageSlidersController
-    var ImageSlidersController = React.createClass({
+    // ImageControlsLayer encapsulates all image controls for a single layer
+    // TODO handle remove layer here, too
+    var ImageControlsLayer = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.string.isRequired,
+        opacity: React.PropTypes.number // TODO pass in as opacity
+      },
+      getDefaultProps: function() {
+        return {
+          opacity: 1,
+          minVal: 0,
+          maxVal: 1,
+          gamma: 1
+        };
+      },
+      getInitialState: function() {
+        return {
+          collapsed: false,
+          opacity: this.props.opacity,
+          minVal: this.props.minVal,
+          maxVal: this.props.maxVal,
+          gamma: this.props.gamma
+        }
+      },
+      handleToggleCollapse: function() {
+        // TODO
+      },
+      handleOpacityChange: function(opacity) {
+        this.setState({opacity: opacity});
+      },
+      handleMinChange: function(min) {
+        this.setState({minVal: min});
+      },
+      handleMaxChange: function(max) {
+        this.setState({maxVal: max});
+      },
+      handleGammaChange: function(gamma) {
+        this.setState({gamma: gamma});
+      },
+      render: function() {
+        var removeLayer = 'remove-layer' + this.props.layer
+        var layer = this.props.layer;
+        return (
+          <div>
+            <div className="controls-layer-name">
+              <a href="#" className={removeLayer}>
+                <i className="fa fa-times-circle"></i>
+              </a>
+              <a href="#" onClick={this.handleToggleCollapse}>{this.props.layer}</a>
+            </div>
+            <div className="controls-slider-name">Opacity ({Math.round(this.state.opacity*100)})</div>
+            <div id="slider">
+              <ImageControlsSlider
+                layer={this.props.layer}
+                layerProp="opacity"
+                defaultValue={this.props.opacity}
+                handleChange={this.handleOpacityChange}
+                className="opacity"
+                divisor={100} />
+            </div>
+            <br />
+            <div className="controls-slider-name">Min ({Math.round(this.state.minVal*255)})</div>
+            <div id="slider">
+              <ImageControlsSlider
+                layer={this.props.layer}
+                layerProp="min"
+                defaultValue={this.props.minVal}
+                handleChange={this.handleMinChange}
+                className="minslider"
+                maxValue={255}
+                divisor={255} />
+            </div>
+            <br />
+            <div className="controls-slider-name">Max ({Math.round(this.state.maxVal*255)})</div>
+            <div id="slider">
+              <ImageControlsSlider
+                layer={this.props.layer}
+                layerProp="max"
+                defaultValue={this.props.maxVal}
+                handleChange={this.handleMaxChange}
+                className="maxslider"
+                maxValue={255}
+                divisor={255} />
+            </div>
+            <br />
+            <div className="controls-slider-name">Gamma ({this.state.gamma})</div>
+            <div id="slider">
+              <ImageControlsSlider
+                layer={this.props.layer}
+                layerProp="gamma"
+                defaultValue={this.props.gamma}
+                handleChange={this.handleGammaChange}
+                className="gammaslider"
+                maxValue={2}
+                step={0.1} />
+            </div>
+            <br />
+            <div className="colorbox" ref={function(div) {
+              // show current color
+              $( div ).children('.btn-group').children( '.btn' ).each(function() {
+                $( this ).click(function() {
+                  layers[layer].color = $(this).val();
+                  glLayer.draw();
+                });
+              });
+            }}>
+              <div className="controls-slider-name">Color</div>
+              <div className="btn-group btn-group-xs">
+                <button className="btn btn-default btn-color btn-r" value="R">R</button>
+                <button className="btn btn-default btn-color btn-g " value="G">G</button>
+                <button className="btn btn-default btn-color btn-b" value="B">B</button>
+                <button className="btn btn-default btn-color btn-c" value="C">C</button>
+                <button className="btn btn-default btn-color btn-m" value="M">M</button>
+                <button className="btn btn-default btn-color btn-y" value="Y">Y</button>
+                <button className="btn btn-default btn-color" value="">
+                  <span className="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+            <br />
+          </div>
+        );
+      }
+    });
+
+    var ImageControlsSlider = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.string.isRequired,
+        layerProp: React.PropTypes.string.isRequired,
+        defaultValue: React.PropTypes.number.isRequired,
+        handleChange: React.PropTypes.func.isRequired,
+        className: React.PropTypes.string.isRequired,
+        minValue: React.PropTypes.number,
+        maxValue: React.PropTypes.number,
+        step: React.PropTypes.number,
+        divisor: React.PropTypes.number
+      },
+      getDefaultProps: function() {
+        return {
+          minValue: 0,
+          maxValue: 100,
+          step: 1,
+          divisor: 1
+        };
+      },
+      getInitialState: function() {
+        return {
+          value: this.props.defaultValue
+        };
+      },
+      handleValueChange: function(event, ui) {
+        layers[this.props.layer][this.props.layerProp] = ui.value/this.props.divisor;
+        this.setState({value: ui.value/this.props.divisor});
+        this.props.handleChange(ui.value/this.props.divisor);
+      },
+      componentDidMount: function() {
+        var layer = this.props.layer;
+        var span = ReactDOM.findDOMNode(this);
+        $( span ).slider({
+          min: this.props.minValue,
+          max: this.props.maxValue,
+          value: this.state.value*this.props.divisor,
+          slide: this.handleValueChange,
+          step: this.props.step,
+          start: function(event, ui) { map.dragging.disable(); },
+          stop: function(event, ui) { map.dragging.enable(); glLayer.draw(); }
+        });
+      },
+      render: function() {
+        return <span className={this.props.className}></span>;
+      }
+    });
+
+
+    var ImageControlsController = React.createClass({
       render: function() {
         return (
           <div id="image-sliders">
@@ -860,106 +1033,8 @@
               var layerKey = 'controls-' + key;
               var removeLayer = 'remove-layer ' + key;
               return (
-                <div className={layerKey} key={layerKey}>
-                  <div className="controls-layer-name">
-                    <a href="#" className={removeLayer}>
-                      <i className="fa fa-times-circle"></i>
-                    </a>
-                    <a href="#">{key}</a>
-                  </div>
-                  <div className="controls-slider-name">Opacity</div>
-                  <div id="slider">
-                    <span className="opacity" ref={function(span) {
-                        var layer = key;
-                        $( span ).empty().slider({
-                          min: 0,
-                          max: 100,
-                          value: layers[layer].opacity*100,
-                          slide: function ( event, ui ) {
-                              layers[layer].opacity = ui.value/100;
-                            },
-                          start: function ( event, ui ) { map.dragging.disable(); },
-                          stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
-                        });
-                    }}></span>
-                  </div>
-                  <br />
-                  <div className="controls-slider-name">Min</div>
-                  <div id="slider">
-                    <span className="minslider" ref={function(span) {
-                      var layer = key;
-                      $( span ).empty().slider({
-                        min: 0,
-                        max: 255,
-                        value: 0,
-                        slide: function ( event, ui ) {
-                          layers[layer].min = ui.value/255.0;
-                          },
-                        start: function ( event, ui ) { map.dragging.disable(); },
-                        stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
-                      });
-                    }}>{key}</span>
-                  </div>
-                  <br />
-                  <div className="controls-slider-name">Max</div>
-                  <div id="slider">
-                    <span className="maxslider" ref={function(span) {
-                      var layer = key;
-                      $( span ).empty().slider({
-                        min: 0,
-                        max: 255,
-                        value: 255,
-                        slide: function ( event, ui ) {
-                          layers[layer].max = ui.value/255.0;
-                          },
-                        start: function ( event, ui ) { map.dragging.disable(); },
-                        stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
-                      });
-                    }}></span>
-                  </div>
-                  <br />
-                  <div className="controls-slider-name">Gamma</div>
-                  <div id="slider">
-                    <span className="gammaslider" ref={function(span) {
-                      var layer = key;
-                      $( span ).empty().slider({
-                        min: 0,
-                        max: 2,
-                        value: 1,
-                        step: 0.1,
-                        slide: function ( event, ui ) {
-                          layers[layer].gamma = ui.value;
-                          },
-                        start: function ( event, ui ) { map.dragging.disable(); },
-                        stop: function ( event, ui ) { map.dragging.enable(); glLayer.draw(); },
-                      });
-                    }}></span>
-                  </div>
-                  <br />
-                  <div id={key} className="colorbox" ref={function(div) {
-                    var layer = key;
-                    // show current color
-                    $( div ).children('.btn-group').children( '.btn' ).each(function() {
-                      $( this ).click(function() {
-                        layers[layer].color = $(this).val();
-                        glLayer.draw();
-                      });
-                    });
-                  }}>
-                    <div className="controls-slider-name">Color</div>
-                    <div className="btn-group btn-group-xs">
-                      <button className="btn btn-default btn-color btn-r" value="R">R</button>
-                      <button className="btn btn-default btn-color btn-g " value="G">G</button>
-                      <button className="btn btn-default btn-color btn-b" value="B">B</button>
-                      <button className="btn btn-default btn-color btn-c" value="C">C</button>
-                      <button className="btn btn-default btn-color btn-m" value="M">M</button>
-                      <button className="btn btn-default btn-color btn-y" value="Y">Y</button>
-                      <button className="btn btn-default btn-color" value="">
-                        <span className="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
-                      </button>
-                    </div>
-                  </div>
-                  <br />
+                <div key={layerKey}>
+                  <ImageControlsLayer layer={key} />
                 </div>
               );
             })}
