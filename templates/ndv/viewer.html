@@ -689,6 +689,16 @@
     });
     /* End Marker Tool Container */
 
+    /* Add a scale bar */
+    var scaleBar = L.control();
+    scaleBar.options.position = 'bottomleft';
+    scaleBar.onAdd = function(map) {
+      this._div = L.DomUtil.create('div', 'scalebar');
+      this._div.innerHTML = '';
+      return this._div;
+    }
+    scaleBar.addTo(map);
+
     </script>
 
 
@@ -856,10 +866,12 @@
     var ImageControlsLayer = React.createClass({
       propTypes: {
         layer: React.PropTypes.string.isRequired,
-        opacity: React.PropTypes.number // TODO pass in as opacity
+        opacity: React.PropTypes.number, // TODO pass in as opacity
+        collapsed: React.PropTypes.bool
       },
       getDefaultProps: function() {
         return {
+          collapsed: false,
           opacity: 1,
           minVal: 0,
           maxVal: 1,
@@ -868,14 +880,18 @@
         };
       },
       getInitialState: function() {
+
         return {
-          collapsed: false,
+          collapsed: this.props.collapsed,
           opacity: this.props.opacity,
           minVal: this.props.minVal,
           maxVal: this.props.maxVal,
           gamma: this.props.gamma,
           color: layers[this.props.layer].color
         }
+      },
+      componentWillReceiveProps: function(nextProps) {
+          this.setState({collapsed: nextProps.collapsed})
       },
       handleToggleCollapse: function() {
         this.setState({collapsed: !this.state.collapsed});
@@ -1065,18 +1081,30 @@
     });
 
     var ImageControlsController = React.createClass({
+      getInitialState: function() {
+        return {
+          collapsed: false
+        }
+      },
+      setCollapsedTrue: function() {
+        this.setState({collapsed: true})
+      },
+      setCollapsedFalse: function() {
+        this.setState({collapsed: false})
+      },
       render: function() {
         return (
           <div id="image-sliders">
+            <small><a href="#" onClick={this.setCollapsedTrue}>Collapse All</a> / <a href="#" onClick={this.setCollapsedFalse}>Expand All</a></small>
             {Object.keys(layers).map(function(key, i) {
               var layerKey = 'controls-' + key;
               var removeLayer = 'remove-layer ' + key;
               return (
                 <div key={layerKey}>
-                  <ImageControlsLayer layer={key} />
+                  <ImageControlsLayer layer={key} collapsed={this.state.collapsed} />
                 </div>
               );
-            })}
+            }.bind(this))}
           </div>
         );
       }
@@ -1322,6 +1350,29 @@
       }
     });
 
+    /* Scale Bar */
+    var ScaleBar = React.createClass({
+      propTypes: {
+        number: React.PropTypes.number,
+        unit: React.PropTypes.string
+      },
+      getDefaultProps: function() {
+        return
+      },
+      render: function() {
+        var scaleStyle = {
+          color: 'white',
+          paddingLeft: 50,
+          paddingBottom: 25
+        };
+        return (
+          <div style={scaleStyle}>
+            <div style={{width: 315.5}}>100nm</div>
+          </div>
+        );
+      }
+    });
+
     /* Generic Toolbox Components */
     var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
@@ -1511,6 +1562,9 @@
       toolboxName="Marker Tool"
       toolboxIconName="fa-map-marker" />,
     document.getElementsByClassName('markertool')[0]);
+
+    /* scale bar */
+    ReactDOM.render( <ScaleBar />, document.getElementsByClassName('scalebar')[0]);
 
     </script>
     <script>
