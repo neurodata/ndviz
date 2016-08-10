@@ -1351,14 +1351,30 @@
     });
 
     /* Scale Bar */
+
     var ScaleBar = React.createClass({
-      propTypes: {
-        number: React.PropTypes.number,
-        unit: React.PropTypes.string
+      getInitialState: function() {
+        return {
+          projinfo: null
+        };
       },
-      getDefaultProps: function() {
-        return
+      componentDidMount: function() {
+        var url = "http://" + this.props.server + "/ocp/ca/" + this.props.token + "/info/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var projinfo = result;
+            this.setState({
+              projinfo: projinfo,
+            });
+          }.bind(this),
+          'json'
+        )
       },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      /*
       render: function() {
         var scaleStyle = {
           color: 'white',
@@ -1370,6 +1386,10 @@
             <div style={{width: 315.5}}>100nm</div>
           </div>
         );
+      }
+      */
+      render: function() {
+        return false;
       }
     });
 
@@ -1513,7 +1533,7 @@
       }
     });
 
-    var projInfoComponent = <ProjectInfoController token="kharris15apical" server="brainviz1.cs.jhu.edu" />;
+    var projInfoComponent = <ProjectInfoController token={layers[Object.keys(layers)[0]].token} server={layers[Object.keys(layers)[0]].server} />;
     ReactDOM.render( <ToolboxController
       toolboxComponent={projInfoComponent}
       toolboxName="Project Info"
