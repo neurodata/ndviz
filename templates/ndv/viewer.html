@@ -878,7 +878,7 @@
         }
       },
       handleToggleCollapse: function() {
-        // TODO
+        this.setState({collapsed: !this.state.collapsed});
       },
       handleOpacityChange: function(opacity) {
         this.setState({opacity: opacity});
@@ -896,7 +896,7 @@
         this.setState({color: color});
       },
       render: function() {
-        var removeLayer = 'remove-layer' + this.props.layer
+        var removeLayer = 'remove-layer ' + this.props.layer
         var layer = this.props.layer;
         return (
           <div>
@@ -906,60 +906,62 @@
               </a>
               <a href="#" onClick={this.handleToggleCollapse}>{this.props.layer}</a>
             </div>
-            <div className="controls-slider-name">Opacity ({Math.round(this.state.opacity*100)})</div>
-            <div id="slider">
-              <ImageControlsSlider
-                layer={this.props.layer}
-                layerProp="opacity"
-                defaultValue={this.props.opacity}
-                handleChange={this.handleOpacityChange}
-                className="opacity"
-                divisor={100} />
-            </div>
-            <br />
-            <div className="controls-slider-name">Min ({Math.round(this.state.minVal*255)})</div>
-            <div id="slider">
-              <ImageControlsSlider
-                layer={this.props.layer}
-                layerProp="min"
-                defaultValue={this.props.minVal}
-                handleChange={this.handleMinChange}
-                className="minslider"
-                maxValue={255}
-                divisor={255} />
-            </div>
-            <br />
-            <div className="controls-slider-name">Max ({Math.round(this.state.maxVal*255)})</div>
-            <div id="slider">
-              <ImageControlsSlider
-                layer={this.props.layer}
-                layerProp="max"
-                defaultValue={this.props.maxVal}
-                handleChange={this.handleMaxChange}
-                className="maxslider"
-                maxValue={255}
-                divisor={255} />
-            </div>
-            <br />
-            <div className="controls-slider-name">Gamma ({this.state.gamma})</div>
-            <div id="slider">
-              <ImageControlsSlider
-                layer={this.props.layer}
-                layerProp="gamma"
-                defaultValue={this.props.gamma}
-                handleChange={this.handleGammaChange}
-                className="gammaslider"
-                maxValue={2}
-                step={0.1} />
-            </div>
-            <br />
+            <div className={this.state.collapsed ? 'hiddencontrols' : 'visiblecontrols'}>
+              <div className="controls-slider-name">Opacity ({Math.round(this.state.opacity*100)})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="opacity"
+                  defaultValue={this.props.opacity}
+                  handleChange={this.handleOpacityChange}
+                  className="opacity"
+                  divisor={100} />
+              </div>
+              <br />
+              <div className="controls-slider-name">Min ({Math.round(this.state.minVal*255)})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="min"
+                  defaultValue={this.props.minVal}
+                  handleChange={this.handleMinChange}
+                  className="minslider"
+                  maxValue={255}
+                  divisor={255} />
+              </div>
+              <br />
+              <div className="controls-slider-name">Max ({Math.round(this.state.maxVal*255)})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="max"
+                  defaultValue={this.props.maxVal}
+                  handleChange={this.handleMaxChange}
+                  className="maxslider"
+                  maxValue={255}
+                  divisor={255} />
+              </div>
+              <br />
+              <div className="controls-slider-name">Gamma ({this.state.gamma})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="gamma"
+                  defaultValue={this.props.gamma}
+                  handleChange={this.handleGammaChange}
+                  className="gammaslider"
+                  maxValue={2}
+                  step={0.1} />
+              </div>
+              <br />
               <div className="colorbox">
                 <div className="controls-slider-name">Color {this.state.color ? '(' + this.state.color + ')' : ''}</div>
                 <ImageControlsColor
                 layer={this.props.layer}
                 onColorChange={this.handleColorChange} />
               </div>
-            <br />
+              <br />
+            </div>
           </div>
         );
       }

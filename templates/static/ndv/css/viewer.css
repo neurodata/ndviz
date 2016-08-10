@@ -43,6 +43,13 @@ html, body, #map {
   max-height: 600px;
 }
 
+.hiddencontrols {
+  display: none;
+}
+.visiblecontrols {
+  
+}
+
 .toolbox {
   padding: 8px 8px;
   width: 300px;
