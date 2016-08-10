@@ -38,7 +38,7 @@ import urllib2
 import json
 import re
 
-VERSION = 'v0.7 Beta'
+VERSION = 'v0.6 Beta'
 
 VALID_SERVERS = {
     'localhost':'localhost',
