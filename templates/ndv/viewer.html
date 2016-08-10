@@ -808,7 +808,7 @@
       glLayer.draw();
     };
 
-    var ImageControlsController = React.createClass({
+    var ImageControlsParent = React.createClass({
       propTypes: {
         blendMode: React.PropTypes.string, // blend mode passed as string via django
       },
@@ -1472,10 +1472,10 @@
 
     // TODO: blend mode is always supplied?
     {% if blendmode %}
-      var imageControlsComponent = <ImageControlsController blendMode="{{ blendmode }}" />;
+      var imageControlsComponent = <ImageControlsParent blendMode="{{ blendmode }}" />;
       updateGlobalBlendMode({{ blendmode }});
     {% else %}
-      var imageControlsComponent = <ImageControlsController />;
+      var imageControlsComponent = <ImageControlsParent />;
     {% endif %}
     ReactDOM.render( <ToolboxController
       toolboxComponent={imageControlsComponent}
@@ -1921,26 +1921,6 @@
 		};
 
     keyhelp.addTo(map);
-
-
-    // blend mode
-    /* DEPRECATED by react (ImageControlsController)
-    $(function() {
-      $('#blendmode').change(function(e) {
-        var changed = $(e.target);
-
-        if (changed.is('select[name="blendmode"]')) {
-          for (layer in layers) {
-            if (layers[layer].type != 'annotation') {
-              layers[layer].blending = changed.val();
-            }
-          }
-          ndv.blendmode = changed.val();
-          glLayer.draw(); // redraw
-        }
-      });
-    }); // blend mode
-    */
 
     // play delay
     $(function() {
