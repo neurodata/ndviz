@@ -863,7 +863,8 @@
           opacity: 1,
           minVal: 0,
           maxVal: 1,
-          gamma: 1
+          gamma: 1,
+          color: null
         };
       },
       getInitialState: function() {
@@ -872,7 +873,8 @@
           opacity: this.props.opacity,
           minVal: this.props.minVal,
           maxVal: this.props.maxVal,
-          gamma: this.props.gamma
+          gamma: this.props.gamma,
+          color: this.props.color
         }
       },
       handleToggleCollapse: function() {
@@ -889,6 +891,9 @@
       },
       handleGammaChange: function(gamma) {
         this.setState({gamma: gamma});
+      },
+      handleColorChange: function(color) {
+        this.setState({color: color});
       },
       render: function() {
         var removeLayer = 'remove-layer' + this.props.layer
@@ -948,28 +953,12 @@
                 step={0.1} />
             </div>
             <br />
-            <div className="colorbox" ref={function(div) {
-              // show current color
-              $( div ).children('.btn-group').children( '.btn' ).each(function() {
-                $( this ).click(function() {
-                  layers[layer].color = $(this).val();
-                  glLayer.draw();
-                });
-              });
-            }}>
-              <div className="controls-slider-name">Color</div>
-              <div className="btn-group btn-group-xs">
-                <button className="btn btn-default btn-color btn-r" value="R">R</button>
-                <button className="btn btn-default btn-color btn-g " value="G">G</button>
-                <button className="btn btn-default btn-color btn-b" value="B">B</button>
-                <button className="btn btn-default btn-color btn-c" value="C">C</button>
-                <button className="btn btn-default btn-color btn-m" value="M">M</button>
-                <button className="btn btn-default btn-color btn-y" value="Y">Y</button>
-                <button className="btn btn-default btn-color" value="">
-                  <span className="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
-                </button>
+              <div className="colorbox">
+                <div className="controls-slider-name">Color {this.state.color ? '(' + this.state.color + ')' : ''}</div>
+                <ImageControlsColor
+                layer={this.props.layer}
+                onColorChange={this.handleColorChange} />
               </div>
-            </div>
             <br />
           </div>
         );
@@ -1024,6 +1013,54 @@
       }
     });
 
+    var ImageControlsColor = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.string.isRequired,
+        onColorChange: React.PropTypes.func.isRequired,
+        color: React.PropTypes.string
+      },
+      getDefaultProps: function() {
+        return {
+          color: null
+        }
+      },
+      getInitialState: function() {
+        return {
+          color: this.props.color
+        }
+      },
+      handleColorChange: function(event) {
+        var layer = this.props.layer;
+        var color = event.target.value;
+        if (color == "none") {
+          this.setState({color: null});
+          this.props.onColorChange(null);
+          layers[layer].color = color;
+          glLayer.draw();
+          return;
+        }
+
+        this.setState({color: color})
+        layers[layer].color = color;
+        this.props.onColorChange(color);
+        glLayer.draw();
+      },
+      render: function() {
+        return (
+            <div className="btn-group btn-group-xs">
+              <button className="btn btn-default btn-color btn-r" value="R" onClick={this.handleColorChange}>R</button>
+              <button className="btn btn-default btn-color btn-g " value="G" onClick={this.handleColorChange}>G</button>
+              <button className="btn btn-default btn-color btn-b" value="B" onClick={this.handleColorChange}>B</button>
+              <button className="btn btn-default btn-color btn-c" value="C" onClick={this.handleColorChange}>C</button>
+              <button className="btn btn-default btn-color btn-m" value="M" onClick={this.handleColorChange}>M</button>
+              <button className="btn btn-default btn-color btn-y" value="Y" onClick={this.handleColorChange}>Y</button>
+              <button className="btn btn-default btn-color" value="none" onClick={this.handleColorChange}>
+                <span className="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+              </button>
+            </div>
+        );
+      }
+    });
 
     var ImageControlsController = React.createClass({
       render: function() {
