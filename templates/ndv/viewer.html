@@ -874,7 +874,7 @@
           minVal: this.props.minVal,
           maxVal: this.props.maxVal,
           gamma: this.props.gamma,
-          color: this.props.color
+          color: layers[this.props.layer].color
         }
       },
       handleToggleCollapse: function() {
@@ -1026,7 +1026,7 @@
       },
       getInitialState: function() {
         return {
-          color: this.props.color
+          color: layers[this.props.layer].color
         }
       },
       handleColorChange: function(event) {
