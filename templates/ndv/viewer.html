@@ -507,32 +507,16 @@
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
 		map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
 
-    // BEGIN propagate warning box
+    // BEGIN propagate warning
     var propwarn = L.control();
     propwarn.options.position = 'topright';
     propwarn.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'propwarnbox');
-      this._div.innerHTML = '<div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-alert" aria-hidden="true"></span><span class="sr-only">Warning:</span> The following layers are not propagated: <strong><span class="notpropchanlist"></span></strong>.<br />Image data may be missing at some resolutions!';
+      this._div.innerHTML = '';
       return this._div;
     };
     propwarn.addTo(map);
-
-    function checkPropagate() {
-      $( ".propwarnbox" ).hide();
-      $( ".notpropchanlist" ).empty();
-      for (layer in layers) {
-        if (layers[layer].tileLayer.options.propagate != 2) {
-          $( ".propwarnbox" ).show();
-          if ($( ".notpropchanlist" ).text().length > 0)  {
-            $( ".notpropchanlist" ).append(", ");
-          }
-          $( ".notpropchanlist" ).append(layer);
-        }
-      }
-    }
-    checkPropagate();
-
-    // END propagate warning box
+    // end propagate warning
 
     // BEGIN query result palette
     var queryres = L.control();
@@ -708,6 +692,57 @@
     // don't render react code as template tags
     {% verbatim %}
 
+    /* begin propagate warning box */
+    var PropagateWarningBox = React.createClass({
+      getInitialState: function() {
+        return {
+          'showWarning': false,
+          'unpropagatedChannels': null
+        }
+      },
+      componentDidMount: function() {
+        var unpropagatedChannels = [];
+        for (var layer in layers) {
+          if (layers[layer].tileLayer.options.propagate != 2) {
+            unpropagatedChannels.push(layer);
+          }
+        }
+        this.setState({unpropagatedChannels: unpropagatedChannels})
+        if (unpropagatedChannels.length > 0) {
+          this.setState({showWarning: true});
+        }
+      },
+      render: function() {
+        if (this.state.showWarning) {
+          return (
+            <div className="alert alert-danger" role="alert">
+              <span className="glyphicon hlyphicon-alert" aria-hidden="true"></span>
+              <span className="sr-only">Warning:</span>
+                The following layers are not propagated:<br />
+                  <strong>
+                    <span className="notpropchanlist">
+                      {this.state.unpropagatedChannels.map(function(channel, i) {
+                        if (i == this.state.unpropagatedChannels.length - 1) {
+                          return <span>{channel}</span>
+                        } else {
+                          return <span>{channel}, </span>
+                        };
+                      }.bind(this))}
+                    </span>
+                  </strong>.
+              <br />
+              Image data may be missing at some resolutions!
+            </div>
+          );
+        } else {
+          return null
+        };
+      }
+    });
+
+    ReactDOM.render(<PropagateWarningBox />, document.getElementsByClassName('propwarnbox')[0]);
+    /* end propagate warning box */
+
     /* Project Info Toolbox Components */
     var ProjectInfoController = React.createClass({
       getInitialState: function() {
@@ -809,7 +844,7 @@
     /* Image Controls Toolbox Components */
 
     var updateGlobalBlendMode = function(value) {
-      for (layer in layers) {
+      for (var layer in layers) {
         if (layers[layer].type != 'annotation') {
           layers[layer].blending = value;
         }
