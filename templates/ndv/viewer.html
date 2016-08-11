@@ -160,6 +160,9 @@
     // blend mode
     ndv.blendmode = THREE.NormalBlending;
 
+    // functions defined in babel
+    var getRamonInfo = null;
+
      // create the map first
 		var map = L.map('map', {
       crs: L.CRS.Simple,
@@ -520,9 +523,7 @@
     queryres.options.position = 'topright';
     queryres.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'queryres');
-      var header = '<div class="closequery" style="float:right;"><a id="closequerybox" href="#"><i class="fa fa-times fa-lg"></a></i></div><h4>Query Result</h4>';
-      var querybody = '<div class="querybody"></div>';
-      this._div.innerHTML = header + querybody;
+      this._div.innerHTML = '';
       return this._div;
     };
 		queryres.addTo(map);
@@ -738,6 +739,179 @@
     });
 
     ReactDOM.render(<PropagateWarningBox />, document.getElementsByClassName('propwarnbox')[0]);
+    /* end propagate warning box */
+
+    /* Query Result Components */
+    var QueryResult = React.createClass({
+      propTypes: {
+        'server': React.PropTypes.string,
+        'token': React.PropTypes.string,
+        'channel': React.PropTypes.string,
+        'id': React.PropTypes.number
+      },
+      ANNO_TYPES: {
+          1 : 'Annotation',
+          2 : 'Synapse',
+          3 : 'Seed',
+          4 : 'Segment',
+          5 : 'Neuron',
+          6 : 'Organelle',
+          7 : 'Node',
+          8 : 'Skeleton',
+          9 : 'ROI',
+      },
+      getDefaultProps: function() {
+        return {
+          'server': null,
+          'token': null,
+          'channel': null,
+          'id': 0,
+        }
+      },
+      getInitialState: function() {
+        return {
+          'ramon': null
+        }
+      },
+      componentWillReceiveProps: function(newProps) {
+        this.getRAMONObject(newProps.server, newProps.token, newProps.channel, newProps.id);
+      },
+      getRAMONObject: function(server, token, channel, id) {
+        var url = "http://" + server + "/ocp/ramon/" + token + "/" + channel + "/" + id + "/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var ramon = result;
+            this.setState({
+              'ramon': ramon,
+            });
+          }.bind(this),
+          'json'
+        );
+      },
+      componentDidMount: function() {
+        //this.getRAMONObject();
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      render: function() {
+        if (this.state.ramon) {
+          // assume we only get one object
+          var ramon_key = Object.keys(this.state.ramon)[0];
+          var ramon_header = this.ANNO_TYPES[this.state.ramon[ramon_key]['ann_type']] + " #" + ramon_key;
+          return (
+            <div className="controls">
+                <div style={{float:"right"}}>
+                  <a href="#">
+                    <i className="fa fa-times fa-lg"></i>
+                  </a>
+                </div>
+                <h4>Query Result</h4>
+                <div style={{color: "#000"}}>
+                  <h5>{ramon_header}</h5>
+                  <table className="table table-condensed">
+                    <tbody>
+                      {Object.keys(this.state.ramon[ramon_key]).map(function(key, i) {
+                        return (
+                          <tr key={key}>
+                            <td>{key}</td>
+                            <td>{this.state.ramon[ramon_key][key]}</td>
+                          </tr>
+                        );
+                      }.bind(this))}
+                    </tbody>
+                  </table>
+                </div>
+            </div>
+          );
+        } else {
+          return null
+        };
+      }
+    });
+
+
+    ReactDOM.render(<QueryResult />, document.getElementsByClassName('queryres')[0]);
+
+    // function for querying ramon info and creating result lives nearby
+    getRamonInfo = function(point, zoom) {
+      // first, make sure that either zoom > 0 or
+      // resample point and zoom to be at level 0
+      if (zoom < 0) {
+        var numScales = 0 - zoom;
+        // scale the x and y coordinates of the point
+        var x = Math.round( point.x / ( 2 * numScales ) );
+        var y = Math.round( point.y / ( 2 * numScales ) );
+        point.x = x;
+        point.y = y;
+        zoom = 0;
+      }
+
+      // get the id of the object at that location
+      var objid = getAnnoId(point, zoom);
+
+      if (parseInt(objid) == 0) {
+        return "No RAMON object here.";
+      }
+
+      // render a new component
+      ReactDOM.render(<QueryResult
+        server={ndv.queryserver}
+        token={ndv.querytoken}
+        channel={ndv.querychannel}
+        id={parseInt(objid)}
+         />, document.getElementsByClassName('queryres')[0]);
+
+         /*
+      queryResultComponent.setProps({
+        'showResult': true,
+        'server': ndv.queryserver,
+        'token': ndv.querytoken,
+        'channel': ndv.querychannel,
+        'id':parseInt(objid)
+      });
+      */
+      /*
+      <QueryResult
+        showResult={true}
+        server='localhost:8080'
+        token='GelatinResults201607'
+        channel='anno1'
+        id={10}
+        />
+      */
+      // string for return
+      var objstr = 'ID: ' + objid;
+
+      /*
+      var script_name = '{{ request.META.SCRIPT_NAME }}';
+      if (script_name == '') {
+        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
+      }
+      else {
+        var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
+      }
+
+      // make request (using jquery)
+      var jqxhr = $.ajax({
+        url: ramonUrl,
+        type: 'GET',
+        success: function(response) {
+          $( ".querybody" ).empty();
+          $( ".querybody" ).append(response);
+          $( ".queryres" ).show("slow");
+          },
+        })
+        .fail(function(response) {
+          objstr = 'Failed to retrieve RAMON obj.';
+        });
+      */
+      return objstr;
+
+    }
+
+
     /* end propagate warning box */
 
     /* Project Info Toolbox Components */
@@ -1209,7 +1383,7 @@
         var res = this.getState('res');
 
         var channels = []
-        for (layer in layers) {
+        for (var layer in layers) {
           channels.push(layers[layer].channel);
         }
         var chanstr = channels.join(',');
@@ -1263,7 +1437,7 @@
       },
       updateOptionsList: function() {
         var newLayers = [];
-        for (layer in layers) {
+        for (var layer in layers) {
           if (layers[layer].type == 'annotation') {
             newLayers.push(layer)
           }
@@ -1885,71 +2059,21 @@
 		// get anno id from coordinate
     // expects a L.point object for point and a number for zoom
 		function getAnnoId(point, zoom) {
-      var script_name = '{{ request.META.SCRIPT_NAME }}';
-      if (script_name == '') {
-        var ocpUrlBase = "http://{{ request.get_host }}/query/" + ndv.queryserver + "/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
-      }
-      else {
-        var ocpUrlBase = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/query/" + ndv.queryserver + "/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
-      }
-			var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
-			var ocpUrl = ocpUrlBase.concat(cutout);
+      var strUrlBase = "http://" + ndv.queryserver + "/ocp/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
+      var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+      var strUrl = strUrlBase.concat(cutout);
 
-      // make request
-			var xmlHttp = new XMLHttpRequest();
-			xmlHttp.open( "GET", ocpUrl, false );
-			xmlHttp.send( null );
+      var strRes = null;
 
-			return xmlHttp.responseText;
+      $.ajax({
+        url: strUrl,
+        success: function(res) {
+          strRes = res;
+        },
+        async: false
+      });
+      return strRes;
 		}
-
-    function getRamonInfo(point, zoom) {
-      // first, make sure that either zoom > 0 or
-      // resample point and zoom to be at level 0
-      if (zoom < 0) {
-        var numScales = 0 - zoom;
-        // scale the x and y coordinates of the point
-        var x = Math.round( point.x / ( 2 * numScales ) );
-        var y = Math.round( point.y / ( 2 * numScales ) );
-        point.x = x;
-        point.y = y;
-        zoom = 0;
-      }
-
-      // get the id of the object at that location
-      objid = getAnnoId(point, zoom);
-
-      if (parseInt(objid) == 0) {
-        return "No RAMON object here.";
-      }
-
-      // string for return
-      var objstr = 'ID: ' + objid;
-
-      var script_name = '{{ request.META.SCRIPT_NAME }}';
-      if (script_name == '') {
-        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
-      }
-      else {
-        var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
-      }
-
-      // make request (using jquery)
-      var jqxhr = $.ajax({
-        url: ramonUrl,
-        type: 'GET',
-        success: function(response) {
-          $( ".querybody" ).empty();
-          $( ".querybody" ).append(response);
-          $( ".queryres" ).show("slow");
-          },
-        })
-        .fail(function(response) {
-          objstr = 'Failed to retrieve RAMON obj.';
-        });
-      return objstr;
-
-    }
 
 		// popup on click (querytool)
 		var popup = L.popup();
@@ -2074,7 +2198,7 @@
       }
       else {
         $( "#timestep" ).parent().removeClass("has-error");
-        for (layer in layers) {
+        for (var layer in layers) {
           if (layers[layer].type == 'timeseries') {
             var server = layers[layer].server;
             layers[layer].tileLayer.options.curtime = newTime;
@@ -2095,7 +2219,7 @@
 
     function timeStepForward() {
       map.closePopup();
-      for (layer in layers) {
+      for (var layer in layers) {
         if (layers[layer].type == 'timeseries') {
           var server = layers[layer].server;
           var curTime = parseInt(layers[layer].tileLayer.options.curtime);
@@ -2125,7 +2249,7 @@
 
 		function timeStepBack() {
       map.closePopup();
-      for (layer in layers) {
+      for (var layer in layers) {
         if (layers[layer].type == 'timeseries') {
           var server = layers[layer].server;
           var curTime = parseInt(layers[layer].tileLayer.options.curtime);
@@ -2155,7 +2279,7 @@
 
     function timeBeginning() {
       map.closePopup();
-      for (layer in layers) {
+      for (var layer in layers) {
         if (layers[layer].type == 'timeseries') {
           var server = layers[layer].server;
           var newTimeStr = {{ starttime }};
@@ -2177,7 +2301,7 @@
 
     function timeEnd() {
       map.closePopup();
-      for (layer in layers) {
+      for (var layer in layers) {
         if (layers[layer].type == 'timeseries') {
           var server = layers[layer].server;
           var newTimeStr = {{ endtime }};

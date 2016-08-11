@@ -47,7 +47,7 @@ html, body, #map {
   display: none;
 }
 .visiblecontrols {
-  
+
 }
 
 .toolbox {
@@ -171,7 +171,7 @@ html, body, #map {
   box-shadow: 0 0 15px rbga(0,0,0,0.2);
   border-radius: 2px;
 }
-.controls, .queryres {
+.controls {
   padding: 8px 8px;
   width: 300px;
   /*font: 14px/16px Arial, Helvetica, sans-serif;*/
@@ -182,7 +182,7 @@ html, body, #map {
   border-radius: 2px;
 }
 .queryres {
-  display: none;
+  /*display: none;*/
 }
 .controls-layer-name {
   width: 90%;
