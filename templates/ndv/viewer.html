@@ -185,46 +185,38 @@
     // define layers (namespaced with a layers. prefix)
     var layers = {};
 
-    // add layer function
-    function addLayer(layername, layertype, layerpropagate, url, server, token, channel, color, tilecache) {
+    var NDVLayer = function(name, type, propagate, url, server, token, channel, color, tilecache) {
+      this.name = name;
+      this.tileLayer = null;
+      this.server = server;
+      this.token = token;
+      this.channel = channel;
+      this.type = type;
+      this.color = color;
+      this.tilecache = tilecache;
+      this.propagate = propagate;
 
-      layers[layername] = {
-        'tileLayer': null,
-        'server': server,
-        'token': token,
-        'channel': channel,
-        'type': layertype,
-        'color': color,
-        'opacity': 1.0,
-        'min': 0.0,
-        'max': 1.0,
-        'gamma': 1.0,
-        'blending': ndv.blendmode,
-        'tilecache': tilecache,
+      /* set some default values */
+      this.opacity = 1.0;
+      this.min = 0.0;
+      this.max = 1.0;
+      this.gamma = 1.0;
+      this.blending = ndv.blendmode;
+
+      /* overwrite some parameters if this is an annotation */
+      if (type == 'annotation') {
+        this.propagate = 2; // annotations are always propagated
+        this.opacity = 0.4;
+        this.blending = THREE.NormalBlending;
       }
 
-      var opacity;
-      var propagate;
-
-      if (layertype == 'annotation') {
-
-        propagate = 2; // annotations propagation status doesn't matter
-        opacity = 0.4; // annotations loaded at 40% opacity by default
-        layers[layername].opacity = 0.4;
-        layers[layername].blending = THREE.NormalBlending; // annotations have normal blending
-      }
-      else
-      {
-        opacity = 1.0;
-        propagate = layerpropagate;
-      }
-
+      // TODO: refactor along with timeseries code
       var curtime = 0;
-      if (layertype == 'timeseries') {
+      if (type == 'timeseries') {
         curtime = {{ starttime }};
       }
 
-      layers[layername]['tileLayer'] = L.tileLayer.OCPLayer(
+      this.tileLayer = L.tileLayer.OCPLayer(
         url,
         {
           zindex: ndv.zindex,
@@ -233,20 +225,22 @@
           maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
           maxNativeZoom: ndv.maxres + ndv.maxres,
           tileSize: 512,
-          opacity: opacity,
-          propagate: propagate,
+          opacity: this.opacity,
+          propagate: this.propagate,
           curtime: curtime,
-          continuousWorld: true,
+          continuousWorld: true
         }
       );
 
-      layers[layername].tileLayer.addTo(map);
-    }
+      /* add layer */
+      this.tileLayer.addTo(map);
+    };
 
-    function updateLayerUrl(layername, newUrl) {
-      layers[layername].tileLayer.setUrl(newUrl);
-      //layers[layername].tileLayer.smoothRedraw();
-    }
+    NDVLayer.extend = {
+      updateLayerUrl: function(newUrl) {
+        this.tileLayer.setUrl(newUrl);
+      }
+    };
 
     // load image layers first
     {% for layer in layers %}
@@ -284,7 +278,9 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
+        var newLayer = new NDVLayer("{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
+        layers[newLayer.name] = newLayer;
+
         {% endif %}
     {% endfor %}
 
@@ -320,7 +316,8 @@
         {% endif %}
 
         {# add the layer #}
-        addLayer( "{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
+        var newLayer = new NDVLayer("{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
+        layers[newLayer.name] = newLayer;
         {% endif %}
     {% endfor %}
 
@@ -1151,7 +1148,7 @@
 
         for (var layername in layers) {
           var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + '/width:' + this.refs.width.value + '/xy/{zindex}/{y}_{x}_{z}.png';
-          updateLayerUrl( layername, url )
+          layers[layername].updateLayerUrl( url )
         }
 
         glLayer.draw();
