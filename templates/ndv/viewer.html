@@ -1746,13 +1746,15 @@
       },
       handleCenterClick: function() {
 
-        var res = ndv.maxres + ndv.maxres - ndv.res;
+        var curRes = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
         if (res < 0) {
-          res = 0;
+          var res = 0;
+        } else {
+          var res = curRes;
         }
         console.log('res: ', res);
 
-        var url = "http://" + this.props.server + "/ocp/ramon/" + this.props.token + "/" + this.props.channel + "/" + this.props.id + "/boundingbox/" + res + "/";
+        var url = "http://" + this.props.server + "/ocp/ramon/" + this.props.token + "/" + this.props.channel + "/" + this.props.id + "/boundingbox/" + curRes + "/";
         this.serverRequest = $.get(
           url,
           function( result ) {
@@ -1763,18 +1765,21 @@
             }
             //
             //map.setView
-            if ((ndv.maxres + ndv.maxres - ndv.res) < 0) {
+            if (curRes < 0) {
               // downsample coordinates to lower res (TODO!)
             }
+
             /*
             console.log('bbcorner: ', bbcorner);
             console.log('bbdim: ', bbdim);
             console.log('point: ', L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
             console.log('z: ', bbcorner[2] + bbdim[2]);
             */
+
             var center = map.unproject(L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
+            //console.log(curRes);
             //console.log('center: ', center);
-            map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
+            map.setView(center, ndv.maxres + ndv.maxres - curRes);
             chgZIndex(bbcorner[2] + bbdim[2]);
 
           }.bind(this),
