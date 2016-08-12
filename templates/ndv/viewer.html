@@ -1205,10 +1205,10 @@
       handleClick: function() {
         var strWindowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes";
 
-        var x = this.getState('x');
-        var y = this.getState('y');
-        var z = this.getState('z');
-        var res = this.getState('res');
+        var x = this.state.x;
+        var y = this.state.y;
+        var z = this.state.z;
+        var res = this.state.res;
 
         var channels = []
         for (var layer in layers) {
@@ -1219,7 +1219,7 @@
         var token = layers[Object.keys(layers)[0]].token;
         var server = layers[Object.keys(layers)[0]].server;
 
-        window.open('http://{{ request.get_host }}{{ request.META.SCRIPT_NAME }}/tools/synaptogram/' + server + '/' + token + '/' + chanstr + '/' + res + '/' + x + ',5/' + y + ',5/' + z + ',7/', "Synaptogram", strWindowFeatures);
+        window.open('http://' + window.location.hostname + '/ndv/tools/synaptogram/' + server + '/' + token + '/' + chanstr + '/' + res + '/' + x + ',5/' + y + ',5/' + z + ',7/', "Synaptogram", strWindowFeatures);
       },
       render: function() {
         return (
@@ -1781,6 +1781,7 @@
             //console.log('center: ', center);
             map.setView(center, ndv.maxres + ndv.maxres - curRes);
             chgZIndex(bbcorner[2] + bbdim[2]);
+            addMarkerCenter();
 
           }.bind(this),
           'json'
