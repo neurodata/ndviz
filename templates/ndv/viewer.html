@@ -538,7 +538,6 @@
     });
     // END query result palette
 
-
     /* ProjInfo Container */
     var projinfo = L.control();
     projinfo.options.position = 'topright';
@@ -739,179 +738,6 @@
     });
 
     ReactDOM.render(<PropagateWarningBox />, document.getElementsByClassName('propwarnbox')[0]);
-    /* end propagate warning box */
-
-    /* Query Result Components */
-    var QueryResult = React.createClass({
-      propTypes: {
-        'server': React.PropTypes.string,
-        'token': React.PropTypes.string,
-        'channel': React.PropTypes.string,
-        'id': React.PropTypes.number
-      },
-      ANNO_TYPES: {
-          1 : 'Annotation',
-          2 : 'Synapse',
-          3 : 'Seed',
-          4 : 'Segment',
-          5 : 'Neuron',
-          6 : 'Organelle',
-          7 : 'Node',
-          8 : 'Skeleton',
-          9 : 'ROI',
-      },
-      getDefaultProps: function() {
-        return {
-          'server': null,
-          'token': null,
-          'channel': null,
-          'id': 0,
-        }
-      },
-      getInitialState: function() {
-        return {
-          'ramon': null
-        }
-      },
-      componentWillReceiveProps: function(newProps) {
-        this.getRAMONObject(newProps.server, newProps.token, newProps.channel, newProps.id);
-      },
-      getRAMONObject: function(server, token, channel, id) {
-        var url = "http://" + server + "/ocp/ramon/" + token + "/" + channel + "/" + id + "/";
-        this.serverRequest = $.get(
-          url,
-          function( result ) {
-            var ramon = result;
-            this.setState({
-              'ramon': ramon,
-            });
-          }.bind(this),
-          'json'
-        );
-      },
-      componentDidMount: function() {
-        //this.getRAMONObject();
-      },
-      componentWillUnmount: function() {
-        this.serverRequest.abort();
-      },
-      render: function() {
-        if (this.state.ramon) {
-          // assume we only get one object
-          var ramon_key = Object.keys(this.state.ramon)[0];
-          var ramon_header = this.ANNO_TYPES[this.state.ramon[ramon_key]['ann_type']] + " #" + ramon_key;
-          return (
-            <div className="controls">
-                <div style={{float:"right"}}>
-                  <a href="#">
-                    <i className="fa fa-times fa-lg"></i>
-                  </a>
-                </div>
-                <h4>Query Result</h4>
-                <div style={{color: "#000"}}>
-                  <h5>{ramon_header}</h5>
-                  <table className="table table-condensed">
-                    <tbody>
-                      {Object.keys(this.state.ramon[ramon_key]).map(function(key, i) {
-                        return (
-                          <tr key={key}>
-                            <td>{key}</td>
-                            <td>{this.state.ramon[ramon_key][key]}</td>
-                          </tr>
-                        );
-                      }.bind(this))}
-                    </tbody>
-                  </table>
-                </div>
-            </div>
-          );
-        } else {
-          return null
-        };
-      }
-    });
-
-
-    ReactDOM.render(<QueryResult />, document.getElementsByClassName('queryres')[0]);
-
-    // function for querying ramon info and creating result lives nearby
-    getRamonInfo = function(point, zoom) {
-      // first, make sure that either zoom > 0 or
-      // resample point and zoom to be at level 0
-      if (zoom < 0) {
-        var numScales = 0 - zoom;
-        // scale the x and y coordinates of the point
-        var x = Math.round( point.x / ( 2 * numScales ) );
-        var y = Math.round( point.y / ( 2 * numScales ) );
-        point.x = x;
-        point.y = y;
-        zoom = 0;
-      }
-
-      // get the id of the object at that location
-      var objid = getAnnoId(point, zoom);
-
-      if (parseInt(objid) == 0) {
-        return "No RAMON object here.";
-      }
-
-      // render a new component
-      ReactDOM.render(<QueryResult
-        server={ndv.queryserver}
-        token={ndv.querytoken}
-        channel={ndv.querychannel}
-        id={parseInt(objid)}
-         />, document.getElementsByClassName('queryres')[0]);
-
-         /*
-      queryResultComponent.setProps({
-        'showResult': true,
-        'server': ndv.queryserver,
-        'token': ndv.querytoken,
-        'channel': ndv.querychannel,
-        'id':parseInt(objid)
-      });
-      */
-      /*
-      <QueryResult
-        showResult={true}
-        server='localhost:8080'
-        token='GelatinResults201607'
-        channel='anno1'
-        id={10}
-        />
-      */
-      // string for return
-      var objstr = 'ID: ' + objid;
-
-      /*
-      var script_name = '{{ request.META.SCRIPT_NAME }}';
-      if (script_name == '') {
-        var ramonUrl = "http://{{ request.get_host }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
-      }
-      else {
-        var ramonUrl = "http://{{ request.get_host }}/{{ request.META.SCRIPT_NAME }}/ramoninfo/" + ndv.queryserver + "/" + ndv.querytoken + "/" + ndv.querychannel + "/" + objid + "/";
-      }
-
-      // make request (using jquery)
-      var jqxhr = $.ajax({
-        url: ramonUrl,
-        type: 'GET',
-        success: function(response) {
-          $( ".querybody" ).empty();
-          $( ".querybody" ).append(response);
-          $( ".queryres" ).show("slow");
-          },
-        })
-        .fail(function(response) {
-          objstr = 'Failed to retrieve RAMON obj.';
-        });
-      */
-      return objstr;
-
-    }
-
-
     /* end propagate warning box */
 
     /* Project Info Toolbox Components */
@@ -1660,17 +1486,14 @@
         toolboxName: React.PropTypes.string.isRequired,
         toolboxIconName: React.PropTypes.string.isRequired
       },
-
       getInitialState: function() {
         return {
           showToolbox: false,
         };
       },
-
       handleClick: function() {
         this.setState({ showToolbox: !this.state.showToolbox });
       },
-
       render: function() {
         var boxKey = "boxKey_" + this.props.toolboxIconName;
         var iconKey = "iconKey_" + this.props.toolboxIconName;
@@ -1739,6 +1562,171 @@
       }
     });
 
+
+    /* Query Result Components */
+    var QueryResultController = React.createClass({
+      propTypes: {
+        toolboxComponent: React.PropTypes.object.isRequired,
+        toolboxName: React.PropTypes.string.isRequired,
+        toolboxIconName: React.PropTypes.string.isRequired,
+        showToolbox: React.PropTypes.bool
+      },
+      getDefaultProps: function() {
+        return {
+          showToolbox: false
+        };
+      },
+      getInitialState: function() {
+        return {
+          showToolbox: this.props.showToolbox,
+        };
+      },
+      componentWillReceiveProps: function(nextProps) {
+        this.setState({showToolbox: true});
+      },
+      handleClick: function() {
+        this.setState({ showToolbox: !this.state.showToolbox });
+      },
+      render: function() {
+        if (this.state.showToolbox) {
+          return <Toolbox
+                  iconClassName={this.props.toolboxIconName}
+                  toolboxName={this.props.toolboxName}
+                  toolboxComponent = {this.props.toolboxComponent}
+                  onClick={this.handleClick} />;
+        } else {
+          return null;
+        }
+      }
+    });
+    var QueryResult = React.createClass({
+      propTypes: {
+        'server': React.PropTypes.string,
+        'token': React.PropTypes.string,
+        'channel': React.PropTypes.string,
+        'id': React.PropTypes.number
+      },
+      ANNO_TYPES: {
+          1 : 'Annotation',
+          2 : 'Synapse',
+          3 : 'Seed',
+          4 : 'Segment',
+          5 : 'Neuron',
+          6 : 'Organelle',
+          7 : 'Node',
+          8 : 'Skeleton',
+          9 : 'ROI',
+      },
+      getDefaultProps: function() {
+        return {
+          'server': null,
+          'token': null,
+          'channel': null,
+          'id': 0,
+        }
+      },
+      getInitialState: function() {
+        return {
+          'ramon': null
+        }
+      },
+      componentWillReceiveProps: function(newProps) {
+        this.getRAMONObject(newProps.server, newProps.token, newProps.channel, newProps.id);
+      },
+      componentDidMount: function() {
+        // assume token and channel are present if server property is present
+        if (this.props.server) {
+          this.getRAMONObject(this.props.server, this.props.token, this.props.channel, this.props.id);
+        }
+      },
+      getRAMONObject: function(server, token, channel, id) {
+        var url = "http://" + server + "/ocp/ramon/" + token + "/" + channel + "/" + id + "/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var ramon = result;
+            this.setState({
+              'ramon': ramon,
+            });
+          }.bind(this),
+          'json'
+        );
+      },
+      render: function() {
+        if (this.state.ramon) {
+          // assume we only get one object
+          var ramon_key = Object.keys(this.state.ramon)[0];
+          var ramon_header = this.ANNO_TYPES[this.state.ramon[ramon_key]['ann_type']] + " #" + ramon_key;
+          return (
+            <div>
+              <h5>{ramon_header}</h5>
+              <table className="table table-condensed">
+                <tbody>
+                  {Object.keys(this.state.ramon[ramon_key]).map(function(key, i) {
+                    return (
+                      <tr key={key}>
+                        <td>{key}</td>
+                        <td>{this.state.ramon[ramon_key][key]}</td>
+                      </tr>
+                    );
+                  }.bind(this))}
+                </tbody>
+              </table>
+            </div>
+          );
+        } else {
+          return null
+        };
+      }
+    });
+
+    var queryResultComponent = <QueryResult />;
+    ReactDOM.render(<QueryResultController
+      toolboxComponent={queryResultComponent}
+      toolboxName="Query Result"
+      toolboxIconName="fa-exchange" />, document.getElementsByClassName('queryres')[0]);
+
+    // function for querying ramon info and creating result lives nearby
+    getRamonInfo = function(point, zoom) {
+      // first, make sure that either zoom > 0 or
+      // resample point and zoom to be at level 0
+      if (zoom < 0) {
+        var numScales = 0 - zoom;
+        // scale the x and y coordinates of the point
+        var x = Math.round( point.x / ( 2 * numScales ) );
+        var y = Math.round( point.y / ( 2 * numScales ) );
+        point.x = x;
+        point.y = y;
+        zoom = 0;
+      }
+
+      // get the id of the object at that location
+      var objid = getAnnoId(point, zoom);
+
+      if (parseInt(objid) == 0) {
+        return "No RAMON object here.";
+      }
+
+      // render a new component
+      var queryResultComponent = <QueryResult
+        server={ndv.queryserver}
+        token={ndv.querytoken}
+        channel={ndv.querychannel}
+        id={parseInt(objid)}
+         />;
+      ReactDOM.render(<QueryResultController
+        toolboxComponent={queryResultComponent}
+        toolboxName="Query Result"
+        toolboxIconName="fa-exchange"
+        showToolbox={true}
+        />, document.getElementsByClassName('queryres')[0]);
+
+      var objstr = 'ID: ' + objid;
+
+      return objstr;
+    }
+
+
     var projInfoComponent = <ProjectInfoController token={layers[Object.keys(layers)[0]].token} server={layers[Object.keys(layers)[0]].server} />;
     ReactDOM.render( <ToolboxController
       toolboxComponent={projInfoComponent}
@@ -1759,7 +1747,7 @@
       toolboxName="Image Controls"
       toolboxIconName="fa-picture-o" />, document.getElementsByClassName('imagecontrols')[0]);
 
-    /*
+
     var projectionServiceComponent = <ProjectionServiceController />;
     ReactDOM.render( <ToolboxController
       toolboxComponent={projectionServiceComponent}
@@ -1773,7 +1761,6 @@
       toolboxName="Synaptogram"
       toolboxIconName="fa-cubes" />,
     document.getElementsByClassName('synaptogramtoolbox')[0]);
-    */
 
     var queryToolComponent = <QueryTool />;
     ReactDOM.render( <ToolboxController
