@@ -507,6 +507,21 @@
     var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
 		map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
 
+    // set global blend mode if passed in by user
+    var updateGlobalBlendMode = function(value) {
+      for (var layer in layers) {
+        if (layers[layer].type != 'annotation') {
+          layers[layer].blending = value;
+        }
+      }
+      ndv.blendmode = value;
+      glLayer.draw();
+    };
+    {% if blendmode %}
+      updateGlobalBlendMode({{ blendmode }});
+    {% endif %}
+
+
     // BEGIN propagate warning
     var propwarn = L.control();
     propwarn.options.position = 'topright';
@@ -840,25 +855,15 @@
 
     /* Image Controls Toolbox Components */
 
-    var updateGlobalBlendMode = function(value) {
-      for (var layer in layers) {
-        if (layers[layer].type != 'annotation') {
-          layers[layer].blending = value;
-        }
-      }
-      ndv.blendmode = value;
-      glLayer.draw();
-    };
-
     var ImageControlsParent = React.createClass({
       propTypes: {
-        blendMode: React.PropTypes.string, // blend mode passed as string via django
+        blendMode: React.PropTypes.number, // blend mode passed as string via django
       },
       getDefaultProps: function() {
         return {blendMode: 1};
       },
       getInitialState: function() {
-        return {blendMode: parseInt(this.props.blendMode)};
+        return {blendMode: this.props.blendMode};
       },
       handleBlendModeChange: function(event) {
         var value = parseInt(event.target.value);
@@ -898,7 +903,6 @@
     var ImageControlsLayer = React.createClass({
       propTypes: {
         layer: React.PropTypes.string.isRequired,
-        opacity: React.PropTypes.number, // TODO pass in as opacity
         collapsed: React.PropTypes.bool
       },
       getDefaultProps: function() {
@@ -912,13 +916,12 @@
         };
       },
       getInitialState: function() {
-
         return {
           collapsed: this.props.collapsed,
-          opacity: this.props.opacity,
-          minVal: this.props.minVal,
-          maxVal: this.props.maxVal,
-          gamma: this.props.gamma,
+          opacity: layers[this.props.layer].opacity,
+          minVal: layers[this.props.layer].min,
+          maxVal: layers[this.props.layer].max,
+          gamma: layers[this.props.layer].gamma,
           color: layers[this.props.layer].color
         }
       },
@@ -960,7 +963,7 @@
                 <ImageControlsSlider
                   layer={this.props.layer}
                   layerProp="opacity"
-                  defaultValue={this.props.opacity}
+                  defaultValue={this.state.opacity}
                   handleChange={this.handleOpacityChange}
                   className="opacity"
                   divisor={100} />
@@ -971,7 +974,7 @@
                 <ImageControlsSlider
                   layer={this.props.layer}
                   layerProp="min"
-                  defaultValue={this.props.minVal}
+                  defaultValue={this.state.minVal}
                   handleChange={this.handleMinChange}
                   className="minslider"
                   maxValue={255}
@@ -983,7 +986,7 @@
                 <ImageControlsSlider
                   layer={this.props.layer}
                   layerProp="max"
-                  defaultValue={this.props.maxVal}
+                  defaultValue={this.state.maxVal}
                   handleChange={this.handleMaxChange}
                   className="maxslider"
                   maxValue={255}
@@ -995,7 +998,7 @@
                 <ImageControlsSlider
                   layer={this.props.layer}
                   layerProp="gamma"
-                  defaultValue={this.props.gamma}
+                  defaultValue={this.state.gamma}
                   handleChange={this.handleGammaChange}
                   className="gammaslider"
                   maxValue={2}
@@ -1735,13 +1738,7 @@
 
     {% endverbatim %}
 
-    // TODO: blend mode is always supplied?
-    {% if blendmode %}
-      var imageControlsComponent = <ImageControlsParent blendMode="{{ blendmode }}" />;
-      updateGlobalBlendMode({{ blendmode }});
-    {% else %}
-      var imageControlsComponent = <ImageControlsParent />;
-    {% endif %}
+    var imageControlsComponent = <ImageControlsParent blendMode={ndv.blendmode} />;
     ReactDOM.render( <ToolboxController
       toolboxComponent={imageControlsComponent}
       toolboxName="Image Controls"
