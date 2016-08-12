@@ -531,10 +531,12 @@
     // disable (and then re-enable) clicking on mouseover
     queryres.getContainer().addEventListener('mouseover', function() {
       map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
     });
 
     queryres.getContainer().addEventListener('mouseout', function() {
       map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
     });
     // END query result palette
 
@@ -1254,7 +1256,8 @@
     var QueryTool = React.createClass({
       getInitialState: function() {
         return {
-          layers: []
+          layers: [],
+          selectedLayer: null
         }
       },
       componentWillMount: function() {
@@ -1284,8 +1287,13 @@
         ndv.querychannel = layers[changed].channel;
         ndv.queryserver = layers[changed].server;
         ndv.querytool = true;
+
+        this.setState({selectedLayer: event.target.value});
       },
       render: function() {
+        if (this.state.selectedLayer) {
+          var filterObjectsByType = <QueryObjectsByType layer={this.state.selectedLayer} />;
+        }
         return (
           <div>
             <form>
@@ -1298,6 +1306,90 @@
                 </select>
               </div>
               </form>
+              {this.state.selectedLayer ? filterObjectsByType : null}
+          </div>
+        );
+      }
+    });
+    var QueryObjectsByType = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.string
+      },
+      getInitialState: function() {
+        return {
+          ramonObjectIds: [],
+          annType: 2
+        }
+      },
+      handleClick: function() {
+        var server = ndv.queryserver;
+        var token = ndv.querytoken;
+        var channel = ndv.querychannel;
+        var url = "http://" + server + "/ocp/ramon/" + token + "/" + channel + "/query/ann_type/" + this.state.annType + "/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            this.setState({
+              ramonObjectIds: result,
+            });
+          }.bind(this),
+          'json'
+        );
+      },
+      updateAnnType: function(event) {
+        this.setState({annType:parseInt(event.target.value)});
+      },
+      render: function() {
+        return (
+          <div>
+            <form className="form-inline">
+              <div className="form-group">
+                <select className="form-control" onChange={this.updateAnnType}>
+                  <option value="2">Synapse</option>
+                  <option value="3">Seed</option>
+                  <option value="4">Segment</option>
+                  <option value="5">Neuron</option>
+                  <option value="6">Organelle</option>
+                  <option value="7">Node</option>
+                  <option value="8">Skeleton</option>
+                  <option value="9">ROI</option>
+                </select>
+              </div>
+              <button onClick={this.handleClick} className="btn btn-primary" type="button">Get All RAMON Objects</button>
+            </form>
+            <div>
+              { (this.state.ramonObjectIds.length > 0) ? <QueryIdsDisplay ids={this.state.ramonObjectIds}/> : null}
+            </div>
+          </div>
+        );
+      }
+    });
+    var QueryIdsDisplay = React.createClass({
+      propTypes: {
+        ids: React.PropTypes.array.isRequired
+      },
+      handleIdClick: function(id) {
+        var queryResultComponent = <QueryResult
+          server={ndv.queryserver}
+          token={ndv.querytoken}
+          channel={ndv.querychannel}
+          id={parseInt(id)}
+           />;
+        ReactDOM.render(<QueryResultController
+          toolboxComponent={queryResultComponent}
+          toolboxName="Query Result"
+          toolboxIconName="fa-exchange"
+          showToolbox={true}
+          />, document.getElementsByClassName('queryres')[0]);
+      },
+      render: function() {
+        return (
+          <div>
+            <ul>
+            {this.props.ids.map(function(id, i) {
+              return (<li key={i}><a href="#" onClick={() => this.handleIdClick(id)}><h5>{id}</h5></a></li>);
+            }.bind(this))}
+            </ul>
           </div>
         );
       }
@@ -1652,6 +1744,43 @@
           'json'
         );
       },
+      handleCenterClick: function() {
+
+        var res = ndv.maxres + ndv.maxres - ndv.res;
+        if (res < 0) {
+          res = 0;
+        }
+        console.log('res: ', res);
+
+        var url = "http://" + this.props.server + "/ocp/ramon/" + this.props.token + "/" + this.props.channel + "/" + this.props.id + "/boundingbox/" + res + "/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var bbcorner = result[this.props.id]['bbcorner'];
+            var bbdim = result[this.props.id]['bbdim'];
+            for (var i = 0; i < 3; i++) {
+              bbdim[i] = Math.floor(bbdim[i]/2);
+            }
+            //
+            //map.setView
+            if ((ndv.maxres + ndv.maxres - ndv.res) < 0) {
+              // downsample coordinates to lower res (TODO!)
+            }
+            /*
+            console.log('bbcorner: ', bbcorner);
+            console.log('bbdim: ', bbdim);
+            console.log('point: ', L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
+            console.log('z: ', bbcorner[2] + bbdim[2]);
+            */
+            var center = map.unproject(L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
+            //console.log('center: ', center);
+            map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
+            chgZIndex(bbcorner[2] + bbdim[2]);
+
+          }.bind(this),
+          'json'
+        );
+      },
       render: function() {
         if (this.state.ramon) {
           // assume we only get one object
@@ -1672,10 +1801,11 @@
                   }.bind(this))}
                 </tbody>
               </table>
+              <button onClick={this.handleCenterClick} className="btn btn-primary">Center View</button>
             </div>
           );
         } else {
-          return null
+          return null;
         };
       }
     });
@@ -2164,13 +2294,6 @@
 
         // remove layer from control panel
         $( ".controls-" + layer_name ).remove();
-      });
-    });
-
-    // close the queryinfo window
-    $(function() {
-      $( "#closequerybox" ).click(function() {
-        $( ".queryres" ).hide( "slow" );
       });
     });
 
