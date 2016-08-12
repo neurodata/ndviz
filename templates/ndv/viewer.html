@@ -162,6 +162,7 @@
 
     // functions defined in babel
     var getRamonInfo = null;
+    var updateScaleBar = null;
 
      // create the map first
 		var map = L.map('map', {
@@ -694,6 +695,10 @@
       return this._div;
     }
     scaleBar.addTo(map);
+
+    var getCurrentRes = function() {
+      return map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+    }
 
     </script>
 
@@ -1386,11 +1391,18 @@
     });
 
     /* Scale Bar */
-
     var ScaleBar = React.createClass({
+      getDefaultProps: function() {
+        return {
+          minbar: 100,
+          maxbar: 300,
+          res: 0
+        }
+      },
       getInitialState: function() {
         return {
-          projinfo: null
+          voxelres: null,
+          res: this.props.res
         };
       },
       componentDidMount: function() {
@@ -1400,31 +1412,66 @@
           function( result ) {
             var projinfo = result;
             this.setState({
-              projinfo: projinfo,
+              voxelres: projinfo.dataset.voxelres,
             });
           }.bind(this),
           'json'
         )
       },
+      componentWillReceiveProps: function (nextProps) {
+        if (nextProps.res != null && isNaN(nextProps.res) == false) {
+          this.setState({res: nextProps.res});
+        }
+      },
       componentWillUnmount: function() {
         this.serverRequest.abort();
       },
-      /*
       render: function() {
-        var scaleStyle = {
+        if (this.props.server == null || this.state.voxelres == null) {
+          return null;
+        }
+        var scaleAreaStyle = {
           color: 'white',
           paddingLeft: 50,
           paddingBottom: 25
         };
+        var scaleBarStyle = {
+          background: "rgba(0, 120, 168, 0.6)",
+          paddingLeft: 10,
+          borderColor: "#000",
+          borderWidth: 2,
+          borderBottomStyle: "solid",
+          borderLeftStyle: "solid",
+          borderRightStyle: "solid"
+        };
+
+        var divisor = 1;
+        if (this.state.res < 0) {
+          divisor = 2**(this.state.res*-1);
+          this.state.res = 0;
+        }
+
+        var curVoxelRes = this.state.voxelres[this.state.res];
+
+        var curRes = (curVoxelRes[0] > curVoxelRes[1]) ? curVoxelRes[1] : curVoxelRes[0];
+
+        var curResScaled = (curRes/divisor) * 250;
+        var scaleBarWidth = 250;
+        var units = 'nm';
+
+        // convert to um if required
+        if (curResScaled > 1000) {
+            curResScaled = curResScaled / 1000;
+            units = 'um'
+        }
+
         return (
-          <div style={scaleStyle}>
-            <div style={{width: 315.5}}>100nm</div>
+          <div style={scaleAreaStyle}>
+            <div style={{width: scaleBarWidth}}>
+              <div style={scaleBarStyle}>{curResScaled} {units}</div>
+            </div>
           </div>
         );
-      }
-      */
-      render: function() {
-        return false;
       }
     });
 
@@ -1774,7 +1821,17 @@
     document.getElementsByClassName('markertool')[0]);
 
     /* scale bar */
-    ReactDOM.render( <ScaleBar />, document.getElementsByClassName('scalebar')[0]);
+    updateScaleBar = function() {
+      var layer = layers[Object.keys(layers)[0]];
+      ReactDOM.render(
+        <ScaleBar
+          server={layer.server}
+          token={layer.token}
+          res={getCurrentRes()}
+        />, document.getElementsByClassName('scalebar')[0]);
+    }
+    updateScaleBar();
+    map.on('zoomend', updateScaleBar);
 
     </script>
     <script>
