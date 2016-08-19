@@ -12,6 +12,9 @@ var Detector = {
 
 			var canvas = document.createElement( 'canvas' ); return !! ( window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ) );
 
+			// delete canvas element
+			canvas.parentElement.removeChild(canvas)
+
 		} catch ( e ) {
 
 			return false;
@@ -66,6 +69,22 @@ var Detector = {
 
 		parent.appendChild( element );
 
+	},
+
+	getWebGLErrorHTML: function() {
+		var html = ''
+		if ( ! this.webgl ) {
+
+			html = window.WebGLRenderingContext ? [
+				'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</a>.<br />',
+				'Find out how to get it <a href="http://get.webgl.org/">here</a>.'
+			].join( '\n' ) : [
+				'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</a>.<br/>',
+				'Find out how to get it <a href="http://get.webgl.org/">here</a>.'
+			].join( '\n' );
+
+		}
+		return html
 	}
 
 };

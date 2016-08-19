@@ -59,9 +59,25 @@
   <script src="{% static 'ndv/js/ocp-leaflet.js' %}"></script>
   {# threejs #}
   <script src="{% static 'ndv/js/threejs/three.min.js' %}"></script>
+  <script src="{% static 'ndv/js/threejs/Detector.js' %}"></script>
 
 	</head>
 <body>
+  <div class="modal fade" id="no_webgl" tabindex="-1" role="dialog" aria-labelledby="no_webgl_modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close"><span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title" id="no_webgl_modal_label">Error Initializing WebGL</h3>
+        </div>
+        <div class="modal-body bg-danger" id="no_webgl_body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   {# Begin Modal Code Includes #}
   {% include "ndv/help.html" %}
@@ -121,6 +137,15 @@
     }
   </script>
   <script>
+    // check for WebGL
+    if ( ! Detector.webgl ) {
+      // launch error modal
+      $(document).ready(function() {
+        $('#no_webgl_body').html(Detector.getWebGLErrorHTML())
+        $("#no_webgl").modal('show');
+      })
+
+    }
     // AB TODO use strict
 
     // global variables
