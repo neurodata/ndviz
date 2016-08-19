@@ -765,9 +765,9 @@
                     <span className="notpropchanlist">
                       {this.state.unpropagatedChannels.map(function(channel, i) {
                         if (i == this.state.unpropagatedChannels.length - 1) {
-                          return <span>{channel}</span>
+                          return <span key={i}>{channel}</span>
                         } else {
-                          return <span>{channel}, </span>
+                          return <span key={i}>{channel}, </span>
                         };
                       }.bind(this))}
                     </span>
