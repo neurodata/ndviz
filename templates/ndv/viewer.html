@@ -79,7 +79,7 @@
     </div>
   </div>
   <div class="modal fade" id="layerControls" tabindex="-1" role="dialog" aria-labelledby="layerControlsModal" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -426,6 +426,9 @@
       var fragmentShader = document.getElementById('fragmentShader').text;
 
       function loadTexture(img, layer, offsetx, offsety, color, opacity, minval, maxval, gamma, blending) {
+
+        //console.log(img);
+
         // use dom element for textures
         var texture = new THREE.Texture({
           repeat: 1,
@@ -442,6 +445,10 @@
             }
           }, this);
         }
+
+
+        //var texture = new THREE.TextureLoader().load(img);
+
 
         var geometry = new THREE.PlaneBufferGeometry(size, size);
 
