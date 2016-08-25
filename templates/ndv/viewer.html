@@ -226,9 +226,8 @@
     });
     map.addControl(loadingControl);
 
-    // define layers (namespaced with a layers. prefix)
-    var layers = {};
-    var layersOrder = [];
+    // array of LDVLayer objects (sortable)
+    var layers = [];
 
     var NDVLayer = function(name, type, propagate, url, server, token, channel, color, tilecache) {
       this.name = name;
@@ -282,7 +281,7 @@
       /* add layer to the map */
       this.tileLayer.addTo(map);
       /* add the layer to the ordering */
-      layersOrder.push(this);
+      layers.push(this);
 
       /* define some methods */
       this.updateLayerUrl = function(newUrl) {
@@ -293,8 +292,6 @@
         console.log('todo!!!')
         // TODO
       };
-
-
     };
 
     // load image layers first
@@ -334,7 +331,6 @@
 
         {# add the layer #}
         var newLayer = new NDVLayer("{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
-        layers[newLayer.name] = newLayer;
 
         {% endif %}
     {% endfor %}
@@ -372,7 +368,6 @@
 
         {# add the layer #}
         var newLayer = new NDVLayer("{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", "{{ layer.propagate }}", url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
-        layers[newLayer.name] = newLayer;
         {% endif %}
     {% endfor %}
 
@@ -498,7 +493,7 @@
         scene.add(plane);
       }
 
-      if (Object.keys(layers).length == 0) {
+      if (layers.length == 0) {
         return;
       }
 
@@ -1000,7 +995,7 @@
     // ImageControlsLayer encapsulates all image controls for a single layer
     var ImageControlsLayer = React.createClass({
       propTypes: {
-        layer: React.PropTypes.string.isRequired,
+        layer: React.PropTypes.object.isRequired,
         collapsed: React.PropTypes.bool
       },
       getDefaultProps: function() {
@@ -1017,12 +1012,12 @@
       getInitialState: function() {
         return {
           collapsed: this.props.collapsed,
-          opacity: layers[this.props.layer].opacity,
-          minVal: layers[this.props.layer].min,
-          maxVal: layers[this.props.layer].max,
-          gamma: layers[this.props.layer].gamma,
-          color: layers[this.props.layer].color,
-          enabled: layers[this.props.layer].enabled
+          opacity: this.props.layer.opacity,
+          minVal: this.props.layer.min,
+          maxVal: this.props.layer.max,
+          gamma: this.props.layer.gamma,
+          color: this.props.layer.color,
+          enabled: this.props.layer.enabled
         }
       },
       componentWillReceiveProps: function(nextProps) {
@@ -1047,19 +1042,18 @@
         this.setState({color: color});
       },
       handleRemoveLayer: function() {
-        layers[this.props.layer].removeLayerFromMap();
+        this.props.layer.removeLayerFromMap();
         this.setState({enabled: false});
       },
       render: function() {
         var removeLayer = 'remove-layer';
-        var layer = this.props.layer;
         return (
           <div>
             <div className="controls-layer-name">
               <a href="#" className='remove-layer' onClick={this.handleRemoveLayer}>
                 <i className={this.state.enabled ? "fa fa-times-circle" : "fa fa-plus-circle"}></i>
               </a>
-              <a href="#" onClick={this.handleToggleCollapse}>{this.props.layer}</a>
+              <a href="#" onClick={this.handleToggleCollapse}>{this.props.layer.name}</a>
             </div>
             <div className={this.state.collapsed ? 'hiddencontrols' : 'visiblecontrols'}>
               <div className="controls-slider-name">Opacity ({Math.round(this.state.opacity*100)})</div>
@@ -1124,7 +1118,7 @@
 
     var ImageControlsSlider = React.createClass({
       propTypes: {
-        layer: React.PropTypes.string.isRequired,
+        layer: React.PropTypes.object.isRequired,
         layerProp: React.PropTypes.string.isRequired,
         defaultValue: React.PropTypes.number.isRequired,
         handleChange: React.PropTypes.func.isRequired,
@@ -1148,12 +1142,11 @@
         };
       },
       handleValueChange: function(event, ui) {
-        layers[this.props.layer][this.props.layerProp] = ui.value/this.props.divisor;
+        this.props.layer[this.props.layerProp] = ui.value/this.props.divisor;
         this.setState({value: ui.value/this.props.divisor});
         this.props.handleChange(ui.value/this.props.divisor);
       },
       componentDidMount: function() {
-        var layer = this.props.layer;
         var span = ReactDOM.findDOMNode(this);
         $( span ).slider({
           min: this.props.minValue,
@@ -1172,7 +1165,7 @@
 
     var ImageControlsColor = React.createClass({
       propTypes: {
-        layer: React.PropTypes.string.isRequired,
+        layer: React.PropTypes.object.isRequired,
         onColorChange: React.PropTypes.func.isRequired,
         color: React.PropTypes.string
       },
@@ -1183,22 +1176,21 @@
       },
       getInitialState: function() {
         return {
-          color: layers[this.props.layer].color
+          color: this.props.layer.color
         }
       },
       handleColorChange: function(event) {
-        var layer = this.props.layer;
         var color = event.target.value;
         if (color == "none") {
           this.setState({color: null});
           this.props.onColorChange(null);
-          layers[layer].color = color;
+          this.props.layer.color = color;
           glLayer.draw();
           return;
         }
 
         this.setState({color: color})
-        layers[layer].color = color;
+        this.props.layer.color = color;
         this.props.onColorChange(color);
         glLayer.draw();
       },
@@ -1235,11 +1227,11 @@
         return (
           <div id="image-sliders">
             <small><a href="#" onClick={this.setCollapsedTrue}>Collapse All</a> / <a href="#" onClick={this.setCollapsedFalse}>Expand All</a></small>
-            {Object.keys(layers).map(function(key, i) {
-              var layerKey = 'controls-' + key;
+            {layers.map(function(layer, i) {
+              var layerKey = 'controls-' + i;
               return (
                 <div key={layerKey}>
-                  <ImageControlsLayer layer={key} collapsed={this.state.collapsed} />
+                  <ImageControlsLayer layer={layer} collapsed={this.state.collapsed} />
                 </div>
               );
             }.bind(this))}
@@ -1252,9 +1244,9 @@
     var ProjectionServiceController = React.createClass({
       handleClick: function() {
 
-        for (var layername in layers) {
-          var url = 'http://' + layers[layername].server + '/nd/catmaid/maxproj/' + layers[layername].token + '/' + layers[layername].channel + '/width:' + this.refs.width.value + '/xy/{zindex}/{y}_{x}_{z}.png';
-          layers[layername].updateLayerUrl( url )
+        for (var layerid in layers) {
+          var url = 'http://' + layers[layerid].server + '/nd/catmaid/maxproj/' + layers[layerid].token + '/' + layers[layerid].channel + '/width:' + this.refs.width.value + '/xy/{zindex}/{y}_{x}_{z}.png';
+          layers[layerid].updateLayerUrl( url )
         }
 
         glLayer.draw();
@@ -1295,7 +1287,7 @@
         var to = Number(this.over.dataset.id);
         if(from < to) to--;
         if(this.nodePlacement == "after") to++;
-        layersOrder.splice(to, 0, layersOrder.splice(from, 1)[0]);
+        layers.splice(to, 0, layers.splice(from, 1)[0]);
 
 
         //this.setState({data: data});
@@ -1329,7 +1321,7 @@
 
         return (
           <ul className="layer-list" onDragOver={this.dragOver}>
-            {layersOrder.map(function(key, i) {
+            {layers.map(function(key, i) {
               return (
                 <li
                   data-id={i}
@@ -1406,8 +1398,8 @@
         }
         var chanstr = channels.join(',');
 
-        var token = layers[Object.keys(layers)[0]].token;
-        var server = layers[Object.keys(layers)[0]].server;
+        var token = layers[0].token;
+        var server = layers[0].server;
 
         window.open('http://{{ request.get_host }}{{ request.META.SCRIPT_NAME }}/tools/synaptogram/' + server + '/' + token + '/' + chanstr + '/' + res + '/' + x + ',5/' + y + ',5/' + z + ',7/', "Synaptogram", strWindowFeatures);
       },
@@ -1457,7 +1449,7 @@
         var newLayers = [];
         for (var layer in layers) {
           if (layers[layer].type == 'annotation') {
-            newLayers.push(layer)
+            newLayers.push(layers[layer])
           }
         }
         this.setState({layers: newLayers});
@@ -1472,9 +1464,13 @@
           ndv.queryserver = 'none';
           return;
         }
-        ndv.querytoken = layers[changed].token;
-        ndv.querychannel = layers[changed].channel;
-        ndv.queryserver = layers[changed].server;
+        for (var layer in layers) {
+          if (layers[layer].name == changed) {
+            ndv.querytoken = layers[layer].token;
+            ndv.querychannel = layers[layer].channel;
+            ndv.queryserver = layers[layer].server;
+          }
+        }
         ndv.querytool = true;
       },
       render: function() {
@@ -1485,7 +1481,7 @@
               <select className="form-control" onChange={this.handleChange}>
                 <option value="none">None</option>
                 {this.state.layers.map(function(layer) {
-                  return <option value={layer} key={layer}>{layer}</option>
+                  return <option value={layer.name} key={layer}>{layer.name}</option>
                 })}
                 </select>
               </div>
@@ -2386,26 +2382,6 @@
       });
     }); // play delay
 
-    // remove a layer
-    $(function() {
-      $( "#image-sliders" ).on( "click", ".remove-layer", function() {
-        var class_arr = this.className.split(' ');
-        var layer_name = $.trim(class_arr[1]);
-        // remove layer from the map
-        console.log(layer_name);
-        console.log(layers[layer_name])
-        // remove from map
-        map.removeLayer( layers[layer_name].tileLayer  );
-        // remove from layers array
-        delete layers[layer_name]
-        // redraw
-        glLayer.draw()
-
-        // remove layer from control panel
-        $( ".controls-" + layer_name ).remove();
-      });
-    });
-
     // close the queryinfo window
     $(function() {
       $( "#closequerybox" ).click(function() {
@@ -2413,7 +2389,7 @@
       });
     });
 
-    // timeseries functions
+    // timeseries functions -- TODO, use new layers format 
     function loadTimeStep(newTime) {
       map.closePopup();
       if (newTime < {{ starttime }}) {
