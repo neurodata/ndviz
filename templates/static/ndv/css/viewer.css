@@ -243,6 +243,23 @@ html, body, #map {
   margin: 0 0 5px;
   color: #777;
 }
+.layer-list {
+  list-style: none !important;
+  margin:0;
+  padding:0
+}
+.layer-list li {
+  padding: 5px;
+  background:#eee
+}
+.layer-list li.placeholder {
+  background: rgb(255,240,120);
+}
+.layer-list li.placeholder:before {
+  content: "Drop here";
+  color: rgb(225,210,90);
+}
+
 .keyhelp {
   display: none;
   background: rgb(34, 34, 34);

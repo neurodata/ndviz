@@ -78,6 +78,21 @@
       </div>
     </div>
   </div>
+  <div class="modal fade" id="layerControls" tabindex="-1" role="dialog" aria-labelledby="layerControlsModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title" id="layerControlsLabel">Layer Controls</h3>
+        </div>
+        <div class="modal-body" id="layerControlsContainer">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+       </div>
+     </div>
+  </div>
 
   {# Begin Modal Code Includes #}
   {% include "ndv/help.html" %}
@@ -213,6 +228,7 @@
 
     // define layers (namespaced with a layers. prefix)
     var layers = {};
+    var layersOrder = [];
 
     var NDVLayer = function(name, type, propagate, url, server, token, channel, color, tilecache) {
       this.name = name;
@@ -231,6 +247,8 @@
       this.max = 1.0;
       this.gamma = 1.0;
       this.blending = ndv.blendmode;
+      /* enabled by default */
+      this.enabled = true;
 
       /* overwrite some parameters if this is an annotation */
       if (type == 'annotation') {
@@ -261,14 +279,22 @@
         }
       );
 
-      /* add layer */
+      /* add layer to the map */
       this.tileLayer.addTo(map);
-    };
+      /* add the layer to the ordering */
+      layersOrder.push(this);
 
-    NDVLayer.extend = {
-      updateLayerUrl: function(newUrl) {
+      /* define some methods */
+      this.updateLayerUrl = function(newUrl) {
         this.tileLayer.setUrl(newUrl);
-      }
+      };
+      this.removeLayerFromMap = function() {
+        this.enabled = false;
+        console.log('todo!!!')
+        // TODO
+      };
+
+
     };
 
     // load image layers first
@@ -623,6 +649,42 @@
     });
     /* End Image Controls Container */
 
+    /* Layer Controls Container */
+    var layercontrols = L.control();
+    layercontrols.options.position = 'topright';
+    layercontrols.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'layercontrols');
+      var button = '<a id="layerControlsButton" href="#" data-toggle="modal" data-target="#layerControls"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-clone fa-stack-1x"></i></span></a>';
+      this._div.innerHTML = button;
+      return this._div;
+    };
+    layercontrols.addTo(map);
+
+    // disable (and then re-enable) clicking on mouseover
+    layercontrols.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+    });
+
+    layercontrols.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+    });
+    // for modal
+    $( "layerControls ").on('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+    $( "layerControls ").on('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+
+    // open modal on click
+    $("#layerControlsButton").on('click', function() {
+      $( "layerControls" ).modal('show');
+    });
+
+    /* End Layer Controls Container */
+
     /* Projection Service Container */
     var projectionservice = L.control();
     projectionservice.options.position = 'topright';
@@ -929,7 +991,6 @@
     });
 
     // ImageControlsLayer encapsulates all image controls for a single layer
-    // TODO handle remove layer here, too
     var ImageControlsLayer = React.createClass({
       propTypes: {
         layer: React.PropTypes.string.isRequired,
@@ -942,7 +1003,8 @@
           minVal: 0,
           maxVal: 1,
           gamma: 1,
-          color: null
+          color: null,
+          enabled: true
         };
       },
       getInitialState: function() {
@@ -952,7 +1014,8 @@
           minVal: layers[this.props.layer].min,
           maxVal: layers[this.props.layer].max,
           gamma: layers[this.props.layer].gamma,
-          color: layers[this.props.layer].color
+          color: layers[this.props.layer].color,
+          enabled: layers[this.props.layer].enabled
         }
       },
       componentWillReceiveProps: function(nextProps) {
@@ -976,14 +1039,18 @@
       handleColorChange: function(color) {
         this.setState({color: color});
       },
+      handleRemoveLayer: function() {
+        layers[this.props.layer].removeLayerFromMap();
+        this.setState({enabled: false});
+      },
       render: function() {
-        var removeLayer = 'remove-layer ' + this.props.layer
+        var removeLayer = 'remove-layer';
         var layer = this.props.layer;
         return (
           <div>
             <div className="controls-layer-name">
-              <a href="#" className={removeLayer}>
-                <i className="fa fa-times-circle"></i>
+              <a href="#" className='remove-layer' onClick={this.handleRemoveLayer}>
+                <i className={this.state.enabled ? "fa fa-times-circle" : "fa fa-plus-circle"}></i>
               </a>
               <a href="#" onClick={this.handleToggleCollapse}>{this.props.layer}</a>
             </div>
@@ -1163,7 +1230,6 @@
             <small><a href="#" onClick={this.setCollapsedTrue}>Collapse All</a> / <a href="#" onClick={this.setCollapsedFalse}>Expand All</a></small>
             {Object.keys(layers).map(function(key, i) {
               var layerKey = 'controls-' + key;
-              var removeLayer = 'remove-layer ' + key;
               return (
                 <div key={layerKey}>
                   <ImageControlsLayer layer={key} collapsed={this.state.collapsed} />
@@ -1192,6 +1258,92 @@
             <br /><div id="projectModeWidth">Width: <input id="projectModeWidthInput" type="number" min="0" max="50" value="5" ref="width"/></div>
             <br /><button className="btn btn-primary" id="projectModeApply" onClick={this.handleClick} >Load Projection</button>
           </div>
+        );
+      }
+    });
+
+    /* Layer Controls Components */
+    // http://webcloud.se/sortable-list-component-react-js/
+    var placeholder = document.createElement("li");
+    placeholder.className = "placeholder";
+    var LayerControlsParent = React.createClass({
+      getInitialState: function() {
+        return {
+          layers: layers
+        }
+      },
+      dragStart: function(e) {
+        this.dragged = e.currentTarget;
+        e.dataTransfer.effectAllowed = 'move';
+        // for firefox
+        e.dataTransfer.setData("text/html", e.currentTarget);
+      },
+      dragEnd: function(e) {
+        this.dragged.style.display = "block";
+        this.dragged.parentNode.removeChild(placeholder);
+
+        // update state
+        var data = this.state.data;
+        var from = Number(this.dragged.dataset.id);
+        var to = Number(this.over.dataset.id);
+        if(from < to) to--;
+        if(this.nodePlacement == "after") to++;
+        layersOrder.splice(to, 0, layersOrder.splice(from, 1)[0]);
+
+
+        //this.setState({data: data});
+        this.setState({layers: layers});
+
+
+      },
+      dragOver: function(e) {
+        e.preventDefault();
+        this.dragged.style.display = "none";
+        if(e.target.className == "placeholder") return;
+        this.over = e.target;
+        e.target.parentNode.insertBefore(placeholder, e.target);
+
+        // Inside the dragOver method
+        var relY = e.clientY - this.over.offsetTop;
+        var height = this.over.offsetHeight / 2;
+        var parent = e.target.parentNode;
+
+        if(relY > height) {
+          this.nodePlacement = "after";
+          parent.insertBefore(placeholder, e.target.nextElementSibling);
+        }
+        else if(relY < height) {
+          this.nodePlacement = "before"
+          parent.insertBefore(placeholder, e.target);
+        }
+
+      },
+      render: function() {
+
+        return (
+          <ul className="layer-list" onDragOver={this.dragOver}>
+            {layersOrder.map(function(key, i) {
+              return (
+                <li
+                  data-id={i}
+                  key={i}
+                  draggable="true"
+                  onDragEnd={this.dragEnd}
+                  onDragStart={this.dragStart}
+                >
+                  <LayerControls layer={key} />
+                </li>
+              );
+            }, this)}
+          </ul>
+        );
+      }
+    });
+    var LayerControls = React.createClass({
+      render: function() {
+        // TODO some nice styling
+        return (
+          <span>{this.props.layer.name}</span>
         );
       }
     });
@@ -1816,6 +1968,7 @@
       toolboxName="Image Controls"
       toolboxIconName="fa-picture-o" />, document.getElementsByClassName('imagecontrols')[0]);
 
+    ReactDOM.render(<LayerControlsParent />, document.getElementById("layerControlsContainer"));
 
     var projectionServiceComponent = <ProjectionServiceController />;
     ReactDOM.render( <ToolboxController
