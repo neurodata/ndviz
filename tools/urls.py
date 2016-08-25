@@ -17,11 +17,13 @@
 # github.com/alexbaden
 
 
-from django.conf.urls import *
+from django.conf.urls import url
 
-urlpatterns = patterns('tools.views',
+from . import views
+
+urlpatterns = [
     # tools
-    url(r'^synaptogram/(?P<webargs>[\w\-:,/_.]+)?$', 'synaptogram', name='synaptogram'),
+    url(r'^synaptogram/(?P<webargs>[\w\-:,/_.]+)?$', views.synaptogram, name='synaptogram'),
     # default
-    url(r'^$', 'default'),
-)
+    url(r'^$', views.default),
+]

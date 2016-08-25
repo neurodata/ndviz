@@ -17,52 +17,57 @@
 # github.com/alexbaden
 
 
-from django.conf.urls import patterns, include, url
-from django.contrib import admin
-import django.contrib.auth
+from django.conf.urls import include, url
+from django.conf import settings
+from django.conf.urls.static import static
 
-base_urlpatterns = patterns('ndv.views',
+from django.contrib import admin
+admin.autodiscover()
+
+from . import views
+
+base_urlpatterns = [
     # tools
     url(r'^tools/', include('tools.urls')),
     # data views
-    url(r'^dataview/render/(?P<webargs>[\w:,/-]+)', 'renderDataview', name='renderDataview'),
-    url(r'^dataview/(?P<webargs>[\w:,/-]+)', 'dataview', name='dataview'),
-    url(r'^list_public/$', 'listPublic', name='listPublic'),
-    url(r'^public/$', 'dataviewsPublic', name='dataviewsPublic'),
+    url(r'^dataview/render/(?P<webargs>[\w:,/-]+)', views.renderDataview, name='renderDataview'),
+    url(r'^dataview/(?P<webargs>[\w:,/-]+)', views.dataview, name='dataview'),
+    url(r'^list_public/$', views.listPublic, name='listPublic'),
+    url(r'^public/$', views.dataviewsPublic, name='dataviewsPublic'),
     # for redirecting queries (reqd because of same origin policy)
-    url(r'^query/(?P<queryargs>[\w,./-]+)', 'query'),
+    url(r'^query/(?P<queryargs>[\w,./-]+)', views.query),
     # for getting the ramon json information from ocp
-    url(r'^ramoninfo/(?P<webargs>[\w,./-]+)', 'ramoninfo'),
+    url(r'^ramoninfo/(?P<webargs>[\w,./-]+)', views.ramoninfo),
     # validate token/channel/server
-    url(r'^validate/(?P<webargs>[\w,\.,/-]+)', 'validate'),
+    url(r'^validate/(?P<webargs>[\w,\.,/-]+)', views.validate),
     # content for the manage modal
-    url(r'^manage/viewProjects/$', 'viewProjects', name='viewProjects'),
+    url(r'^manage/viewProjects/$', views.viewProjects, name='viewProjects'),
     # manage modal
-    url(r'^manage/layers/delete/$', 'deleteLayer', name='deleteLayer'),
-    url(r'^manage/layers/(?P<project>[\w,-]+)/?', 'getLayers', name='getLayers'),
-    url(r'^manage/deleteproject/$', 'deleteVizProject', name='deleteVizProject'),
-    url(r'^manage/addproject/$', 'addVizProject', name='addVizProject'),
-    url(r'^manage/editproject/submit/$', 'editVizProjectSubmit', name='editVizProjectSubmit'),
-    url(r'^manage/editproject/(?P<project>[\w,-]+)/?', 'editVizProject', name='editVizProject'),
-    url(r'^manage/adddataview/$', 'addDataview', name='addDataview'),
-    url(r'^manage/editdataview/submit/$', 'editDataviewSubmit', name='editDataviewSubmit'),
-    url(r'^manage/editdataview/(?P<token>[\w,-]+)/?', 'editDataview', name='editDataview'),
-    url(r'^manage/deletedataview/$', 'deleteDataview', name='deleteDataview'),
-    url(r'^manage/deletedataviewitem/$', 'deleteDataviewItem', name='deleteDataviewItem'),
-    url(r'^manage/autopopulate/(?P<webargs>[\w,\.,/-]+)/?', 'autopopulateDataset', name='autopopulateDataset'),
-    url(r'^manage/?$', 'manage', name='manage'),
+    url(r'^manage/layers/delete/$', views.deleteLayer, name='deleteLayer'),
+    url(r'^manage/layers/(?P<project>[\w,-]+)/?', views.getLayers, name='getLayers'),
+    url(r'^manage/deleteproject/$', views.deleteVizProject, name='deleteVizProject'),
+    url(r'^manage/addproject/$', views.addVizProject, name='addVizProject'),
+    url(r'^manage/editproject/submit/$', views.editVizProjectSubmit, name='editVizProjectSubmit'),
+    url(r'^manage/editproject/(?P<project>[\w,-]+)/?', views.editVizProject, name='editVizProject'),
+    url(r'^manage/adddataview/$', views.addDataview, name='addDataview'),
+    url(r'^manage/editdataview/submit/$', views.editDataviewSubmit, name='editDataviewSubmit'),
+    url(r'^manage/editdataview/(?P<token>[\w,-]+)/?', views.editDataview, name='editDataview'),
+    url(r'^manage/deletedataview/$', views.deleteDataview, name='deleteDataview'),
+    url(r'^manage/deletedataviewitem/$', views.deleteDataviewItem, name='deleteDataviewItem'),
+    url(r'^manage/autopopulate/(?P<webargs>[\w,\.,/-]+)/?', views.autopopulateDataset, name='autopopulateDataset'),
+    url(r'^manage/?$', views.manage, name='manage'),
     # user auth
-    url(r'^login/$', 'processLogin', name='login'),
-    url(r'^logout/$', 'processLogout', name='logout'),
-    url(r'^$', 'default'),
+    url(r'^login/$', views.processLogin, name='login'),
+    url(r'^logout/$', views.processLogout, name='logout'),
+    url(r'^$', views.default),
     # for displaying ocpviz projects
     # NOTE: this must be last (because of the tokenview view)
-    url(r'^project/(?P<webargs>[\w:,/-]+)$', 'projectview', name='projectview'),
-    url(r'(?P<webargs>[\w:,/-]+)$', 'tokenview', name='tokenview'),
-)
+    url(r'^project/(?P<webargs>[\w:,/-]+)$', views.projectview, name='projectview'),
+    url(r'(?P<webargs>[\w:,/-]+)$', views.tokenview, name='tokenview'),
+]
 
-urlpatterns = patterns('',
+urlpatterns = [
   url(r'^admin/', include(admin.site.urls)),
   url('^ndv/', include(base_urlpatterns)),
   url('^', include(base_urlpatterns)), # maintain unprefixed URLs
-)
+] 
