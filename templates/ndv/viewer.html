@@ -1266,7 +1266,7 @@
       },
       updateOptionsList: function() {
         var newLayers = [];
-        for (layer in layers) {
+        for (var layer in layers) {
           if (layers[layer].type == 'annotation') {
             newLayers.push(layer)
           }
