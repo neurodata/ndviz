@@ -692,6 +692,7 @@
     /* End Layer Controls Container */
 
     /* Projection Service Container */
+    /* TODO: re-enable for microns
     var projectionservice = L.control();
     projectionservice.options.position = 'topright';
     projectionservice.onAdd = function (map) {
@@ -700,6 +701,7 @@
       return this._div;
     };
     projectionservice.addTo(map);
+
 
     // disable (and then re-enable) clicking and scrolling on mouseover
     projectionservice.getContainer().addEventListener('mouseover', function() {
@@ -711,9 +713,11 @@
       map.on('click', onMapClick);
       map.scrollWheelZoom.enable();
     });
+    */
     /* End Projection Service Container */
 
     /* Synaptogram Toolbox Container */
+    /* TODO: re-enable for microns
     var synaptogramtoolbox = L.control();
     synaptogramtoolbox.options.position = 'topright';
     synaptogramtoolbox.onAdd = function (map) {
@@ -733,6 +737,7 @@
       map.on('click', onMapClick);
       map.scrollWheelZoom.enable();
     });
+    */
     /* End Synaptogram Toolbox Container */
 
     /* Begin Query Tool Container */
@@ -2256,7 +2261,7 @@
         toolboxIconName="fa-sort-amount-asc" />,
       document.getElementsByClassName('projectionservice')[0]);
     };
-    renderProjectionServiceToolbox();
+    // TODO: re-enable for microns renderProjectionServiceToolbox();
 
     var renderSynaptogramServiceToolbox =  function() {
       var synaptogramServiceComponent = <Synaptogram />;
@@ -2266,7 +2271,7 @@
         toolboxIconName="fa-cubes" />,
       document.getElementsByClassName('synaptogramtoolbox')[0]);
     }
-    renderSynaptogramServiceToolbox();
+    // TODO: re-enable for microns renderSynaptogramServiceToolbox();
 
     var renderQueryToolbox = function() {
       var queryToolComponent = <QueryTool />;
