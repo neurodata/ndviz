@@ -504,8 +504,8 @@
       }
 
       for (var layer in layers) {
-        var color = setThreeColor(layers[layer].color);
         var opacity = layers[layer].opacity;
+        var color = setThreeColor(layers[layer].color);
         var minval = layers[layer].min;
         var maxval = layers[layer].max;
         var gamma = layers[layer].gamma;
@@ -1031,7 +1031,18 @@
         this.setState({collapsed: !this.state.collapsed});
       },
       handleOpacityChange: function(opacity) {
+        if (opacity == 0 && this.state.opacity > 0) {
+          // remove all tiles, we are going dark
+          this.props.layer.tileLayer._removeAllTiles();
+          map.removeLayer(this.props.layer.tileLayer);
+        } else if (opacity > 0 && this.state.opacity == 0) {
+          // readd all tiles, we are back in business
+          this.props.layer.reinitializeLayer();
+          this.props.layer.tileLayer.addTo(map);
+        }
+
         this.setState({opacity: opacity});
+
       },
       handleMinChange: function(min) {
         this.setState({minVal: min});
@@ -1044,10 +1055,6 @@
       },
       handleColorChange: function(color) {
         this.setState({color: color});
-      },
-      handleRemoveLayer: function() {
-        this.props.layer.removeLayerFromMap();
-        this.setState({enabled: false});
       },
       render: function() {
         return (
@@ -1356,8 +1363,6 @@
         } else {
           this.props.layer.reinitializeLayer();
           this.props.layer.tileLayer.addTo(map);
-          //this.props.layer.tileLayer.zindex = ndv.zindex;
-          //this.props.layer.tileLayer.smoothRedraw();
         }
         glLayer.draw();
 
