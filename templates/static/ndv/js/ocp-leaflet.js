@@ -293,7 +293,7 @@ L.WebGLLayer = L.Class.extend({
 
 			var worldSize = this._map.getSize();
 			var geo = new THREE.PlaneBufferGeometry( worldSize.x, worldSize.y );
-			var mat = new THREE.MeshBasicMaterial({map: this._renderTarget.texture});
+			var mat = new THREE.MeshBasicMaterial({map: this._renderTarget.texture });
 			var mesh = new THREE.Mesh( geo, mat );
 			this._screenScene = new THREE.Scene();
 			this._screenScene.add(mesh);
