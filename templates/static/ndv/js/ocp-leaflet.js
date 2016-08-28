@@ -13,7 +13,6 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		opacity: 1,
     /* begin ocpviz added */
     curtime: 0,
-    propagate: 0,
     /* end ocpviz added */
 		/*
 		maxNativeZoom: null,
@@ -92,6 +91,16 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		return tile;
 	},
 
+	_removeAllTiles: function() {
+		for (var key in this._tiles) {
+			this.fire('tileunload', {tile: this._tiles[key]});
+		}
+		this._tiles = {};
+		this._tilesToLoad = 0;
+
+		this._tileContainer.innerHTML = '';
+	},
+
   smoothRedraw: function () {
     if (this._map) {
       var old_tiles = this._tiles;
@@ -104,13 +113,13 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
         for (key in old_tiles) {
 					var tile = old_tiles[key];
 					this.fire('tileunload', {tile: tile, url: tile.src});
-          //this._tileContainer.removeChild(old_tiles[key]);
+          this._tileContainer.removeChild(tile);
         }
         old_tiles = {};
       };
 
       this.on('load', function () {
-          setTimeout(unloadTiles.bind(this), 300);
+        setTimeout(unloadTiles.bind(this), 300);
       });
     }
     return this;

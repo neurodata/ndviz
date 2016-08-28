@@ -262,21 +262,27 @@
         curtime = {{ starttime }};
       }
 
-      this.tileLayer = L.tileLayer.OCPLayer(
-        url,
-        {
-          zindex: ndv.zindex,
-          zoomReverse: true,
-          minZoom: ndv.maxres,
-          maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
-          maxNativeZoom: ndv.maxres + ndv.maxres,
-          tileSize: 512,
-          opacity: this.opacity,
-          propagate: this.propagate,
-          curtime: curtime,
-          continuousWorld: true
-        }
-      );
+      this.initializeLayer = function() {
+        tileLayer = L.tileLayer.OCPLayer(
+          url,
+          {
+            zindex: ndv.zindex,
+            zoomReverse: true,
+            minZoom: ndv.maxres,
+            maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+            maxNativeZoom: ndv.maxres + ndv.maxres,
+            tileSize: 512,
+            opacity: this.opacity,
+            //propagate: this.propagate,
+            curtime: curtime,
+            continuousWorld: true
+          }
+        );
+
+        return tileLayer;
+      };
+
+      this.tileLayer = this.initializeLayer();
 
       /* add layer to the map */
       this.tileLayer.addTo(map);
@@ -287,11 +293,11 @@
       this.updateLayerUrl = function(newUrl) {
         this.tileLayer.setUrl(newUrl);
       };
-      this.removeLayerFromMap = function() {
-        this.enabled = false;
-        console.log('todo!!!')
-        // TODO
+      this.reinitializeLayer = function() {
+        this.tileLayer = null;
+        this.tileLayer = this.initializeLayer();
       };
+
     };
 
     // load image layers first
@@ -793,8 +799,7 @@
 
 
     <script type="text/babel">
-    /* Testing React */
-
+    /* React Code */
     // don't render react code as template tags
     {% verbatim %}
 
@@ -809,8 +814,8 @@
       componentDidMount: function() {
         var unpropagatedChannels = [];
         for (var layer in layers) {
-          if (layers[layer].tileLayer.options.propagate != 2) {
-            unpropagatedChannels.push(layer);
+          if (layers[layer].propagate != 2) {
+            unpropagatedChannels.push(layers[layer].name);
           }
         }
         this.setState({unpropagatedChannels: unpropagatedChannels})
@@ -1227,11 +1232,15 @@
             <small><a href="#" onClick={this.setCollapsedTrue}>Collapse All</a> / <a href="#" onClick={this.setCollapsedFalse}>Expand All</a></small>
             {layers.map(function(layer, i) {
               var layerKey = 'controls-' + i;
-              return (
-                <div key={layerKey}>
-                  <ImageControlsLayer layer={layer} collapsed={this.state.collapsed} />
-                </div>
-              );
+              if (layer.enabled) {
+                return (
+                  <div key={layerKey}>
+                    <ImageControlsLayer layer={layer} collapsed={this.state.collapsed} />
+                  </div>
+                );
+              } else {
+                return null;
+              }
             }.bind(this))}
           </div>
         );
@@ -1342,11 +1351,21 @@
 
         // handle removing layer from map
         if (!this.props.layer.enabled) {
+          this.props.layer.tileLayer._removeAllTiles();
           map.removeLayer(this.props.layer.tileLayer);
         } else {
+          this.props.layer.reinitializeLayer();
           this.props.layer.tileLayer.addTo(map);
+          //this.props.layer.tileLayer.zindex = ndv.zindex;
+          //this.props.layer.tileLayer.smoothRedraw();
         }
         glLayer.draw();
+
+        // reset a few toolboxes
+        renderImageControlsToolbox();
+        renderQueryToolbox();
+        renderProjectionServiceToolbox();
+
       },
       render: function() {
         if (!this.state.enabled) {
@@ -1469,7 +1488,7 @@
       updateOptionsList: function() {
         var newLayers = [];
         for (var layer in layers) {
-          if (layers[layer].type == 'annotation') {
+          if (layers[layer].type == 'annotation' && layers[layer].enabled) {
             newLayers.push(layers[layer])
           }
         }
@@ -1986,44 +2005,62 @@
 
     {% endverbatim %}
 
-    var imageControlsComponent = <ImageControlsParent blendMode={ndv.blendmode} />;
-    ReactDOM.render( <ToolboxController
-      toolboxComponent={imageControlsComponent}
-      toolboxName="Image Controls"
-      toolboxIconName="fa-picture-o" />, document.getElementsByClassName('imagecontrols')[0]);
+    var renderImageControlsToolbox = function() {
+      var imageControlsComponent = <ImageControlsParent blendMode={ndv.blendmode} />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={imageControlsComponent}
+        toolboxName="Image Controls"
+        toolboxIconName="fa-picture-o" />, document.getElementsByClassName('imagecontrols')[0]);
+    };
+    renderImageControlsToolbox();
 
-    ReactDOM.render(<LayerControlsParent />, document.getElementById("layerControlsContainer"));
+    var renderLayerToolbox = function() {
+      ReactDOM.render(<LayerControlsParent />, document.getElementById("layerControlsContainer"));
+    };
+    renderLayerToolbox();
 
-    var projectionServiceComponent = <ProjectionServiceController />;
-    ReactDOM.render( <ToolboxController
-      toolboxComponent={projectionServiceComponent}
-      toolboxName="Max Projection"
-      toolboxIconName="fa-sort-amount-asc" />,
-    document.getElementsByClassName('projectionservice')[0]);
+    var renderProjectionServiceToolbox = function() {
+      var projectionServiceComponent = <ProjectionServiceController />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={projectionServiceComponent}
+        toolboxName="Max Projection"
+        toolboxIconName="fa-sort-amount-asc" />,
+      document.getElementsByClassName('projectionservice')[0]);
+    };
+    renderProjectionServiceToolbox();
 
-    var synaptogramServiceComponent = <Synaptogram />;
-    ReactDOM.render( <ToolboxController
-      toolboxComponent={synaptogramServiceComponent}
-      toolboxName="Synaptogram"
-      toolboxIconName="fa-cubes" />,
-    document.getElementsByClassName('synaptogramtoolbox')[0]);
+    var renderSynaptogramServiceToolbox =  function() {
+      var synaptogramServiceComponent = <Synaptogram />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={synaptogramServiceComponent}
+        toolboxName="Synaptogram"
+        toolboxIconName="fa-cubes" />,
+      document.getElementsByClassName('synaptogramtoolbox')[0]);
+    }
+    renderSynaptogramServiceToolbox();
 
-    var queryToolComponent = <QueryTool />;
-    ReactDOM.render( <ToolboxController
-      toolboxComponent={queryToolComponent}
-      toolboxName="Query Tool"
-      toolboxIconName="fa-search" />,
-    document.getElementsByClassName('querytool')[0]);
+    var renderQueryToolbox = function() {
+      var queryToolComponent = <QueryTool />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={queryToolComponent}
+        toolboxName="Query Tool"
+        toolboxIconName="fa-search" />,
+      document.getElementsByClassName('querytool')[0]);
+    };
+    renderQueryToolbox();
 
-    var markerToolComponent = <MarkerTool />;
-    ReactDOM.render( <ToolboxController
-      toolboxComponent={markerToolComponent}
-      toolboxName="Marker Tool"
-      toolboxIconName="fa-map-marker" />,
-    document.getElementsByClassName('markertool')[0]);
+    var renderMarkerToolbox = function() {
+      var markerToolComponent = <MarkerTool />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={markerToolComponent}
+        toolboxName="Marker Tool"
+        toolboxIconName="fa-map-marker" />,
+      document.getElementsByClassName('markertool')[0]);
+    };
+    renderMarkerToolbox();
 
     /* scale bar */
-    updateScaleBar = function() {
+    var updateScaleBar = function() {
       var layer = layers[Object.keys(layers)[0]];
       ReactDOM.render(
         <ScaleBar
