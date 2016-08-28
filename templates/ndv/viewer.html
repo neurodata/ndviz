@@ -1463,6 +1463,11 @@
             var newLayer = new NDVLayer(this.state.channel, channel['channel_type'], channel['propagate'], url, this.state.server, this.state.token, this.state.channel, "", false);
             this.props.updateLayersList();
             glLayer.draw();
+            if (layers.length == 1) {
+              // if this is the first layer
+              renderProjInfoToolbox();
+              updateScaleBar();
+            }
             var sucessMsg = "Successfully added " + this.state.channel + " to map layers!";
             this.setState({infoMsg: sucessMsg});
           }.bind(this),
@@ -2214,12 +2219,18 @@
       return objstr;
     }
 
+    var renderProjInfoToolbox = function() {
+      if (layers.length == 0) {
+        return;
+      }
 
-    var projInfoComponent = <ProjectInfoController token={layers[Object.keys(layers)[0]].token} server={layers[Object.keys(layers)[0]].server} />;
-    ReactDOM.render( <ToolboxController
-      toolboxComponent={projInfoComponent}
-      toolboxName="Project Info"
-      toolboxIconName="fa-info" />, document.getElementsByClassName('projinfo')[0]);
+      var projInfoComponent = <ProjectInfoController token={layers[Object.keys(layers)[0]].token} server={layers[Object.keys(layers)[0]].server} />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={projInfoComponent}
+        toolboxName="Project Info"
+        toolboxIconName="fa-info" />, document.getElementsByClassName('projinfo')[0]);
+    }
+    renderProjInfoToolbox();
 
     {% endverbatim %}
 
@@ -2279,6 +2290,9 @@
 
     /* scale bar */
     var updateScaleBar = function() {
+      if (layers.length == 0) {
+        return;
+      }
       var layer = layers[Object.keys(layers)[0]];
       ReactDOM.render(
         <ScaleBar
