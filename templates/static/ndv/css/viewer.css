@@ -250,7 +250,11 @@ html, body, #map {
 }
 .layer-list li {
   padding: 5px;
-  background:#eee
+  background:#eee;
+  border-color: #666;
+  border-style: ridge;
+  border-width: 1px;
+  margin-bottom: 0.5px;
 }
 .layer-list li.placeholder {
   background: rgb(255,240,120);
