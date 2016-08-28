@@ -1462,6 +1462,7 @@
 
             var newLayer = new NDVLayer(this.state.channel, channel['channel_type'], channel['propagate'], url, this.state.server, this.state.token, this.state.channel, "", false);
             this.props.updateLayersList();
+            glLayer.draw();
             var sucessMsg = "Successfully added " + this.state.channel + " to map layers!";
             this.setState({infoMsg: sucessMsg});
           }.bind(this),
@@ -2568,6 +2569,9 @@
       if ( !$(event.target).is('input')) {
         // disable shortcuts if modal is open
         if ($("#remoteModal").hasClass('in') == true) {
+          return;
+        }
+        if ($("#layerControls").hasClass('in') == true) {
           return;
         }
         switch (event.which) {
