@@ -1017,7 +1017,6 @@
           maxVal: this.props.layer.max,
           gamma: this.props.layer.gamma,
           color: this.props.layer.color,
-          enabled: this.props.layer.enabled
         }
       },
       componentWillReceiveProps: function(nextProps) {
@@ -1046,14 +1045,13 @@
         this.setState({enabled: false});
       },
       render: function() {
-        var removeLayer = 'remove-layer';
         return (
           <div>
             <div className="controls-layer-name">
-              <a href="#" className='remove-layer' onClick={this.handleRemoveLayer}>
-                <i className={this.state.enabled ? "fa fa-times-circle" : "fa fa-plus-circle"}></i>
+              <a href="#" onClick={this.handleToggleCollapse}>
+                <span className="image-controls-layer-icon"><i className={this.state.collapsed ? "fa fa-plus-square-o" : "fa fa-minus-square-o"}></i></span>
+                <span>{this.props.layer.name}</span>
               </a>
-              <a href="#" onClick={this.handleToggleCollapse}>{this.props.layer.name}</a>
             </div>
             <div className={this.state.collapsed ? 'hiddencontrols' : 'visiblecontrols'}>
               <div className="controls-slider-name">Opacity ({Math.round(this.state.opacity*100)})</div>
@@ -1313,7 +1311,6 @@
 
       },
       render: function() {
-
         return (
           <ul className="layer-list" onDragOver={this.dragOver}>
             {this.state.layers.map(function(key, i) {
@@ -1334,13 +1331,38 @@
       }
     });
     var LayerControls = React.createClass({
+      getInitialState: function() {
+        return {
+          enabled: this.props.layer.enabled,
+        };
+      },
+      handleRemoveLayer: function() {
+        this.props.layer.enabled = !this.props.layer.enabled;
+        this.setState({ enabled: this.props.layer.enabled });
+
+        // handle removing layer from map
+        if (!this.props.layer.enabled) {
+          map.removeLayer(this.props.layer.tileLayer);
+        } else {
+          this.props.layer.tileLayer.addTo(map);
+        }
+        glLayer.draw();
+      },
       render: function() {
+        if (!this.state.enabled) {
+          var componentStyle = {
+            textDecoration: "line-through",
+          }
+        } else {
+          var componentStyle = {}
+        }
         return (
-          <span>
+          <span style={componentStyle}>
             <i className="fa fa-bars" aria-hidden="true"></i>
             <span style={{paddingLeft: 10}}>{this.props.layer.name}</span>
             <span style={{paddingLeft: 100}}><em>{this.props.layer.type} layer</em></span>
             <span style={{paddingLeft: 200}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em></span>
+            <span style={{float: "right"}}><a onClick={this.handleRemoveLayer}><i className="fa fa-ban" aria-hidden="true"></i></a></span>
           </span>
         );
       }
