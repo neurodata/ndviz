@@ -627,44 +627,6 @@ def ramoninfo(request, webargs):
     html += '</table>'
   return HttpResponse(html)
 
-def validate(request, webargs):
-  # redirects a query to the specified server
-  # expected syntax is:
-  # ocp/ocpviz/query/<<server>>/<<query>>
-  # e.g. ocp/ocpviz/query/dsp061/ca/kharris15apical/info/
-  [token, channel, server] = webargs.split('/', 2)
-
-  if (token == ''):
-    return HttpResponseBadRequest('Missing Token Value')
-  if (channel == ''):
-    return HttpResponseBadRequest('Missing Channel Value')
-
-  # strip the trailing / from the server name
-  server = server.strip('/')
-
-  # get the proj info for this token
-  addr = 'http://{}/ocp/ca/{}/info/'.format(server, token)
-
-  try:
-    r = urllib2.urlopen(addr)
-  except urllib2.HTTPError, e:
-    return HttpResponseBadRequest(str(e.getcode()))
-
-  # if we get a response, check to see the channel exists
-
-  rjson = json.loads(r.read())
-  for proj_channel in rjson['channels']:
-    print proj_channel
-    if channel == proj_channel:
-      return HttpResponse('Valid')
-
-
-  return HttpResponseBadRequest('Channel not found for project {} on server {}'.format(token, server))
-
-def tileloader(request, webargs):
-  # Forward a tile loading request to the appropriate server
-  return HttpResponse('Tile Loaded')
-
 # Manage
 @login_required
 def viewProjects(request):

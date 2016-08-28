@@ -99,8 +99,6 @@
 
   {% include "ndv/nav.html" %}
 
-  {% include "ndv/add_data.html" %}
-
   {% include "ndv/login.html" %}
 
   {% include "ndv/blendmodes.html" %}
@@ -1277,12 +1275,32 @@
 
     /* Layer Controls Components */
     // http://webcloud.se/sortable-list-component-react-js/
-    var placeholder = document.createElement("li");
-    placeholder.className = "placeholder";
     var LayerControlsParent = React.createClass({
       getInitialState: function() {
         return {
           layers: layers
+        }
+      },
+      updateLayersList: function() {
+        this.setState({layers:layers});
+      },
+      render: function() {
+        return (
+          <div>
+            <h4>Manage Current Layers</h4>
+            <LayerListParent layers={this.state.layers}/>
+            <h4>Add Additional Layers</h4>
+            <AddDataForm updateLayersList={this.updateLayersList}/>
+          </div>
+        )
+      }
+    });
+    var placeholder = document.createElement("li");
+    placeholder.className = "placeholder";
+    var LayerListParent = React.createClass({
+      getInitialState: function() {
+        return {
+          layers: this.props.layers
         }
       },
       dragStart: function(e) {
@@ -1385,10 +1403,204 @@
             <i className="fa fa-bars" aria-hidden="true"></i>
             <span style={{paddingLeft: 10}}>{this.props.layer.name}</span>
             <span style={{paddingLeft: 100}}><em>{this.props.layer.type} layer</em></span>
-            <span style={{paddingLeft: 200}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em></span>
+            <span style={{paddingLeft: 100}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em> / server: <em>{this.props.layer.server}</em></span>
             <span style={{float: "right"}}><a onClick={this.handleRemoveLayer}><i className="fa fa-ban" aria-hidden="true"></i></a></span>
           </span>
         );
+      }
+    });
+    var AddDataForm = React.createClass({
+      getInitialState: function() {
+        return {
+          server: null,
+          token: null,
+          channel: null,
+          infoMsg: null,
+          errorMsg: null
+        };
+      },
+      handleServerChange: function(e) {
+        this.setState({server: null});
+        if (this.timeoutReference) clearTimeout(this.timeoutReference);
+        var value = e.target.value;
+        this.timeoutReference = setTimeout(function() {
+          this.setState({
+            infoMsg: null,
+            token: null,
+            channel: null,
+            server: value
+          })
+        }.bind(this), 1000);
+
+      },
+      handleTokenChange: function(token) {
+        this.setState({
+          infoMsg: null,
+          channel: null,
+          token: token
+        });
+      },
+      handleChannelChange: function(channel) {
+        this.setState({
+          infoMsg: null,
+          channel : channel
+        });
+      },
+      handleAddChannel: function() {
+        var url = "http://" + this.state.server + "/ocp/ca/" + this.state.token + "/info/";
+        $.get(
+          url,
+          function( result ) {
+            var channel = result['channels'][this.state.channel];
+            if (channel['channel_type'] == 'timeseries') {
+              // get current time
+              var curtime = layers[0].tileLayer.options.curtime;
+              var url = "http://" + this.state.server + "/ocp/catmaid/" + this.state.token + "/" + this.state.channel + "/xy/" + curtime + "/{zindex}/{y}_{x}_{z}.png";
+            } else {
+              var url = "http://" + this.state.server + "/ocp/catmaid/" + this.state.token + "/" + this.state.channel + "/xy/{zindex}/{y}_{x}_{z}.png";
+            }
+
+            var newLayer = new NDVLayer(this.state.channel, channel['channel_type'], channel['propagate'], url, this.state.server, this.state.token, this.state.channel, "", false);
+            this.props.updateLayersList();
+            var sucessMsg = "Successfully added " + this.state.channel + " to map layers!";
+            this.setState({infoMsg: sucessMsg});
+          }.bind(this),
+          'json'
+        );
+      },
+      setErrorMsg: function(msg) {
+        this.setState({errorMsg: msg});
+      },
+      render: function() {
+        return (
+          <form className="form-horizontal">
+            <div className="form-group">
+              <label htmlFor="addDataServer" className="col-sm-1 control-label">Server</label>
+              <div className="col-sm-6">
+                <input className="form-control" id="addDataServer" type="text" placeholder="openconnecto.me" onChange={this.handleServerChange} />
+              </div>
+            </div>
+            {this.state.server ? <AddDataTokens server={this.state.server} handleTokenChange={this.handleTokenChange} setErrorMsg={this.setErrorMsg} /> : null}
+            {this.state.server && this.state.token ? <AddDataChannels server={this.state.server} token={this.state.token} handleChannelChange={this.handleChannelChange} setErrorMsg={this.setErrorMsg} /> : null}
+            {this.state.server && this.state.token && this.state.channel ? <button className="btn btn-primary" type="button" onClick={this.handleAddChannel}>Add Layer</button> : null}
+            <div style={{paddingTop: 10}}>
+              {this.state.infoMsg ? <p className="bg-info">{this.state.infoMsg}</p> : null}
+              {this.state.errorMsg ? <p className="bg-danger">{this.state.errorMsg}</p> : null}
+            </div>
+          </form>
+        )
+      }
+    });
+    var AddDataTokens = React.createClass({
+      getInitialState: function() {
+        return {
+          tokens: null,
+          manualEntry: false
+        };
+      },
+      componentDidMount: function() {
+        var url = "http://" + this.props.server + "/ocp/ca/public_tokens/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            this.setState({ tokens: result });
+            this.props.setErrorMsg(null);
+          }.bind(this),
+          'json'
+        ).fail(function() {
+          this.setState({tokens: null});
+          this.props.setErrorMsg("Failed to contact server: " + this.props.server);
+        }.bind(this));
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      handleManualToken: function() {
+        this.setState({manualEntry: !this.state.manualEntry});
+      },
+      handleChange: function(e) {
+        if (this.timeoutReference) clearTimeout(this.timeoutReference);
+        var value = e.target.value;
+        this.timeoutReference = setTimeout(function() {
+          this.props.handleTokenChange(value);
+        }.bind(this), 1000);
+      },
+      render: function() {
+        if (this.state.tokens) {
+          if (!this.state.manualEntry) {
+            return (
+              <div className="form-group">
+                <label htmlFor="addDataToken" className="col-sm-1 control-label">Token</label>
+                <div className="col-sm-6">
+                  <select className="form-control" id="addDataToken"  onChange={this.handleChange}>
+                    {this.state.tokens.map(function(key) {
+                      return <option key={key} value={key}>{key}</option>;
+                    })};
+                  </select>
+                  <p className="help-block"><a href="#" onClick={this.handleManualToken}>Specify Token Manually</a></p>
+                </div>
+              </div>
+            );
+          } else {
+            return (
+              <div className="form-group">
+                <label htmlFor="addDataToken" className="col-sm-1 control-label">Token</label>
+                <div className="col-sm-6">
+                  <input type="text" id="addDataToken" className="form-control" onChange={this.handleChange} />
+                  <p className="help-block"><a href="#" onClick={this.handleManualToken}>List Public Tokens</a></p>
+                </div>
+              </div>
+            );
+          }
+        } else {
+          return <span></span>;
+        }
+
+      }
+    });
+
+    var AddDataChannels = React.createClass({
+      getInitialState: function() {
+        return {
+          channels: null,
+        };
+      },
+      componentDidMount: function() {
+        var url = "http://" + this.props.server + "/ocp/ca/" + this.props.token + "/info/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var channels = Object.keys(result['channels']);
+            this.setState({ channels: channels });
+            this.props.handleChannelChange(channels[0]);
+          }.bind(this),
+          'json'
+        );
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      handleChange: function(e) {
+        this.props.handleChannelChange(e.target.value);
+      },
+      render: function() {
+        if (this.state.channels) {
+          return (
+            <div className="form-group">
+              <label htmlFor="addDataChannel" className="col-sm-1 control-label">Channel</label>
+              <div className="col-sm-6">
+                <select className="form-control" id="addDataChannel"  onChange={this.handleChange}>
+                  {this.state.channels.map(function(key) {
+                    return <option key={key} value={key}>{key}</option>;
+                  })};
+                </select>
+              </div>
+            </div>
+          );
+        } else {
+          return <span></span>;
+        }
+
       }
     });
 
@@ -2158,28 +2370,6 @@
     };
 
     // END marker tool palette
-
-    // BEGIN add data button
-    var addDataButton = L.control();
-    addDataButton.options.position = 'topright';
-    addDataButton.onAdd = function (map) {
-      this._div = L.DomUtil.create('div', 'addDataButton');
-      var button = '<a id="add_data_link" href="#" data-toggle="modal" data-target="#add_data"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-plus fa-stack-1x"></i></span></a>';
-      this._div.innerHTML = button;
-      return this._div;
-    };
-		addDataButton.addTo(map);
-
-    // disable (and then re-enable) clicking on mouseover
-    addDataButton.getContainer().addEventListener('mouseover', function() {
-      map.off('click', onMapClick);
-    });
-
-    addDataButton.getContainer().addEventListener('mouseout', function() {
-      map.on('click', onMapClick);
-    });
-
-    // END add data button palette
 
     // update current coordinates in nav box
     function coordinatesUpdate() {

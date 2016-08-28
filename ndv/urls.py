@@ -38,8 +38,6 @@ base_urlpatterns = [
     url(r'^query/(?P<queryargs>[\w,./-]+)', views.query),
     # for getting the ramon json information from ocp
     url(r'^ramoninfo/(?P<webargs>[\w,./-]+)', views.ramoninfo),
-    # validate token/channel/server
-    url(r'^validate/(?P<webargs>[\w,\.,/-]+)', views.validate),
     # content for the manage modal
     url(r'^manage/viewProjects/$', views.viewProjects, name='viewProjects'),
     # manage modal
@@ -70,4 +68,4 @@ urlpatterns = [
   url(r'^admin/', include(admin.site.urls)),
   url('^ndv/', include(base_urlpatterns)),
   url('^', include(base_urlpatterns)), # maintain unprefixed URLs
-] 
+]
