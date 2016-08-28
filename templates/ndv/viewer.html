@@ -1282,18 +1282,13 @@
         this.dragged.parentNode.removeChild(placeholder);
 
         // update state
-        var data = this.state.data;
         var from = Number(this.dragged.dataset.id);
         var to = Number(this.over.dataset.id);
         if(from < to) to--;
         if(this.nodePlacement == "after") to++;
         layers.splice(to, 0, layers.splice(from, 1)[0]);
-
-
-        //this.setState({data: data});
         this.setState({layers: layers});
-
-
+        glLayer.draw();
       },
       dragOver: function(e) {
         e.preventDefault();
@@ -1321,7 +1316,7 @@
 
         return (
           <ul className="layer-list" onDragOver={this.dragOver}>
-            {layers.map(function(key, i) {
+            {this.state.layers.map(function(key, i) {
               return (
                 <li
                   data-id={i}
@@ -2389,7 +2384,7 @@
       });
     });
 
-    // timeseries functions -- TODO, use new layers format 
+    // timeseries functions -- TODO, use new layers format
     function loadTimeStep(newTime) {
       map.closePopup();
       if (newTime < {{ starttime }}) {
