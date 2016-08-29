@@ -38,9 +38,11 @@ base_urlpatterns = [
     url(r'^query/(?P<queryargs>[\w,./-]+)', views.query),
     # for getting the ramon json information from ocp
     url(r'^ramoninfo/(?P<webargs>[\w,./-]+)', views.ramoninfo),
-    # content for the manage modal
-    url(r'^manage/viewProjects/$', views.viewProjects, name='viewProjects'),
+    # render
+    url(r'^getRenderTile/(?P<webargs>[\w:,./-]+)', views.getRenderTile),
+    url(r'^render/(?P<webargs>[\w:,./-]+)', views.renderView),
     # manage modal
+    url(r'^manage/viewProjects/$', views.viewProjects, name='viewProjects'),
     url(r'^manage/layers/delete/$', views.deleteLayer, name='deleteLayer'),
     url(r'^manage/layers/(?P<project>[\w,-]+)/?', views.getLayers, name='getLayers'),
     url(r'^manage/deleteproject/$', views.deleteVizProject, name='deleteVizProject'),
