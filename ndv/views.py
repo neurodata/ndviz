@@ -665,9 +665,7 @@ def getRenderTile(request, webargs):
 def renderView(request, webargs):
   """ /<<server>>/<<owner>>/<<project>>/<<stack>>/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
   # res (x,y,z) will center the map at (x,y,z) for a given res
-  channels_str = None
-  channels = None
-  channel_colors = {}
+  stack_colors = {}
 
   # initialize these variables, which will be passed to the template
   x = None
@@ -680,23 +678,32 @@ def renderView(request, webargs):
 
   # process arguments
   try:
-    p = re.compile(r"(?P<server>[\w%\-.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w_]+)/(?P<res>\d+)?/?(?P<x>\d+)?/?(?P<y>\d+)?/?(?P<z>\d+)?/?(options)?/?(?P<options>[\w:,{}]+)?/?$")
+    p = re.compile(r"(?P<server>[\w%\-.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w,:_]+)/(?P<res>\d+)?/?(?P<x>\d+)?/?(?P<y>\d+)?/?(?P<z>\d+)?/?(options)?/?(?P<options>[\w:,{}]+)?/?$")
     m = p.match(webargs)
     md = m.groupdict()
     server = md['server']
     owner = md['owner']
     project = md['project']
-    stacks = [md['stack']]
+    stacks = md['stack'].split(',')
+    for idx, stack in enumerate(stacks):
+      if len(stack.split(':')) > 1:
+        newStack = stack.split(':')[0]
+        stack_colors[newStack] = stack.split(':')[1]
+        stacks[idx] = newStack
 
-    if res in md.keys():
+    if md['res']:
       res = int(md['res'])
-    if x in md.keys() and y in md.keys() and z in md.keys():
+
+    if md['x'] and md['y'] and md['z']:
       x = int(md['x'])
       y = int(md['y'])
       z = int(md['z'])
 
-    if options in md.keys():
-      options = md['options']
+    if md['options']:
+      options = {}
+      optionsList = md['options'].split(',')
+      for option in optionsList:
+        options[option.split(':')[0]] = option.split(':')[1]
 
   except Exception, e:
     print e
@@ -730,13 +737,15 @@ def renderView(request, webargs):
   # convert the specified stack to a layer
   for stack in stacks:
     tmp_layer = VizLayer()
-    tmp_layer.layer_name = jsoninfo['stackId']['stack']
+    tmp_layer.layer_name = stack
     tmp_layer.layer_description = "new render interface"
     tmp_layer.layertype = 'image'
     tmp_layer.token = project
     tmp_layer.channel = stack
     tmp_layer.server = server
     tmp_layer.tilecache = False
+    if stack in stack_colors:
+      tmp_layer.color = stack_colors[stack]
     #if channel['channel_name'] in channel_colors.keys():
     #  tmp_layer.color = channel_colors[ channel['channel_name'] ].upper()
     layers.append(tmp_layer)
@@ -752,14 +761,14 @@ def renderView(request, webargs):
     res = 0
 
   # process template options
-  """
+
   blendmode = BLENDOPTS['normal']
   if options is not None:
     if 'marker' in options.keys():
       marker = True
     if 'blend' in options.keys() and options['blend'] in BLENDOPTS.keys():
       blendmode = BLENDOPTS[ options['blend'].lower() ]
-  """
+
   context = {
       'layers': layers,
       'renderServer': server,
@@ -784,6 +793,7 @@ def renderView(request, webargs):
       'plane': 'xy',
       'marker': marker,
       'timeseries': False,
+      'blendmode': blendmode,
       'version': VERSION,
       'viewtype': 'renderview',
   }

@@ -300,7 +300,7 @@
 
     // load image layers first
     {% for layer in layers %}
-      var url = "http://{{ request.META.HTTP_HOST }}/getRenderTile/{{ renderServer }}/{{ owner }}/{{ project }}/{{ stack }}/xy/{zindex}/{y}_{x}_{z}.png";
+      var url = "http://{{ request.META.HTTP_HOST }}/getRenderTile/{{ renderServer }}/{{ owner }}/{{ layer.token }}/{{ layer.channel }}/xy/{zindex}/{y}_{x}_{z}.png";
       console.log('url = ' + url);
 
       {# add the layer #}
