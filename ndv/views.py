@@ -678,7 +678,7 @@ def renderView(request, webargs):
 
   # process arguments
   try:
-    p = re.compile(r"(?P<server>[\w-%.:]+)/(?P<owner>\w+)/(?P<project>\w+)/(?P<stack>\w+)/(?P<res>\d+)?/?(?P<x>\d+)?/?(?P<y>\d+)?/?(?P<z>\d+)?/?(options)?/?(?P<options>[\w:,{}]+)?/?$")
+    p = re.compile(r"(?P<server>[\w-%.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w_]+)/(?P<res>\d+)?/?(?P<x>\d+)?/?(?P<y>\d+)?/?(?P<z>\d+)?/?(options)?/?(?P<options>[\w:,{}]+)?/?$")
     m = p.match(webargs)
     md = m.groupdict()
     server = md['server']
