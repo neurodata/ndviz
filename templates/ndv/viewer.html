@@ -1332,8 +1332,15 @@
       dragOver: function(e) {
         e.preventDefault();
         this.dragged.style.display = "none";
-        if(e.target.className == "placeholder") return;
+        if(e.target.className == "placeholder" || e.target.tagName == "EM" || e.target.tagName == "SPAN" || e.target.tagName == "I") return;
         this.over = e.target;
+        /*
+        while (this.over.tagName != "LI") {
+          this.over = this.over.parentNode
+        }
+        */
+        console.log(this.over.tagName);
+        //console.log(e.target);
         e.target.parentNode.insertBefore(placeholder, e.target);
 
         // Inside the dragOver method
@@ -1409,9 +1416,10 @@
           <span style={componentStyle}>
             <i className="fa fa-bars" aria-hidden="true"></i>
             <span style={{paddingLeft: 10}}>{this.props.layer.name}</span>
-            <span style={{paddingLeft: 100}}><em>{this.props.layer.type} layer</em></span>
-            <span style={{paddingLeft: 100}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em> / server: <em>{this.props.layer.server}</em></span>
             <span style={{float: "right"}}><a onClick={this.handleRemoveLayer}><i className="fa fa-ban" aria-hidden="true"></i></a></span>
+            <br />
+            <span><em>{this.props.layer.type} layer</em></span>
+            <span style={{paddingLeft: 150}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em> / server: <em>{this.props.layer.server}</em></span>
           </span>
         );
       }

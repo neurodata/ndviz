@@ -257,7 +257,12 @@ html, body, #map {
   margin-bottom: 0.5px;
 }
 .layer-list li.placeholder {
+  padding: 5px;
   background: rgb(255,240,120);
+  border-color: #666;
+  border-style: ridge;
+  border-width: 1px;
+  margin-bottom: 0.5px;
 }
 .layer-list li.placeholder:before {
   content: "Drop here";
