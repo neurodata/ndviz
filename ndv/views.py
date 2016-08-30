@@ -629,9 +629,10 @@ def ramoninfo(request, webargs):
 
 def getRenderTile(request, webargs):
   try:
-    p = re.compile(r"(?P<owner>\w+)/(?P<project>\w+)/(?P<stack>\w+)/(xy|yz|xz|)/(?P<zindex>\d+)/(?P<y>\d+)_(?P<x>\d+)_(?P<res>\d+).png")
+    p = re.compile(r"(?P<server>[\w%\-.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w_]+)/(xy|yz|xz|)/(?P<zindex>\d+)/(?P<y>\d+)_(?P<x>\d+)_(?P<res>\d+).png")
     m = p.match(webargs)
     md = m.groupdict()
+    server = md['server']
     owner = md['owner']
     project = md['project']
     stack = md['stack']
@@ -642,7 +643,7 @@ def getRenderTile(request, webargs):
     res = int(md['res'])
 
     # GET /v1/owner/{owner}/project/{project}/stack/{stack}/z/{z}/box/{x},{y},{width},{height},{scale}/png-image
-    server = "http://localhost:8080"
+    server = "http://{}".format(server)
     addr_base = "{}/render-ws/v1/owner/{}/project/{}/stack/{}/z/{}/box".format(server, owner, project, stack, ztile)
 
     cutout = "{},{},{},{},{}/png-image".format( xtile*(512*2**(res)), ytile*(512*2**(res)), 512*2**(res), 512*2**(res), float(1)/float(2**res) )
@@ -654,6 +655,7 @@ def getRenderTile(request, webargs):
       r = urllib2.urlopen(addr)
     except urllib2.HTTPError, e:
       r = '[ERROR]: ' + str(e.getcode())
+      return HttpResponseBadRequest(r)
 
     return HttpResponse(r, content_type="image/png")
 
@@ -760,6 +762,7 @@ def renderView(request, webargs):
   """
   context = {
       'layers': layers,
+      'renderServer': server,
       'owner': owner,
       'project': project,
       'stack': stack,
