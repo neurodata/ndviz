@@ -1334,13 +1334,6 @@
         this.dragged.style.display = "none";
         if(e.target.className == "placeholder" || e.target.tagName == "EM" || e.target.tagName == "SPAN" || e.target.tagName == "I") return;
         this.over = e.target;
-        /*
-        while (this.over.tagName != "LI") {
-          this.over = this.over.parentNode
-        }
-        */
-        console.log(this.over.tagName);
-        //console.log(e.target);
         e.target.parentNode.insertBefore(placeholder, e.target);
 
         // Inside the dragOver method
