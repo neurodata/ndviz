@@ -1263,7 +1263,7 @@
       dragOver: function(e) {
         e.preventDefault();
         this.dragged.style.display = "none";
-        if(e.target.className == "placeholder") return;
+        if(e.target.className == "placeholder" || e.target.tagName == "EM" || e.target.tagName == "SPAN" || e.target.tagName == "I") return;
         this.over = e.target;
         e.target.parentNode.insertBefore(placeholder, e.target);
 
@@ -1340,9 +1340,10 @@
           <span style={componentStyle}>
             <i className="fa fa-bars" aria-hidden="true"></i>
             <span style={{paddingLeft: 10}}>{this.props.layer.name}</span>
-            <span style={{paddingLeft: 100}}><em>{this.props.layer.type} layer</em></span>
-            <span style={{paddingLeft: 100}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em> / server: <em>{this.props.layer.server}</em></span>
             <span style={{float: "right"}}><a onClick={this.handleRemoveLayer}><i className="fa fa-ban" aria-hidden="true"></i></a></span>
+            <br />
+            <span><em>{this.props.layer.type} layer</em></span>
+            <span style={{paddingLeft: 150}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em> / server: <em>{this.props.layer.server}</em></span>
           </span>
         );
       }
@@ -1351,8 +1352,10 @@
       getInitialState: function() {
         return {
           server: null,
-          token: null,
-          channel: null,
+          owner: null,
+          project: null,
+          stack: null,
+          //channel: null,
           infoMsg: null,
           errorMsg: null
         };
@@ -1371,28 +1374,32 @@
         }.bind(this), 1000);
 
       },
-      handleTokenChange: function(token) {
+      handleOwnerChange: function(owner) {
         this.setState({
           infoMsg: null,
-          channel: null,
-          token: token
+          stack: null,
+          owner: owner
         });
       },
-      handleChannelChange: function(channel) {
+      handleProjectChange: function(project) {
         this.setState({
           infoMsg: null,
-          channel : channel
+          project: project
         });
       },
-      handleAddChannel: function() {
+      handleStackChange: function(channel) {
+        this.setState({
+          infoMsg: null,
+          stack : stack
+        });
+      },
+      handleAddStack: function() {
         var url = "http://" + this.state.server + "/ocp/ca/" + this.state.token + "/info/";
         $.get(
           url,
           function( result ) {
             var channel = result['channels'][this.state.channel];
             if (channel['channel_type'] == 'timeseries') {
-              // get current time
-              var curtime = layers[0].tileLayer.options.curtime;
               var url = "http://" + this.state.server + "/ocp/catmaid/" + this.state.token + "/" + this.state.channel + "/xy/" + curtime + "/{zindex}/{y}_{x}_{z}.png";
             } else {
               var url = "http://" + this.state.server + "/ocp/catmaid/" + this.state.token + "/" + this.state.channel + "/xy/{zindex}/{y}_{x}_{z}.png";
@@ -1424,9 +1431,10 @@
                 <input className="form-control" id="addDataServer" type="text" placeholder="openconnecto.me" onChange={this.handleServerChange} />
               </div>
             </div>
-            {this.state.server ? <AddDataTokens server={this.state.server} handleTokenChange={this.handleTokenChange} setErrorMsg={this.setErrorMsg} /> : null}
-            {this.state.server && this.state.token ? <AddDataChannels server={this.state.server} token={this.state.token} handleChannelChange={this.handleChannelChange} setErrorMsg={this.setErrorMsg} /> : null}
-            {this.state.server && this.state.token && this.state.channel ? <button className="btn btn-primary" type="button" onClick={this.handleAddChannel}>Add Layer</button> : null}
+            {this.state.server ? <AddDataOwner server={this.state.server} handleTokenChange={this.handleOwnerChange} /> : null}
+
+            {this.state.server && this.state.owner ? <AddDataStacks server={this.state.server} owner={this.state.owner} handleStackChange={this.handleStackChange} handleProjectChange={this.handleProjectChange} setErrorMsg={this.setErrorMsg} /> : null}
+            {this.state.server && this.state.owner && this.state.project && this.state.stack ? <button className="btn btn-primary" type="button" onClick={this.handleAddStack}>Add Layer</button> : null}
             <div style={{paddingTop: 10}}>
               {this.state.infoMsg ? <p className="bg-info">{this.state.infoMsg}</p> : null}
               {this.state.errorMsg ? <p className="bg-danger">{this.state.errorMsg}</p> : null}
@@ -1435,33 +1443,7 @@
         )
       }
     });
-    var AddDataTokens = React.createClass({
-      getInitialState: function() {
-        return {
-          tokens: null,
-          manualEntry: false
-        };
-      },
-      componentDidMount: function() {
-        var url = "http://" + this.props.server + "/ocp/ca/public_tokens/";
-        this.serverRequest = $.get(
-          url,
-          function( result ) {
-            this.setState({ tokens: result });
-            this.props.setErrorMsg(null);
-          }.bind(this),
-          'json'
-        ).fail(function() {
-          this.setState({tokens: null});
-          this.props.setErrorMsg("Failed to contact server: " + this.props.server);
-        }.bind(this));
-      },
-      componentWillUnmount: function() {
-        this.serverRequest.abort();
-      },
-      handleManualToken: function() {
-        this.setState({manualEntry: !this.state.manualEntry});
-      },
+    var AddDataOwner = React.createClass({
       handleChange: function(e) {
         if (this.timeoutReference) clearTimeout(this.timeoutReference);
         var value = e.target.value;
@@ -1470,56 +1452,63 @@
         }.bind(this), 1000);
       },
       render: function() {
-        if (this.state.tokens) {
-          if (!this.state.manualEntry) {
-            return (
-              <div className="form-group">
-                <label htmlFor="addDataToken" className="col-sm-1 control-label">Token</label>
-                <div className="col-sm-6">
-                  <select className="form-control" id="addDataToken"  onChange={this.handleChange}>
-                    {this.state.tokens.map(function(key) {
-                      return <option key={key} value={key}>{key}</option>;
-                    })};
-                  </select>
-                  <p className="help-block"><a href="#" onClick={this.handleManualToken}>Specify Token Manually</a></p>
-                </div>
-              </div>
-            );
-          } else {
-            return (
-              <div className="form-group">
-                <label htmlFor="addDataToken" className="col-sm-1 control-label">Token</label>
-                <div className="col-sm-6">
-                  <input type="text" id="addDataToken" className="form-control" onChange={this.handleChange} />
-                  <p className="help-block"><a href="#" onClick={this.handleManualToken}>List Public Tokens</a></p>
-                </div>
-              </div>
-            );
-          }
-        } else {
-          return <span></span>;
-        }
-
+        return (
+          <div className="form-group">
+            <label htmlFor="addDataOwner" className="col-sm-1 control-label">Owner</label>
+            <div className="col-sm-6">
+              <input type="text" id="addDataOwner" className="form-control" onChange={this.handleChange} />
+            </div>
+          </div>
+        );
       }
     });
 
-    var AddDataChannels = React.createClass({
+    var AddDataProject = React.createClass({
+      handleChange: function(e) {
+        if (this.timeoutReference) clearTimeout(this.timeoutReference);
+        var value = e.target.value;
+        this.timeoutReference = setTimeout(function() {
+          this.props.handleTokenChange(value);
+        }.bind(this), 1000);
+      },
+      render: function() {
+        return (
+          <div className="form-group">
+            <label htmlFor="addDataProject" className="col-sm-1 control-label">Project</label>
+            <div className="col-sm-6">
+              <input type="text" id="addDataProject" className="form-control" onChange={this.handleChange} />
+            </div>
+          </div>
+        );
+      }
+    });
+
+    var AddDataStacks = React.createClass({
       getInitialState: function() {
         return {
-          channels: null,
+          stacks: null,
         };
       },
       componentDidMount: function() {
-        var url = "http://" + this.props.server + "/ocp/ca/" + this.props.token + "/info/";
+        var url = "http://" + this.props.server + "/render-ws/v1/owner/" + this.props.owner + "/stacks/";
         this.serverRequest = $.get(
           url,
           function( result ) {
+            for (var i = 0; i < result.length; i++) {
+              var stackJson = result[i];
+              console.log(stackJson)
+              // ABTODO: progress stymied by same origin policy
+            }
+            /*
             var channels = Object.keys(result['channels']);
             this.setState({ channels: channels });
             this.props.handleChannelChange(channels[0]);
+            */
           }.bind(this),
           'json'
-        );
+        ).fail(function() {
+          this.props.setErrorMsg("Error: Failed to contact render server (" + url + ")");
+        }.bind(this));
       },
       componentWillUnmount: function() {
         this.serverRequest.abort();
@@ -1531,9 +1520,9 @@
         if (this.state.channels) {
           return (
             <div className="form-group">
-              <label htmlFor="addDataChannel" className="col-sm-1 control-label">Channel</label>
+              <label htmlFor="addDataStack" className="col-sm-1 control-label">Stack</label>
               <div className="col-sm-6">
-                <select className="form-control" id="addDataChannel"  onChange={this.handleChange}>
+                <select className="form-control" id="addDataStack"  onChange={this.handleChange}>
                   {this.state.channels.map(function(key) {
                     return <option key={key} value={key}>{key}</option>;
                   })};
