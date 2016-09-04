@@ -662,7 +662,7 @@
     layercontrols.options.position = 'topright';
     layercontrols.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'layercontrols');
-      var button = '<a id="layerControlsButton" href="#" data-toggle="modal" data-target="#layerControls"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-clone fa-stack-1x"></i></span></a>';
+      var button = '<div class="helperText">Layer Controls</div><a id="layerControlsButton" href="#" data-toggle="modal" data-target="#layerControls"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-clone fa-stack-1x"></i></span></a>';
       this._div.innerHTML = button;
       return this._div;
     };
@@ -2025,6 +2025,7 @@
 
         return (
           <div className="showToolboxIcon" style={{float: "left"}}>
+            <div className="helperText">{this.props.helperText}</div>
             <span className="fa-stack fa-2x">
               <a href="#" onClick={this.props.onClick}>
                 <i className="fa fa-square fa-stack-2x fa-inverse"></i>
@@ -2075,7 +2076,7 @@
       propTypes: {
         toolboxComponent: React.PropTypes.object.isRequired,
         toolboxName: React.PropTypes.string.isRequired,
-        toolboxIconName: React.PropTypes.string.isRequired
+        toolboxIconName: React.PropTypes.string.isRequired,
       },
       getInitialState: function() {
         return {
@@ -2103,6 +2104,7 @@
                 <ToolboxShowIcon
                   iconClassName={this.props.toolboxIconName}
                   onClick={this.handleClick}
+                  helperText={this.props.toolboxName}
                   key={iconKey}
                   /> }
             </ReactCSSTransitionGroup>
@@ -2732,7 +2734,7 @@
         }
         switch (event.which) {
           case 104: // h -- help
-            toggleKeyboardHelp();
+            toggleHelp();
             break;
           case 119: // w -- ndv.zindex++
             incZIndex();
@@ -2752,17 +2754,15 @@
         }
       }
     });
-    function toggleKeyboardHelp() {
+    function toggleHelp() {
       if ($( ".keyhelp" ).css("display") == "none") {
-        $( ".keyhelp" ).fadeIn( 1000, function() {
-          // Animation complete
-        });
+        $( ".keyhelp" ).fadeIn( 1000 );
+        $( ".helperText" ).fadeIn( 1000 );
+      } else {
+        $( ".keyhelp" ).fadeOut( 500 );
+        $( ".helperText" ).fadeOut( 500 );
       }
-      else {
-        $( ".keyhelp" ).fadeOut( 500, function() {
-          // Animation complete
-        });
-      }
+
     }
 
     // add keyboard help to map

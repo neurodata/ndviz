@@ -50,6 +50,18 @@ html, body, #map {
 
 }
 
+.helperText {
+  float: left;
+  padding-top: 8px;
+  padding-right: 15px;
+  color: #F6DB22;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+  font-size: 160%;
+  /*font-weight: bold;*/
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  display: none;
+}
+
 .toolbox {
   padding: 8px 8px;
   width: 300px;
@@ -61,8 +73,6 @@ html, body, #map {
   overflow: auto;
   max-height: 500px;
 }
-
-
 .toolboxContent {
   overflow: auto;
   max-height: 600px;
@@ -272,7 +282,8 @@ html, body, #map {
 .keyhelp {
   display: none;
   background: rgb(34, 34, 34);
-  color: rgb(157, 157, 157);
+  /*color: rgb(157, 157, 157);*/
+  color: #F6DB22;
   padding-top: 5px;
   padding-bottom: 5px;
   padding-left: 10px;
