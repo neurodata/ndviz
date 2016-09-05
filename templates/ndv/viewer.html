@@ -265,7 +265,7 @@
       // TODO: refactor along with timeseries code
       var curtime = 0;
       if (type == 'timeseries') {
-        curtime = {{ starttime }};
+        curtime = {{ time }};
       }
 
       this.initializeLayer = function() {
@@ -2474,7 +2474,6 @@
         } else {
           var res = curRes;
         }
-        console.log('res: ', res);
 
         var url = "http://" + this.props.server + "/ocp/ramon/" + this.props.token + "/" + this.props.channel + "/" + this.props.id + "/boundingbox/" + curRes + "/";
         this.serverRequest = $.get(
@@ -2491,16 +2490,7 @@
               // downsample coordinates to lower res (TODO!)
             }
 
-            /*
-            console.log('bbcorner: ', bbcorner);
-            console.log('bbdim: ', bbdim);
-            console.log('point: ', L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
-            console.log('z: ', bbcorner[2] + bbdim[2]);
-            */
-
             var center = map.unproject(L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
-            //console.log(curRes);
-            //console.log('center: ', center);
             map.setView(center, ndv.maxres + ndv.maxres - curRes);
             chgZIndex(bbcorner[2] + bbdim[2]);
             addMarkerCenter();
@@ -2715,6 +2705,16 @@
       var pathArr = pathRaw.split('/');
       var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
 
+      var curTime = 0;
+      var isTimeseries = false;
+      for (var layeridx in layers) {
+        if (layers[layeridx].type == 'timeseries') {
+          curTime = layers[layeridx].tileLayer.options.curtime;
+          isTimeseries = true;
+          break;
+        }
+      }
+
       if (script_name == '') {
         var token = pathArr[1];
         var channels = '';
@@ -2730,10 +2730,18 @@
         }
 
         if (channels == '') {
-          var markerUrl = "http://{{ request.get_host }}/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          if (isTimeseries) {
+            var markerUrl = "http://{{ request.get_host }}/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/" + curTime + "/";
+          } else {
+            var markerUrl = "http://{{ request.get_host }}/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          }
         }
         else {
-          var markerUrl = "http://{{ request.get_host }}/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          if (isTimeseries) {
+            var markerUrl = "http://{{ request.get_host }}/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/" + curTime + "/";
+          } else {
+            var markerUrl = "http://{{ request.get_host }}/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          }
         }
       }
       else {
@@ -2751,10 +2759,18 @@
         }
 
         if (channels == '') {
-          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          if (isTimeseries) {
+            var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/" + curTime + "/";
+          } else {
+            var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          }
         }
         else {
-          var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          if (isTimeseries) {
+            var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/" + curTime + "/";
+          } else {
+            var markerUrl = "http://{{ request.get_host }}" + script_name + "/" + token + "/" + channels + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+          }
         }
       }
       return markerUrl;

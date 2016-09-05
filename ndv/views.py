@@ -107,7 +107,7 @@ def default(request):
 
 # View a project dynamically generated based on token (and channel)
 def tokenview(request, webargs):
-  """ /<<token>>/<<channel1,channel2,...>>/<<plane>>(opt)/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
+  """ /<<token>>/<<channel1,channel2,...>>/<<plane>>(opt)/time/<<time>>/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
   # res (x,y,z) will center the map at (x,y,z) for a given res
   channels_str = None
   channels = None
@@ -118,14 +118,15 @@ def tokenview(request, webargs):
   y = None
   z = None
   res = None
+  time = None
   marker = False
 
   options = None
 
   # process arguments
   try:
-    m = re.match(r"(?P<token>\w+)/?(?!(xy|xz|yz))(?P<channels>[\w+,:-]+)?/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
-    [token_str, neg, channels_str, orientation, cutoutstr, options_str] = [i for i in m.groups()]
+    m = re.match(r"(?P<token>\w+)/?(?P<channels>[\w+,:-]+)?/?(?P<plane>xy|xz|yz)?/(?P<cutout>[\d,/-]+)?/?(?P<options>[\w:,{}]+)?/?$", webargs)
+    [token_str, channels_str, orientation, cutoutstr, options_str] = [i for i in m.groups()]
 
     if channels_str is not None:
       channels_str = channels_str.split(',')
@@ -146,12 +147,17 @@ def tokenview(request, webargs):
   # process cutoutargs
   if cutoutstr is not None:
     cutoutargs = cutoutstr.split('/')
-
-    if len (cutoutstr) >= 4:
+    if len (cutoutargs) == 5:
       res = int(cutoutargs[0])
       x = int(cutoutargs[1])
       y = int(cutoutargs[2])
       z = int(cutoutargs[3])
+    if len(cutoutargs) == 6:
+      res = int(cutoutargs[0])
+      x = int(cutoutargs[1])
+      y = int(cutoutargs[2])
+      z = int(cutoutargs[3])
+      time = int(cutoutargs[4])
 
   # get data from ocp running locally
   # make get request to projinfo
@@ -269,6 +275,8 @@ def tokenview(request, webargs):
     z = zoffset
   if res is None:
     res = scalinglevels
+  if time is None:
+    time = starttime
 
   # process template options
   blendmode = BLENDOPTS['normal']
@@ -294,6 +302,7 @@ def tokenview(request, webargs):
       'ydownmax': ydownmax,
       'starttime': starttime,
       'endtime': endtime,
+      'time': time,
       'maxres': scalinglevels,
       'minres':0,
       'res': res,
@@ -319,6 +328,7 @@ def projectview(request, webargs):
   y = None
   z = None
   res = None
+  time = None
   marker = False
 
   options = None
@@ -344,12 +354,18 @@ def projectview(request, webargs):
   # process cutoutargs
   if cutoutstr is not None:
     cutoutargs = cutoutstr.split('/')
-
-    if len (cutoutstr) >= 4:
+    if len (cutoutargs) == 5:
       res = int(cutoutargs[0])
       x = int(cutoutargs[1])
       y = int(cutoutargs[2])
       z = int(cutoutargs[3])
+    if len(cutoutargs) == 6:
+      res = int(cutoutargs[0])
+      x = int(cutoutargs[1])
+      y = int(cutoutargs[2])
+      z = int(cutoutargs[3])
+      time = int(cutoutargs[4])
+
 
   # query for the project from the db
   project = get_object_or_404(VizProject, pk=project_name)
@@ -373,6 +389,8 @@ def projectview(request, webargs):
     z = project.zoffset
   if res is None:
     res = project.scalinglevels
+  if time is None:
+    time = project.starttime
 
   # get dataviews for project
   dvi = DataViewItem.objects.filter(vizproject = project_name)
@@ -404,6 +422,7 @@ def projectview(request, webargs):
       'zstart': z,
       'starttime': project.starttime,
       'endtime': project.endtime,
+      'time': time,
       'plane': 'xy',
       'marker': marker,
       'timeseries': timeseries,
