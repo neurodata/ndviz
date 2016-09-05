@@ -31,6 +31,7 @@
 
   {# leaflet files #}
   <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" />
+  <link rel="stylesheet" href="{% static 'ndv/leaflet-draw/leaflet.draw.css' %}" />
   <link rel="stylesheet" href="{% static 'ndv/css/Control.Loading.css' %}" />
 
   {# buttons, buttons, buttons #}
@@ -50,8 +51,9 @@
   <script src="{% static 'ndv/js/react-with-addons.js' %}"></script>
   <script src="{% static 'ndv/js/react-dom.js' %}"></script>
 
-  <script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>
-  {#<script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>#}
+  {#<script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>#}
+  <script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'ndv/leaflet-draw/leaflet.draw.js' %}"></script>
   <script src="{% static 'ndv/js/Control.Loading.js' %}"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <script src="{% static 'ndv/js/spin.min.js' %}"></script>
@@ -206,7 +208,13 @@
 		var map = L.map('map', {
       crs: L.CRS.Simple,
 			doubleClickZoom: false,
+      /*drawControl: true,*/
     });
+
+    // L.Draw (drawing on map)
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
 
     // add loading symbol
     var spinOpts = {
@@ -785,6 +793,28 @@
       map.scrollWheelZoom.enable();
     });
     /* End Marker Tool Container */
+
+    /* Begin Download Data Container */
+    var downloadtool = L.control();
+    downloadtool.options.position = 'topright';
+    downloadtool.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'downloadtool');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    downloadtool.addTo(map);
+
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    downloadtool.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    downloadtool.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    /* End Download Data Container */
 
     /* Add a scale bar */
     var scaleBar = L.control();
@@ -1744,7 +1774,7 @@
           }
         }
         ndv.querytool = true;
-
+        // AB TODO: store the actual layer object (i think)
         this.setState({selectedLayer: event.target.value});
       },
       render: function() {
@@ -1757,8 +1787,8 @@
             <div className="form-group">
               <select className="form-control" onChange={this.handleChange}>
                 <option value="none">None</option>
-                {this.state.layers.map(function(layer) {
-                  return <option value={layer.name} key={layer}>{layer.name}</option>
+                {this.state.layers.map(function(layer, i) {
+                  return <option value={i} key={i + "_" + layer.name}>{layer.name}</option>
                 })}
                 </select>
               </div>
@@ -1928,6 +1958,197 @@
             </div>
           </div>
         );
+      }
+    });
+
+    var LayersList = React.createClass({
+      getInitialState: function() {
+        return {
+          layers: [],
+          selectedLayer: null
+        }
+      },
+      componentWillMount: function() {
+        // update options list each time the tool is opened
+        this.updateOptionsList();
+      },
+      updateOptionsList: function() {
+        var newLayers = [];
+        for (var layer in layers) {
+          if (layers[layer].enabled) {
+            newLayers.push(layers[layer])
+          }
+        }
+        this.setState({layers: newLayers});
+      },
+      render: function() {
+        return (
+          <div>
+            <div className="form-group">
+              <select className="form-control" onChange={this.props.handleChange}>
+                {this.state.layers.length == 0 ? <option value="none">None</option> :
+                this.state.layers.map(function(layer, i) {
+                  return <option value={i} key={i + "_" + layer.name}>{layer.name}</option>
+                })}
+                </select>
+              </div>
+          </div>
+        );
+      }
+    });
+
+    /* Download Tool Components */
+    var DownloadTool = React.createClass({
+      getInitialState: function() {
+        if (layers.length > 0) {
+          var layer = layers[0];
+        } else {
+          var layer = null;
+        }
+        return {
+          rectangleDrawn: false,
+          rectangleLowerBound: [0, 0],
+          rectangleUpperBound: [0, 0],
+          zExtent: 0,
+          layer: layer,
+        }
+      },
+      componentDidMount: function() {
+        map.on('draw:created', function (e) {
+          drawnItems.addLayer(e.layer);
+          this.getRectangleCoords(e.layer);
+        }.bind(this));
+        map.on('draw:editresize', function(e) {
+          this.getRectangleCoords(e.layer);
+        }.bind(this));
+        map.on('zoomend', function() {
+          if(Object.keys(drawnItems._layers).length > 0) {
+            // Note: this essentially assumes we only have 1 layer at a time
+            var layerKey = Object.keys(drawnItems._layers)[0];
+            var layer = drawnItems._layers[layerKey];
+            this.getRectangleCoords(layer)
+          }
+        }.bind(this));
+
+        if (Object.keys(drawnItems._layers).length > 0) {
+          var layerKey = Object.keys(drawnItems._layers)[0];
+          var layer = drawnItems._layers[layerKey];
+          this.getRectangleCoords(layer)
+        }
+      },
+      componentWillUnmount: function() {
+        if (Object.keys(drawnItems._layers).length > 0) {
+          var layerKey = Object.keys(drawnItems._layers)[0];
+          var layer = drawnItems._layers[layerKey];
+          drawnItems.removeLayer(layer);
+        }
+      },
+      getRectangleCoords: function(layer) {
+        var coordinatesLow = map.project(layer._latlngs[1]);
+        var coordinatesHigh = map.project(layer._latlngs[3]);
+        this.setState({
+          rectangleDrawn: true,
+          rectangleLowerBound: [Math.round(coordinatesLow.x), Math.round(coordinatesLow.y)],
+          rectangleUpperBound: [Math.round(coordinatesHigh.x), Math.round(coordinatesHigh.y)],
+        })
+      },
+      drawRectangle: function() {
+        // remove existing rectangles
+        Object.keys(drawnItems._layers).map(function(layer) {
+          drawnItems.removeLayer(layer);
+        });
+        var rectangle = new L.Draw.Rectangle(map, {
+          shapeOptions: {
+            color: '#B15E00'
+          }
+        });
+        rectangle.enable();
+      },
+      handleZChange: function(e) {
+        if (e.target.value == "" || parseInt(e.target.value) < 0) {
+          var value = 0;
+        } else {
+          var value = parseInt(e.target.value);
+        }
+        this.setState({
+          zExtent: value
+        });
+      },
+      handleLayerChange: function(e) {
+        var layer = layers[e.target.value];
+        this.setState({layer: layer});
+      },
+      render: function() {
+        return (
+          <div>
+            <p>Download a region of data in zipped numpy format. Use the button below to draw a rectangle, then adjust the number of z-stacks (above the current stack) as necessary.<br /><strong>Note</strong>: The number of z-stacks corresponds to the number of z stacks in the viewer. If the dataset plane is other than xy, this will not be the dataset z dimension.</p>
+            <div className="form-group">
+              <button className="btn btn-primary btn-block" onClick={this.drawRectangle}>
+                Draw Rectangle
+              </button>
+            </div>
+
+            <div className="form-group">
+              <input className="form-control" type="number" placeholder="Z-Extent" onChange={this.handleZChange} />
+            </div>
+            <LayersList handleChange={this.handleLayerChange} />
+
+            <DownloadToolAction
+              rectangleDrawn={this.state.rectangleDrawn}
+              rectangleLowerBound={this.state.rectangleLowerBound}
+              rectangleUpperBound={this.state.rectangleUpperBound}
+              zExtent={this.state.zExtent}
+              layer={this.state.layer}
+            />
+          </div>
+        );
+      }
+    });
+    var DownloadToolAction = React.createClass({
+      propTypes: {
+        rectangleDrawn: React.PropTypes.bool.isRequired,
+        rectangleLowerBound: React.PropTypes.array.isRequired,
+        rectangleUpperBound: React.PropTypes.array.isRequired,
+        zExtent: React.PropTypes.number.isRequired,
+        layer: React.PropTypes.object
+      },
+      getInitialState: function() {
+        var z = $( "#z" ).val();
+        return {
+          zCurrent: z,
+        }
+      },
+      componentWillReceiveProps: function() {
+        var z = $( "#z" ).val();
+        this.setState({
+          zCurrent: z
+        });
+      },
+      render: function() {
+        var zUpper = parseInt(this.state.zCurrent) + this.props.zExtent;
+        var zLower = parseInt(this.state.zCurrent); //this.props.zExtent;
+        if (this.props.rectangleDrawn && this.props.layer) {
+          var urlBase = "http://" + this.props.layer.server + "/ocp/ca/" + this.props.layer.token + "/" + this.props.layer.channel + "/npz/";
+          var cutout = getCurrentRes() + "/" + this.props.rectangleLowerBound[0] + "," + this.props.rectangleUpperBound[0] + "/" + this.props.rectangleLowerBound[1] + "," + this.props.rectangleUpperBound[1] + "/" + zLower + "," + zUpper + "/";
+          var url = urlBase + cutout;
+          return (
+            <div>
+              <h4>Cutout:</h4>
+              ({this.props.rectangleLowerBound[0]}, {this.props.rectangleLowerBound[1]}, {zLower})
+              x
+              ({this.props.rectangleUpperBound[0]}, {this.props.rectangleUpperBound[1]}, {zUpper})
+              <br />
+              <div className="form-group">
+                <a href={url} target="_blank"><button className="btn btn-success btn-block">Download Now</button></a>
+              </div>
+              <div className="form-group">
+                <input type="text" className="form-control" value={url} readOnly/>
+              </div>
+            </div>
+          );
+        } else {
+          return null;
+        }
       }
     });
 
@@ -2431,6 +2652,17 @@
       document.getElementsByClassName('markertool')[0]);
     };
     renderMarkerToolbox();
+
+
+    var renderDownloadToolbox = function() {
+      var downloadToolComponent = <DownloadTool />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={downloadToolComponent}
+        toolboxName="Download Data"
+        toolboxIconName="fa-download" />,
+      document.getElementsByClassName('downloadtool')[0]);
+    };
+    renderDownloadToolbox();
 
     /* scale bar */
     var updateScaleBar = function() {
