@@ -56,12 +56,10 @@ L.TileLayer.OCPLayer = L.TileLayer.extend({
 		tile.onerror = this._tileOnError;
 
 		// don't load negative tiles (ndstore is 0 indexed)
-		// TODO don't load tiles > image bounds
 		this._adjustTilePoint(tilePoint);
     if (tilePoint.x < 0 || tilePoint.y < 0) {
       tile.src = L.Util.emptyImageUrl
-    }
-    else {
+    } else {
       tile.src = this.getTileUrl(tilePoint);
     }
 		this.fire('tileloadstart', {
