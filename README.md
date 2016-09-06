@@ -1,4 +1,4 @@
-# NeuroDataViz v0.5
+# NeuroDataViz v0.6
 
 Web visualization and analysis tool for displaying images and metadata from NeuroData / Open Connectome Project Datastores. Supported imaging modalities include:
 
@@ -16,6 +16,9 @@ Web visualization and analysis tool for displaying images and metadata from Neur
  * Built-in image processing, including opacity, intensity resampling, dynamic coloring, and blending.
  * Dynamic metadata support. Query locations from the web interface and add your own metadata (coming soon).
 
+### Help
+Pressing "h" while in the main viewer window will load a small help window and descriptors for each of the items present in the viewer. 
+
 ## Installation
 
 Several NeuroDataViz configurations are possible:
@@ -31,7 +34,7 @@ We recommend Ubuntu 14.04 LTS, but any linux-based server operating system shoul
 
 **A note about Python**: NeuroDataViz does not currently support Python 3.x due to the lack of a mature, fast, and plug and play MySQL connector. We are constantly evaluating the Python 3 software landscape and hope to provide a Python 2 / Python 3 compatible version in the near future. In the meantime, we recommend Python 2.7.
 
-**A note about CORS**: As of v0.5, NeuroDataViz uses WebGL and requires CORS headers on any remote tileserver. For more information on CORS and configuring servers to allow remote loading of resources by adding the appropriate CORS headers, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS. 
+**A note about CORS**: As of v0.5, NeuroDataViz uses WebGL and requires CORS headers on any remote tileserver. For more information on CORS and configuring servers to allow remote loading of resources by adding the appropriate CORS headers, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS.
 
 
 ### Dependencies
