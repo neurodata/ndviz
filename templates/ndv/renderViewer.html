@@ -168,6 +168,8 @@
     ndv.querychannel = 'none';
     ndv.queryserver = 'none';
 
+    ndv.currentserver = "{{ request.META.HTTP_HOST }}";
+
     // timeseries globals
     ndv.playdelay = 1;
 
@@ -1387,37 +1389,26 @@
           project: project
         });
       },
-      handleStackChange: function(channel) {
+      handleStackChange: function(stack) {
         this.setState({
           infoMsg: null,
           stack : stack
         });
       },
       handleAddStack: function() {
-        var url = "http://" + this.state.server + "/ocp/ca/" + this.state.token + "/info/";
-        $.get(
-          url,
-          function( result ) {
-            var channel = result['channels'][this.state.channel];
-            if (channel['channel_type'] == 'timeseries') {
-              var url = "http://" + this.state.server + "/ocp/catmaid/" + this.state.token + "/" + this.state.channel + "/xy/" + curtime + "/{zindex}/{y}_{x}_{z}.png";
-            } else {
-              var url = "http://" + this.state.server + "/ocp/catmaid/" + this.state.token + "/" + this.state.channel + "/xy/{zindex}/{y}_{x}_{z}.png";
-            }
+        var url = "http://" + ndv.currentserver + "/getRenderTile/" + this.state.server + "/" + this.state.owner + "/" + this.state.project + "/" + this.state.stack + "/xy/{zindex}/{y}_{x}_{z}.png";
 
-            var newLayer = new NDVLayer(this.state.channel, channel['channel_type'], channel['propagate'], url, this.state.server, this.state.token, this.state.channel, "", false);
-            this.props.updateLayersList();
-            glLayer.draw();
-            if (layers.length == 1) {
-              // if this is the first layer
-              renderProjInfoToolbox();
-              updateScaleBar();
-            }
-            var sucessMsg = "Successfully added " + this.state.channel + " to map layers!";
-            this.setState({infoMsg: sucessMsg});
-          }.bind(this),
-          'json'
-        );
+        var newLayer = new NDVLayer(this.state.stack, 'image', 2, url, this.state.server, this.state.project, this.state.stack, "", false);
+
+        this.props.updateLayersList();
+        glLayer.draw();
+        if (layers.length == 1) {
+          // if this is the first layer
+          renderProjInfoToolbox();
+          updateScaleBar();
+        }
+        var sucessMsg = "Successfully added " + this.state.stack + " to map layers!";
+        this.setState({infoMsg: sucessMsg});
       },
       setErrorMsg: function(msg) {
         this.setState({errorMsg: msg});
@@ -1431,9 +1422,17 @@
                 <input className="form-control" id="addDataServer" type="text" placeholder="openconnecto.me" onChange={this.handleServerChange} />
               </div>
             </div>
-            {this.state.server ? <AddDataOwner server={this.state.server} handleTokenChange={this.handleOwnerChange} /> : null}
 
-            {this.state.server && this.state.owner ? <AddDataStacks server={this.state.server} owner={this.state.owner} handleStackChange={this.handleStackChange} handleProjectChange={this.handleProjectChange} setErrorMsg={this.setErrorMsg} /> : null}
+            {this.state.server ? <AddDataOwner server={this.state.server} handleOwnerChange={this.handleOwnerChange} /> : null}
+
+            {this.state.server && this.state.owner ? <AddDataProject server={this.state.server} owner={this.state.owner} handleProjectChange={this.handleProjectChange} /> : null}
+
+            {this.state.server && this.state.owner && this.state.project ? <AddDataStacks
+            server={this.state.server}
+            owner={this.state.owner}
+            project={this.state.project}
+            handleStackChange={this.handleStackChange}
+            setErrorMsg={this.setErrorMsg} /> : null}
             {this.state.server && this.state.owner && this.state.project && this.state.stack ? <button className="btn btn-primary" type="button" onClick={this.handleAddStack}>Add Layer</button> : null}
             <div style={{paddingTop: 10}}>
               {this.state.infoMsg ? <p className="bg-info">{this.state.infoMsg}</p> : null}
@@ -1448,7 +1447,7 @@
         if (this.timeoutReference) clearTimeout(this.timeoutReference);
         var value = e.target.value;
         this.timeoutReference = setTimeout(function() {
-          this.props.handleTokenChange(value);
+          this.props.handleOwnerChange(value);
         }.bind(this), 1000);
       },
       render: function() {
@@ -1468,7 +1467,7 @@
         if (this.timeoutReference) clearTimeout(this.timeoutReference);
         var value = e.target.value;
         this.timeoutReference = setTimeout(function() {
-          this.props.handleTokenChange(value);
+          this.props.handleProjectChange(value);
         }.bind(this), 1000);
       },
       render: function() {
@@ -1490,40 +1489,43 @@
         };
       },
       componentDidMount: function() {
+        this.updateStackList();
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      updateStackList: function() {
+        var stacksArr = [];
         var url = "http://" + this.props.server + "/render-ws/v1/owner/" + this.props.owner + "/stacks/";
         this.serverRequest = $.get(
           url,
           function( result ) {
             for (var i = 0; i < result.length; i++) {
               var stackJson = result[i];
-              console.log(stackJson)
-              // ABTODO: progress stymied by same origin policy
+              var stackIdJson = stackJson['stackId'];
+              if (stackIdJson['owner'] == this.props.owner && stackIdJson['project'] == this.props.project) {
+                stacksArr.push(stackIdJson['stack']);
+              }
             }
-            /*
-            var channels = Object.keys(result['channels']);
-            this.setState({ channels: channels });
-            this.props.handleChannelChange(channels[0]);
-            */
+            this.setState({ stacks: stacksArr });
+            this.props.handleStackChange(stacksArr[0]);
           }.bind(this),
           'json'
         ).fail(function() {
           this.props.setErrorMsg("Error: Failed to contact render server (" + url + ")");
         }.bind(this));
       },
-      componentWillUnmount: function() {
-        this.serverRequest.abort();
-      },
       handleChange: function(e) {
-        this.props.handleChannelChange(e.target.value);
+        this.props.handleStackChange(e.target.value);
       },
       render: function() {
-        if (this.state.channels) {
+        if (this.state.stacks) {
           return (
             <div className="form-group">
               <label htmlFor="addDataStack" className="col-sm-1 control-label">Stack</label>
               <div className="col-sm-6">
                 <select className="form-control" id="addDataStack"  onChange={this.handleChange}>
-                  {this.state.channels.map(function(key) {
+                  {this.state.stacks.map(function(key) {
                     return <option key={key} value={key}>{key}</option>;
                   })};
                 </select>
