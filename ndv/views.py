@@ -678,7 +678,7 @@ def renderView(request, webargs):
 
   # process arguments
   try:
-    p = re.compile(r"(?P<server>[\w%\-.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w,:_]+)/(?P<res>\d+)?/?(?P<x>\d+)?/?(?P<y>\d+)?/?(?P<z>\d+)?/?(options)?/?(?P<options>[\w:,{}]+)?/?$")
+    p = re.compile(r"(?P<server>[\w%\-.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w,:_]+)/?(?P<plane>xy|xz|yz)?/?(?P<res>\d+)?/?(?P<x>\d+)?/?(?P<y>\d+)?/?(?P<z>\d+)?/?(options)?/?(?P<options>[\w:,{}]+)?/?")
     m = p.match(webargs)
     md = m.groupdict()
     server = md['server']
@@ -762,7 +762,7 @@ def renderView(request, webargs):
 
   # process template options
 
-  blendmode = BLENDOPTS['normal']
+  blendmode = BLENDOPTS['additive']
   if options is not None:
     if 'marker' in options.keys():
       marker = True
