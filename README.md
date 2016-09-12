@@ -17,7 +17,20 @@ Web visualization and analysis tool for displaying images and metadata from Neur
  * Dynamic metadata support. Query locations from the web interface and add your own metadata (coming soon).
 
 ### Help
-Pressing "h" while in the main viewer window will load a small help window and descriptors for each of the items present in the viewer. 
+Pressing "h" while in the main viewer window will load a small help window and descriptors for each of the items present in the viewer.
+
+## Dockerfile
+
+As of v0.6, NeuroDataViz includes a Dockerfile. The Docker container runs the django web server, allowing the user to run ndviz locally in a lightweight Docker environment. To build a ndviz Docker container, do the following:
+
+1. Copy `/ndv/settings.py.example` to `settings.py` in the ndviz root directory (where the Dockerfile is located).
+2. Copy `/ndv/settings_secret.py.example` to `settings_secret.py` in the ndviz root directory.
+3. Edit `settings_secret.py` and set a database host, username, and password. Note that the Dockerfile will install MySQL and run migrations. If you wish to use the Docker container database (recommended), use `localhost`. Also set a secret key.
+4. Run `docker build -t ndviz:v0.6 .` in the root ndviz container.
+
+To run ndviz inside a container:
+
+`docker run -d -p 8000:8000 ndviz:v0.6`
 
 ## Installation
 
