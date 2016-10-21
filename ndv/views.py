@@ -34,7 +34,7 @@ from models import VizLayer
 from models import DataView
 from models import DataViewItem
 
-import urllib2
+import urllib, urllib2
 import json
 import re
 
@@ -645,6 +645,178 @@ def ramoninfo(request, webargs):
     #html += kvhtml # kvpairs at the bottom
     html += '</table>'
   return HttpResponse(html)
+
+def getRenderTile(request, webargs):
+  try:
+    p = re.compile(r"(?P<server>[\w%\-.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w_]+)/(xy|yz|xz|)/(?P<zindex>\d+)/(?P<y>\d+)_(?P<x>\d+)_(?P<res>\d+).png")
+    m = p.match(webargs)
+    md = m.groupdict()
+    server = md['server']
+    owner = md['owner']
+    project = md['project']
+    stack = md['stack']
+
+    ztile = int(md['zindex'])
+    xtile = int(md['x'])
+    ytile = int(md['y'])
+    res = int(md['res'])
+
+    # GET /v1/owner/{owner}/project/{project}/stack/{stack}/z/{z}/box/{x},{y},{width},{height},{scale}/png-image
+    server = "http://{}".format(server)
+    addr_base = "{}/render-ws/v1/owner/{}/project/{}/stack/{}/z/{}/box".format(server, owner, project, stack, ztile)
+
+    cutout = "{},{},{},{},{}/png-image".format( xtile*(512*2**(res)), ytile*(512*2**(res)), 512*2**(res), 512*2**(res), float(1)/float(2**res) )
+
+    addr = "{}/{}".format(addr_base, cutout)
+    print addr
+
+    try:
+      r = urllib2.urlopen(addr)
+    except urllib2.HTTPError, e:
+      r = '[ERROR]: ' + str(e.getcode())
+      return HttpResponseBadRequest(r)
+
+    return HttpResponse(r, content_type="image/png")
+
+  except Exception, e:
+    return HttpResponseBadRequest(e)
+
+def renderView(request, webargs):
+  """ /<<server>>/<<owner>>/<<project>>/<<stack>>/<<res>/<<x>>/<<y>>/<<z>>/<<options>>/ """
+  # res (x,y,z) will center the map at (x,y,z) for a given res
+  stack_colors = {}
+
+  # initialize these variables, which will be passed to the template
+  x = None
+  y = None
+  z = None
+  res = None
+  marker = False
+
+  options = None
+
+  # process arguments
+  try:
+    p = re.compile(r"(?P<server>[\w%\-.:]+)/(?P<owner>[\w_]+)/(?P<project>[\w_]+)/(?P<stack>[\w,:_]+)/?(?P<plane>xy|xz|yz)?/?(?P<res>\d+)?/?(?P<x>\d+)?/?(?P<y>\d+)?/?(?P<z>\d+)?/?(options)?/?(?P<options>[\w:,{}]+)?/?")
+    m = p.match(webargs)
+    md = m.groupdict()
+    server = md['server']
+    owner = md['owner']
+    project = md['project']
+    stacks = md['stack'].split(',')
+    for idx, stack in enumerate(stacks):
+      if len(stack.split(':')) > 1:
+        newStack = stack.split(':')[0]
+        stack_colors[newStack] = stack.split(':')[1]
+        stacks[idx] = newStack
+
+    if md['res']:
+      res = int(md['res'])
+
+    if md['x'] and md['y'] and md['z']:
+      x = int(md['x'])
+      y = int(md['y'])
+      z = int(md['z'])
+
+    if md['options']:
+      options = {}
+      optionsList = md['options'].split(',')
+      for option in optionsList:
+        options[option.split(':')[0]] = option.split(':')[1]
+
+  except Exception, e:
+    print e
+    return HttpResponseBadRequest("[ERROR]: Invalid RESTful argument. ({})".format(e))
+
+
+  # get stack data from the render server
+  server = urllib.unquote(server)
+  addr = "http://{}/render-ws/v1/owner/{}/project/{}/stack/{}/".format(server, owner, project, stacks[0])
+
+  try:
+    r = urllib2.urlopen(addr)
+  except urllib2.HTTPError, e:
+    return HttpResponseBadRequest('[ERROR]: Unknown error. (error code: {})'.format( e.getcode() ))
+
+  jsoninfo = json.loads(r.read())
+
+  # get project metadata
+  project_name = jsoninfo['stackId']['project']
+
+  # get dataset metadata
+  xmin = jsoninfo['stats']['stackBounds']['minX']
+  ymin = jsoninfo['stats']['stackBounds']['minY']
+  zmin = jsoninfo['stats']['stackBounds']['minZ']
+
+  xmax = jsoninfo['stats']['stackBounds']['maxX']
+  ymax = jsoninfo['stats']['stackBounds']['maxY']
+  zmax = jsoninfo['stats']['stackBounds']['maxZ']
+
+  layers = []
+  # convert the specified stack to a layer
+  for stack in stacks:
+    tmp_layer = VizLayer()
+    tmp_layer.layer_name = stack
+    tmp_layer.layer_description = "new render interface"
+    tmp_layer.layertype = 'image'
+    tmp_layer.token = project
+    tmp_layer.channel = stack
+    tmp_layer.server = server
+    tmp_layer.tilecache = False
+    if stack in stack_colors:
+      tmp_layer.color = stack_colors[stack]
+    #if channel['channel_name'] in channel_colors.keys():
+    #  tmp_layer.color = channel_colors[ channel['channel_name'] ].upper()
+    layers.append(tmp_layer)
+
+  # center the map on the image at base resolution, if no other coordinate is specified
+  if x is None:
+    x = int((xmax - xmin) / 2)
+  if y is None:
+    y = int((ymax - ymin) / 2)
+  if z is None:
+    z = zmin
+  if res is None:
+    res = 0
+
+  # process template options
+
+  blendmode = BLENDOPTS['additive']
+  if options is not None:
+    if 'marker' in options.keys():
+      marker = True
+    if 'blend' in options.keys() and options['blend'] in BLENDOPTS.keys():
+      blendmode = BLENDOPTS[ options['blend'].lower() ]
+
+  context = {
+      'layers': layers,
+      'renderServer': server,
+      'owner': owner,
+      'project': project,
+      'stack': stack,
+      'project_name': project_name,
+      'xsize': xmax,
+      'ysize': ymax,
+      'zsize': zmax,
+      'xoffset': xmin,
+      'yoffset': ymin,
+      'zoffset': zmin,
+      'starttime': 0,
+      'endtime': 0,
+      'maxres': 20,
+      'minres':0,
+      'res': res,
+      'xstart': x,
+      'ystart': y,
+      'zstart': z,
+      'plane': 'xy',
+      'marker': marker,
+      'timeseries': False,
+      'blendmode': blendmode,
+      'version': VERSION,
+      'viewtype': 'renderview',
+  }
+  return render(request, 'ndv/renderViewer.html', context)
 
 # Manage
 @login_required

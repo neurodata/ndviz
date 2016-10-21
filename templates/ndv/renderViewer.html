@@ -1,0 +1,2937 @@
+<!DOCTYPE html>
+<html>
+<!--
+# Copyright 2016 NeuroData (http://neurodata.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Designed, Developed, and Maintained by Alex Baden
+# abaden1@jhu.edu
+# github.com/alexbaden
+
+!-->
+<head>
+  <title>NeuroDataViz: viewing {{ project_name }}</title>
+  {% load staticfiles %}
+  {# boostrap files #}
+  <link rel="stylesheet" type ="text/css" href="{% static 'bootstrap/css/bootstrap.css' %}" />
+
+  {# jquery UI #}
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+
+  {# leaflet files #}
+  <link rel="stylesheet" href="{% static 'ndv/leaflet/leaflet.css' %}" />
+  <link rel="stylesheet" href="{% static 'ndv/css/Control.Loading.css' %}" />
+
+  {# buttons, buttons, buttons #}
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+  {# css file #}
+  <link rel="stylesheet" href="{% static 'ndv/css/viewer.css' %}" />
+
+  {% if GOOGLE_ANALYTICS_PROPERTY_ID %}
+    {% include "ndv/analytics.html" %}
+  {% endif %}
+
+  {# react #}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+
+  {# react dev -- add ".min" before ".js" for production #}
+  <script src="{% static 'ndv/js/react-with-addons.js' %}"></script>
+  <script src="{% static 'ndv/js/react-dom.js' %}"></script>
+
+  <script src="{% static 'ndv/leaflet/leaflet-src.js' %}"></script>
+  {#<script src="{% static 'ndv/leaflet/leaflet.js' %}"></script>#}
+  <script src="{% static 'ndv/js/Control.Loading.js' %}"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="{% static 'ndv/js/spin.min.js' %}"></script>
+  <script src="{% static 'ndv/js/easy-button.js' %}"></script>
+  <script src="{% static 'ndv/js/ocp-leaflet.js' %}"></script>
+  {# threejs #}
+  <script src="{% static 'ndv/js/threejs/three.min.js' %}"></script>
+  <script src="{% static 'ndv/js/threejs/Detector.js' %}"></script>
+
+	</head>
+<body>
+  <div class="modal fade" id="no_webgl" tabindex="-1" role="dialog" aria-labelledby="no_webgl_modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close"><span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title" id="no_webgl_modal_label">Error Initializing WebGL</h3>
+        </div>
+        <div class="modal-body bg-danger" id="no_webgl_body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="layerControls" tabindex="-1" role="dialog" aria-labelledby="layerControlsModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title" id="layerControlsLabel">Layer Controls</h3>
+        </div>
+        <div class="modal-body" id="layerControlsContainer">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+       </div>
+     </div>
+  </div>
+
+  {# Begin Modal Code Includes #}
+  {% include "ndv/help.html" %}
+
+  {% include "ndv/nav.html" %}
+
+  {% include "ndv/login.html" %}
+
+  {% include "ndv/blendmodes.html" %}
+  {# End Modal Code Includes #}
+
+  <div id="map"></div>
+  <script id="vertexShader" type="x-shader/x-vertex">
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  </script>
+
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    varying vec2 vUv;
+
+    uniform vec3 color;
+    uniform sampler2D texture;
+
+    uniform float opacity;
+
+    // remapping
+    uniform float minval;
+    uniform float maxval;
+
+    // gamma
+    uniform float gamma;
+
+    void main() {
+      vec4 tmpColor;
+
+      #ifdef REMAP
+      tmpColor = texture2D(texture, vUv) * vec4(color.x, color.y, color.z, opacity);
+      // remap color to new intensity range
+      tmpColor.x = min( max( (tmpColor.x - minval)/maxval, 0.0), 1.0 );
+      tmpColor.y = min( max( (tmpColor.y - minval)/maxval, 0.0), 1.0 );
+      tmpColor.z = min( max( (tmpColor.z - minval)/maxval, 0.0), 1.0 );
+      #else
+      tmpColor = texture2D(texture, vUv) * vec4(color.x, color.y, color.z, opacity);
+      #endif
+
+      #ifdef GAMMACOR
+      tmpColor.rgb = pow(tmpColor.rgb, vec3(1.0 / gamma));
+      #endif
+
+      gl_FragColor = tmpColor;
+
+    }
+  </script>
+  <script>
+    // check for WebGL
+    if ( ! Detector.webgl ) {
+      // launch error modal
+      $(document).ready(function() {
+        $('#no_webgl_body').html(Detector.getWebGLErrorHTML())
+        $("#no_webgl").modal('show');
+      })
+
+    }
+    // AB TODO use strict
+
+    // global variables
+    var ndv = {};
+    ndv.querytool = false;
+    ndv.querytoken = 'none';
+    ndv.querychannel = 'none';
+    ndv.queryserver = 'none';
+
+    ndv.currentserver = "{{ request.META.HTTP_HOST }}";
+
+    // timeseries globals
+    ndv.playdelay = 1;
+
+    // marker array
+    ndv.markers = [];
+
+    // upsample settings
+    ndv.upsample_num = 2;
+
+    // dataset info
+    ndv.xstart = {{ xstart }};
+    ndv.xmin = {{ xoffset }};
+    ndv.xmax = {{ xsize }} + {{ xoffset }} - 1;
+
+    ndv.ystart = {{ ystart }};
+    ndv.ymin = {{ yoffset }};
+    ndv.ymax = {{ ysize }} + {{ yoffset }} - 1;
+
+    ndv.zmin = {{ zoffset }};
+    ndv.zmax = {{ zsize }} + {{ zoffset }} - 1;
+
+    ndv.minres = {{ minres }};
+    ndv.maxres = {{ maxres }};
+    ndv.res = {{ res }};
+    // set zindex to some default (we pick the lowest slice)
+    ndv.zindex = {{ zstart }};
+
+    // blend mode
+    ndv.blendmode = THREE.NormalBlending;
+
+    // functions defined in babel
+    var getRamonInfo = null;
+    var updateScaleBar = null;
+
+     // create the map first
+		var map = L.map('map', {
+      crs: L.CRS.Simple,
+			doubleClickZoom: false,
+    });
+
+    // add loading symbol
+    var spinOpts = {
+      lines: 13,
+      length: 3,
+      width: 3,
+      radius: 5,
+      rotate: 13,
+      speed: 1.7,
+      top: "83%",
+    };
+    var loadingControl = L.Control.loading({
+      spinjs: true,
+      spin: spinOpts
+    });
+    map.addControl(loadingControl);
+
+    // array of LDVLayer objects (sortable)
+    var layers = [];
+
+    var NDVLayer = function(name, type, propagate, url, server, token, channel, color, tilecache) {
+      this.name = name;
+      this.tileLayer = null;
+      this.server = server;
+      this.token = token;
+      this.channel = channel;
+      this.type = type;
+      this.color = color;
+      this.tilecache = tilecache;
+      this.propagate = propagate;
+
+      /* set some default values */
+      this.opacity = 1.0;
+      this.min = 0.0;
+      this.max = 1.0;
+      this.gamma = 1.0;
+      this.blending = ndv.blendmode;
+      /* enabled by default */
+      this.enabled = true;
+
+      /* overwrite some parameters if this is an annotation */
+      if (type == 'annotation') {
+        this.propagate = 2; // annotations are always propagated
+        this.opacity = 0.4;
+        this.blending = THREE.NormalBlending;
+      }
+
+      // TODO: refactor along with timeseries code
+      var curtime = 0;
+      if (type == 'timeseries') {
+        curtime = {{ starttime }};
+      }
+
+      this.initializeLayer = function() {
+        tileLayer = L.tileLayer.OCPLayer(
+          url,
+          {
+            zindex: ndv.zindex,
+            zoomReverse: true,
+            minZoom: ndv.maxres,
+            maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+            maxNativeZoom: ndv.maxres + ndv.maxres,
+            tileSize: 512,
+            opacity: this.opacity,
+            //propagate: this.propagate,
+            curtime: curtime,
+            continuousWorld: true
+          }
+        );
+
+        return tileLayer;
+      };
+
+      this.tileLayer = this.initializeLayer();
+
+      /* add layer to the map */
+      this.tileLayer.addTo(map);
+      /* add the layer to the ordering */
+      layers.push(this);
+
+      /* define some methods */
+      this.updateLayerUrl = function(newUrl) {
+        this.tileLayer.setUrl(newUrl);
+      };
+      this.reinitializeLayer = function() {
+        this.tileLayer = null;
+        this.tileLayer = this.initializeLayer();
+      };
+
+    };
+
+    // load image layers first
+    {% for layer in layers %}
+      var url = "http://{{ request.META.HTTP_HOST }}/getRenderTile/{{ renderServer }}/{{ owner }}/{{ layer.token }}/{{ layer.channel }}/xy/{zindex}/{y}_{x}_{z}.png";
+      console.log('url = ' + url);
+
+      {# add the layer #}
+      var newLayer = new NDVLayer("{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}",  2, url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", {{ layer.tilecache|lower }});
+    {% endfor %}
+
+    function setThreeColor(color) {
+      // given a color tag ('r','g','b','c','m','y') set the appropriate three color
+      switch(color) {
+        case 'R':
+          return new THREE.Color("rgb(255,0,0)");
+        case 'G':
+          return new THREE.Color("rgb(0, 255, 0)");
+        case 'B':
+          return new THREE.Color("rgb(0, 0, 255)");
+        case 'C':
+          return new THREE.Color("rgb(0, 255, 255)");
+        case 'M':
+          return new THREE.Color("rgb(255, 0, 255)");
+        case 'Y':
+          return new THREE.Color("rgb(255, 255, 0)");
+        default:
+          return new THREE.Color("rgb(255, 255, 255)");
+      }
+    }
+
+    // add the webgl layer
+    var glLayer = new L.WebGLLayer({
+      zindex: ndv.zindex,
+      zoomReverse: true,
+      minZoom: ndv.maxres,
+      maxZoom: ndv.maxres + ndv.maxres + ndv.upsample_num,
+      maxNativeZoom: ndv.maxres + ndv.maxres,
+      tileSize: 512,
+    }).addTo(map);
+
+    glLayer.draw = function() {
+
+      // set layer to not idle so we actually render!
+      this.isIdle = false;
+
+      var scene = new THREE.Scene();
+
+      var worldsize = this._map.getSize();
+      var origin = this._map.getPixelOrigin();
+      var shift = this._map.getPixelBounds().min.subtract(origin);
+      var camera = this._camera;
+
+      // get size from local function since layers may not have loaded
+      var size = this._getTileSize();
+
+      var vertexShader = document.getElementById('vertexShader').text;
+      var fragmentShader = document.getElementById('fragmentShader').text;
+
+      function loadTexture(img, layer, offsetx, offsety, color, opacity, minval, maxval, gamma, blending) {
+
+        //console.log(img);
+
+        // use dom element for textures
+        var texture = new THREE.Texture({
+          repeat: 1,
+        });
+
+        texture.image = img;
+        texture.name = layer;
+        if ( $(img).hasClass('leaflet-tile-loaded') ) {
+          texture.needsUpdate = true;
+        } else {
+          layer.on('tileload', function(e) {
+            if (e.tile == texture.image) {
+              texture.needsUpdate = true;
+            }
+          }, this);
+        }
+
+
+        //var texture = new THREE.TextureLoader().load(img);
+
+
+        var geometry = new THREE.PlaneBufferGeometry(size, size);
+
+        // some default uniforms
+        var uniforms = {
+          color: { type: "c", value: color },
+          texture: { type: "t", value: texture },
+          opacity: { type: "f", value: opacity },
+          minval: { type: "f", value: minval },
+          maxval: { type: "f", value: maxval },
+          gamma: { type: "f", value: gamma },
+        };
+
+        // TODO only enable these when sliders have been moved
+        var defines = {
+          REMAP: true,
+          GAMMACOR: true,
+        }
+
+        var material = new THREE.ShaderMaterial({
+          uniforms: uniforms,
+          defines: defines,
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
+          transparent: true,
+          blending: blending,
+        });
+
+        var plane = new THREE.Mesh( geometry, material );
+
+        // dispose of material, geometry, and mesh on unload
+        layer.on('tileunload', function(e) {
+          if (e.tile == texture.image) {
+            texture.dispose();
+            geometry.dispose();
+            geometry = undefined;
+            material.dispose();
+            material = undefined;
+            scene.remove(plane);
+            plane = undefined;
+          }
+        }, this);
+
+        // offset tile
+        plane.position.set(offsetx, offsety, 0);
+
+        scene.add(plane);
+      }
+
+      if (layers.length == 0) {
+        return;
+      }
+
+      for (var layer in layers) {
+        var opacity = layers[layer].opacity;
+        var color = setThreeColor(layers[layer].color);
+        var minval = layers[layer].min;
+        var maxval = layers[layer].max;
+        var gamma = layers[layer].gamma;
+        var blending = parseInt(layers[layer].blending);
+
+        for (var tile in layers[layer].tileLayer._tiles) {
+          var img = layers[layer].tileLayer._tiles[tile];
+
+          var offset = this._getTilePos(tile);
+
+          loadTexture(img, layers[layer].tileLayer, offset.x, offset.y, color, opacity, minval, maxval, gamma, blending);
+        }
+      }
+
+      this._camera.position.z = 1;
+
+      this._renderTarget = new THREE.WebGLRenderTarget( worldsize.x, worldsize.y );
+
+      function render() {
+        if (this._repeater) {
+          cancelAnimationFrame(this._repeater);
+        }
+        this._repeater = requestAnimationFrame( render.bind(this) );
+        if (!glLayer.isIdle) {
+          this._renderer.render(scene, this._camera, this._renderTarget);
+          this._renderToScreen();
+        }
+      }
+      render.bind(this)();
+    }
+
+    // cancel the render loop by setting the map to be idle every second
+    $(function() {
+      setInterval(function() { glLayer.isIdle = true; }, 5000); // set idle after 5 seconds
+    })
+    // cancel idle on user interaction
+    map.on('viewreset', function() { glLayer.isIdle = false; });
+
+
+    function coordinatesDebug(event) {
+      // place a leaflet marker and a webgl marker at the click
+
+      var point = map.project(event.latlng);
+      var marker_options = {
+        title: point.x + " " + point.y + " " + ndv.zindex,
+      }
+
+      // add leaflet marker
+      L.marker(event.latlng, marker_options).addTo(map);
+
+      var projPoint = map._getCenterOffset(event.latlng);
+      // add GL marker
+      glLayer._drawCircle( L.point([projPoint.x, -projPoint.y])  );
+    };
+
+    //map.on('click', coordinatesDebug);
+
+    // set the initial view
+    var center = map.unproject(L.point( ndv.xstart, ndv.ystart ), ndv.maxres + ndv.maxres - ndv.res);
+		map.setView(center, ndv.maxres + ndv.maxres - ndv.res);
+
+    // set global blend mode if passed in by user
+    var updateGlobalBlendMode = function(value) {
+      for (var layer in layers) {
+        if (layers[layer].type != 'annotation') {
+          layers[layer].blending = value;
+        }
+      }
+      ndv.blendmode = value;
+      glLayer.draw();
+    };
+    {% if blendmode %}
+      updateGlobalBlendMode({{ blendmode }});
+    {% endif %}
+
+
+    // BEGIN propagate warning
+    var propwarn = L.control();
+    propwarn.options.position = 'topright';
+    propwarn.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'propwarnbox');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    propwarn.addTo(map);
+    // end propagate warning
+
+    // BEGIN query result palette
+    var queryres = L.control();
+    queryres.options.position = 'topright';
+    queryres.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'queryres');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+		queryres.addTo(map);
+
+    // disable (and then re-enable) clicking on mouseover
+    queryres.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    queryres.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    // END query result palette
+
+    /* ProjInfo Container */
+    var projinfo = L.control();
+    projinfo.options.position = 'topright';
+    projinfo.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'projinfo');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    projinfo.addTo(map);
+
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    projinfo.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    projinfo.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    /* End ProjInfo Container */
+
+    /* Image Controls Container */
+    var imagecontrols = L.control();
+    imagecontrols.options.position = 'topright';
+    imagecontrols.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'imagecontrols');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    imagecontrols.addTo(map);
+
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    imagecontrols.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    imagecontrols.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    /* End Image Controls Container */
+
+    /* Layer Controls Container */
+    var layercontrols = L.control();
+    layercontrols.options.position = 'topright';
+    layercontrols.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'layercontrols');
+      var button = '<a id="layerControlsButton" href="#" data-toggle="modal" data-target="#layerControls"><span class="fa-stack fa-2x"><i class="fa fa-square fa-stack-2x fa-inverse"></i><i class="fa fa-clone fa-stack-1x"></i></span></a>';
+      this._div.innerHTML = button;
+      return this._div;
+    };
+    layercontrols.addTo(map);
+
+    // disable (and then re-enable) clicking on mouseover
+    layercontrols.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+    });
+
+    layercontrols.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+    });
+    // for modal
+    $( "layerControls ").on('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+    $( "layerControls ").on('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+
+    // open modal on click
+    $("#layerControlsButton").on('click', function() {
+      $( "layerControls" ).modal('show');
+    });
+
+    /* End Layer Controls Container */
+
+    /* Projection Service Container */
+    /* TODO: re-enable for microns
+    var projectionservice = L.control();
+    projectionservice.options.position = 'topright';
+    projectionservice.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'projectionservice');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    projectionservice.addTo(map);
+
+
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    projectionservice.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    projectionservice.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    */
+    /* End Projection Service Container */
+
+    /* Synaptogram Toolbox Container */
+    /* TODO: re-enable for microns
+    var synaptogramtoolbox = L.control();
+    synaptogramtoolbox.options.position = 'topright';
+    synaptogramtoolbox.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'synaptogramtoolbox');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    synaptogramtoolbox.addTo(map);
+
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    synaptogramtoolbox.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    synaptogramtoolbox.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    */
+    /* End Synaptogram Toolbox Container */
+
+    /* Begin Query Tool Container */
+    var querytool = L.control();
+    querytool.options.position = 'topright';
+    querytool.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'querytool');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    querytool.addTo(map);
+
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    querytool.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    querytool.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    /* End Query Tool Container */
+
+    /* Begin Marker Tool Container */
+    var markertool = L.control();
+    markertool.options.position = 'topright';
+    markertool.onAdd = function (map) {
+      this._div = L.DomUtil.create('div', 'markertool');
+      this._div.innerHTML = '';
+      return this._div;
+    };
+    markertool.addTo(map);
+
+    // disable (and then re-enable) clicking and scrolling on mouseover
+    markertool.getContainer().addEventListener('mouseover', function() {
+      map.off('click', onMapClick);
+      map.scrollWheelZoom.disable();
+    });
+
+    markertool.getContainer().addEventListener('mouseout', function() {
+      map.on('click', onMapClick);
+      map.scrollWheelZoom.enable();
+    });
+    /* End Marker Tool Container */
+
+    /* Add a scale bar */
+    var scaleBar = L.control();
+    scaleBar.options.position = 'bottomleft';
+    scaleBar.onAdd = function(map) {
+      this._div = L.DomUtil.create('div', 'scalebar');
+      this._div.innerHTML = '';
+      return this._div;
+    }
+    scaleBar.addTo(map);
+
+    var getCurrentRes = function() {
+      return map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+    }
+
+    </script>
+
+
+    <script type="text/babel">
+    /* React Code */
+    // don't render react code as template tags
+    {% verbatim %}
+
+    /* begin propagate warning box */
+    var PropagateWarningBox = React.createClass({
+      getInitialState: function() {
+        return {
+          'showWarning': false,
+          'unpropagatedChannels': null
+        }
+      },
+      componentDidMount: function() {
+        var unpropagatedChannels = [];
+        for (var layer in layers) {
+          if (layers[layer].propagate != 2) {
+            unpropagatedChannels.push(layers[layer].name);
+          }
+        }
+        this.setState({unpropagatedChannels: unpropagatedChannels})
+        if (unpropagatedChannels.length > 0) {
+          this.setState({showWarning: true});
+        }
+      },
+      render: function() {
+        if (this.state.showWarning) {
+          return (
+            <div className="alert alert-danger" role="alert">
+              <span className="glyphicon hlyphicon-alert" aria-hidden="true"></span>
+              <span className="sr-only">Warning:</span>
+                The following layers are not propagated:<br />
+                  <strong>
+                    <span className="notpropchanlist">
+                      {this.state.unpropagatedChannels.map(function(channel, i) {
+                        if (i == this.state.unpropagatedChannels.length - 1) {
+                          return <span key={i}>{channel}</span>
+                        } else {
+                          return <span key={i}>{channel}, </span>
+                        };
+                      }.bind(this))}
+                    </span>
+                  </strong>.
+              <br />
+              Image data may be missing at some resolutions!
+            </div>
+          );
+        } else {
+          return null
+        };
+      }
+    });
+
+    ReactDOM.render(<PropagateWarningBox />, document.getElementsByClassName('propwarnbox')[0]);
+    /* end propagate warning box */
+
+    /* Project Info Toolbox Components */
+    var ProjectInfoController = React.createClass({
+      getInitialState: function() {
+        return {
+          projinfo: null
+        };
+      },
+      componentDidMount: function() {
+        var url = "http://" + this.props.server + "/ocp/ca/" + this.props.token + "/info/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var projinfo = result;
+            this.setState({
+              projinfo: projinfo,
+            });
+          }.bind(this),
+          'json'
+        )
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      render: function() {
+        return (
+          <div>
+            {(this.state.projinfo != null) ? <ProjectInfoDisplay projinfo={this.state.projinfo} /> : <ToolboxLoading />}
+          </div>
+        );
+      }
+    });
+
+    var ProjectInfoDisplay = React.createClass({
+      render: function() {
+        var project = this.props.projinfo.project;
+        var channels = this.props.projinfo.channels;
+        var dataset = this.props.projinfo.dataset;
+        var metadata = this.props.projinfo.metadata;
+
+        return (
+          <div>
+            <h4>{project.name}</h4>
+            <p>{project.description}</p>
+            <h5>Channels</h5>
+            <table className="table table-condensed">
+            <tbody>
+              {Object.keys(channels).map(function(key, i) {
+                return (
+                  <tr key={i}>
+                    <td><a href="#"
+                      ref={function(a) {
+                        var popoverHTML = "<strong>" + channels[key].description + "</strong>";
+                        $(a).popover({content: popoverHTML, placement: "bottom", html: true, trigger: "focus"});
+                      }.bind(this)}
+                      >{key}</a></td>
+                    <td><em>{channels[key].channel_type} ({channels[key].datatype})</em></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            </table>
+            <h5>Dataset</h5>
+            <table className="table table-condensed">
+            <tbody>
+              <tr>
+                <td colSpan="3"><strong>Image Size</strong></td>
+              </tr>
+              <tr>
+                <td>x</td>
+                <td>{dataset.offset[0][0]}</td>
+                <td>{dataset.imagesize[0][0]}</td>
+              </tr>
+              <tr>
+                <td>y</td>
+                <td>{dataset.offset[0][1]}</td>
+                <td>{dataset.imagesize[0][1]}</td>
+              </tr>
+              <tr>
+                <td>z</td>
+                <td>{dataset.offset[0][2]}</td>
+                <td>{dataset.imagesize[0][2]}</td>
+              </tr>
+              <tr>
+                <td colSpan="2"><strong>Low Resolution</strong></td>
+                <td>{dataset.resolutions[dataset.resolutions.length - 1]}</td>
+              </tr>
+              <tr>
+                <td><strong>Time Range</strong></td>
+                <td>{dataset.timerange[0]}</td>
+                <td>{dataset.timerange[1]}</td>
+              </tr>
+            </tbody>
+            </table>
+          </div>
+        );
+      }
+    });
+
+    /* Image Controls Toolbox Components */
+
+    var ImageControlsParent = React.createClass({
+      propTypes: {
+        blendMode: React.PropTypes.number, // blend mode passed as string via django
+      },
+      getDefaultProps: function() {
+        return {blendMode: 1};
+      },
+      getInitialState: function() {
+        return {blendMode: this.props.blendMode};
+      },
+      handleBlendModeChange: function(event) {
+        var value = parseInt(event.target.value);
+        this.setState({blendMode: value});
+        updateGlobalBlendMode(value);
+      },
+      render: function() {
+        return (
+          <div>
+            <ImageControlsController />
+            <br />
+            <div id="blendmode">
+              Blending:
+              <select name="blendmode"
+                onChange={this.handleBlendModeChange}
+                value={this.state.blendMode}
+                >
+                <option value="1">Normal</option>
+                <option value="2">Additive</option>
+                <option value="3">Subtractive</option>
+                <option value="4">Multiply</option>
+                <option value="0">None</option>
+              </select>
+              <span style={{float: "right"}}>
+                <a href="#" data-toggle="modal" data-target="#blendModeHelp">
+                  <i className="fa fa-info-circle fa-lg"></i>
+                </a>
+              </span>
+            </div>
+          </div>
+        );
+      }
+    });
+
+    // ImageControlsLayer encapsulates all image controls for a single layer
+    var ImageControlsLayer = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.object.isRequired,
+        collapsed: React.PropTypes.bool
+      },
+      getDefaultProps: function() {
+        return {
+          collapsed: false,
+          opacity: 1,
+          minVal: 0,
+          maxVal: 1,
+          gamma: 1,
+          color: null,
+          enabled: true
+        };
+      },
+      getInitialState: function() {
+        return {
+          collapsed: this.props.collapsed,
+          opacity: this.props.layer.opacity,
+          minVal: this.props.layer.min,
+          maxVal: this.props.layer.max,
+          gamma: this.props.layer.gamma,
+          color: this.props.layer.color,
+        }
+      },
+      componentWillReceiveProps: function(nextProps) {
+          this.setState({collapsed: nextProps.collapsed})
+      },
+      handleToggleCollapse: function() {
+        this.setState({collapsed: !this.state.collapsed});
+      },
+      handleOpacityChange: function(opacity) {
+        if (opacity == 0 && this.state.opacity > 0) {
+          // remove all tiles, we are going dark
+          this.props.layer.tileLayer._removeAllTiles();
+          map.removeLayer(this.props.layer.tileLayer);
+        } else if (opacity > 0 && this.state.opacity == 0) {
+          // readd all tiles, we are back in business
+          this.props.layer.reinitializeLayer();
+          this.props.layer.tileLayer.addTo(map);
+        }
+
+        this.setState({opacity: opacity});
+
+      },
+      handleMinChange: function(min) {
+        this.setState({minVal: min});
+      },
+      handleMaxChange: function(max) {
+        this.setState({maxVal: max});
+      },
+      handleGammaChange: function(gamma) {
+        this.setState({gamma: gamma});
+      },
+      handleColorChange: function(color) {
+        this.setState({color: color});
+      },
+      render: function() {
+        return (
+          <div>
+            <div className="controls-layer-name">
+              <a href="#" onClick={this.handleToggleCollapse}>
+                <span className="image-controls-layer-icon"><i className={this.state.collapsed ? "fa fa-plus-square-o" : "fa fa-minus-square-o"}></i></span>
+                <span>{this.props.layer.name}</span>
+              </a>
+            </div>
+            <div className={this.state.collapsed ? 'hiddencontrols' : 'visiblecontrols'}>
+              <div className="controls-slider-name">Opacity ({Math.round(this.state.opacity*100)})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="opacity"
+                  defaultValue={this.state.opacity}
+                  handleChange={this.handleOpacityChange}
+                  className="opacity"
+                  divisor={100} />
+              </div>
+              <br />
+              <div className="controls-slider-name">Min ({Math.round(this.state.minVal*255)})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="min"
+                  defaultValue={this.state.minVal}
+                  handleChange={this.handleMinChange}
+                  className="minslider"
+                  maxValue={255}
+                  divisor={255} />
+              </div>
+              <br />
+              <div className="controls-slider-name">Max ({Math.round(this.state.maxVal*255)})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="max"
+                  defaultValue={this.state.maxVal}
+                  handleChange={this.handleMaxChange}
+                  className="maxslider"
+                  maxValue={255}
+                  divisor={255} />
+              </div>
+              <br />
+              <div className="controls-slider-name">Gamma ({this.state.gamma})</div>
+              <div id="slider">
+                <ImageControlsSlider
+                  layer={this.props.layer}
+                  layerProp="gamma"
+                  defaultValue={this.state.gamma}
+                  handleChange={this.handleGammaChange}
+                  className="gammaslider"
+                  maxValue={2}
+                  step={0.1} />
+              </div>
+              <br />
+              <div className="colorbox">
+                <div className="controls-slider-name">Color {this.state.color ? '(' + this.state.color + ')' : ''}</div>
+                <ImageControlsColor
+                layer={this.props.layer}
+                onColorChange={this.handleColorChange} />
+              </div>
+              <br />
+            </div>
+          </div>
+        );
+      }
+    });
+
+    var ImageControlsSlider = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.object.isRequired,
+        layerProp: React.PropTypes.string.isRequired,
+        defaultValue: React.PropTypes.number.isRequired,
+        handleChange: React.PropTypes.func.isRequired,
+        className: React.PropTypes.string.isRequired,
+        minValue: React.PropTypes.number,
+        maxValue: React.PropTypes.number,
+        step: React.PropTypes.number,
+        divisor: React.PropTypes.number
+      },
+      getDefaultProps: function() {
+        return {
+          minValue: 0,
+          maxValue: 100,
+          step: 1,
+          divisor: 1
+        };
+      },
+      getInitialState: function() {
+        return {
+          value: this.props.defaultValue
+        };
+      },
+      handleValueChange: function(event, ui) {
+        this.props.layer[this.props.layerProp] = ui.value/this.props.divisor;
+        this.setState({value: ui.value/this.props.divisor});
+        this.props.handleChange(ui.value/this.props.divisor);
+      },
+      componentDidMount: function() {
+        var span = ReactDOM.findDOMNode(this);
+        $( span ).slider({
+          min: this.props.minValue,
+          max: this.props.maxValue,
+          value: this.state.value*this.props.divisor,
+          slide: this.handleValueChange,
+          step: this.props.step,
+          start: function(event, ui) { map.dragging.disable(); },
+          stop: function(event, ui) { map.dragging.enable(); glLayer.draw(); }
+        });
+      },
+      render: function() {
+        return <span className={this.props.className}></span>;
+      }
+    });
+
+    var ImageControlsColor = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.object.isRequired,
+        onColorChange: React.PropTypes.func.isRequired,
+        color: React.PropTypes.string
+      },
+      getDefaultProps: function() {
+        return {
+          color: null
+        }
+      },
+      getInitialState: function() {
+        return {
+          color: this.props.layer.color
+        }
+      },
+      handleColorChange: function(event) {
+        var color = event.target.value;
+        if (color == "none") {
+          this.setState({color: null});
+          this.props.onColorChange(null);
+          this.props.layer.color = color;
+          glLayer.draw();
+          return;
+        }
+
+        this.setState({color: color})
+        this.props.layer.color = color;
+        this.props.onColorChange(color);
+        glLayer.draw();
+      },
+      render: function() {
+        return (
+            <div className="btn-group btn-group-xs">
+              <button className="btn btn-default btn-color btn-r" value="R" onClick={this.handleColorChange}>R</button>
+              <button className="btn btn-default btn-color btn-g " value="G" onClick={this.handleColorChange}>G</button>
+              <button className="btn btn-default btn-color btn-b" value="B" onClick={this.handleColorChange}>B</button>
+              <button className="btn btn-default btn-color btn-c" value="C" onClick={this.handleColorChange}>C</button>
+              <button className="btn btn-default btn-color btn-m" value="M" onClick={this.handleColorChange}>M</button>
+              <button className="btn btn-default btn-color btn-y" value="Y" onClick={this.handleColorChange}>Y</button>
+              <button className="btn btn-default btn-color" value="none" onClick={this.handleColorChange}>
+                <span className="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+              </button>
+            </div>
+        );
+      }
+    });
+
+    var ImageControlsController = React.createClass({
+      getInitialState: function() {
+        return {
+          collapsed: false
+        }
+      },
+      setCollapsedTrue: function() {
+        this.setState({collapsed: true})
+      },
+      setCollapsedFalse: function() {
+        this.setState({collapsed: false})
+      },
+      render: function() {
+        return (
+          <div id="image-sliders">
+            <small><a href="#" onClick={this.setCollapsedTrue}>Collapse All</a> / <a href="#" onClick={this.setCollapsedFalse}>Expand All</a></small>
+            {layers.map(function(layer, i) {
+              var layerKey = 'controls-' + i;
+              if (layer.enabled) {
+                return (
+                  <div key={layerKey}>
+                    <ImageControlsLayer layer={layer} collapsed={this.state.collapsed} />
+                  </div>
+                );
+              } else {
+                return null;
+              }
+            }.bind(this))}
+          </div>
+        );
+      }
+    });
+
+    /* Projection Service Toolbox Components */
+    var ProjectionServiceController = React.createClass({
+      handleClick: function() {
+
+        for (var layerid in layers) {
+          var url = 'http://' + layers[layerid].server + '/nd/catmaid/maxproj/' + layers[layerid].token + '/' + layers[layerid].channel + '/width:' + this.refs.width.value + '/xy/{zindex}/{y}_{x}_{z}.png';
+          layers[layerid].updateLayerUrl( url )
+        }
+
+        glLayer.draw();
+      },
+      render: function() {
+        return (
+          <div>
+            <br /><div id="projectModeWidth">Width: <input id="projectModeWidthInput" type="number" min="0" max="50" value="5" ref="width"/></div>
+            <br /><button className="btn btn-primary" id="projectModeApply" onClick={this.handleClick} >Load Projection</button>
+          </div>
+        );
+      }
+    });
+
+    /* Layer Controls Components */
+    // http://webcloud.se/sortable-list-component-react-js/
+    var LayerControlsParent = React.createClass({
+      getInitialState: function() {
+        return {
+          layers: layers
+        }
+      },
+      updateLayersList: function() {
+        this.setState({layers:layers});
+      },
+      render: function() {
+        return (
+          <div>
+            <h4>Manage Current Layers</h4>
+            <LayerListParent layers={this.state.layers}/>
+            <h4>Add Additional Layers</h4>
+            <AddDataForm updateLayersList={this.updateLayersList}/>
+          </div>
+        )
+      }
+    });
+    var placeholder = document.createElement("li");
+    placeholder.className = "placeholder";
+    var LayerListParent = React.createClass({
+      getInitialState: function() {
+        return {
+          layers: this.props.layers
+        }
+      },
+      dragStart: function(e) {
+        this.dragged = e.currentTarget;
+        e.dataTransfer.effectAllowed = 'move';
+        // for firefox
+        e.dataTransfer.setData("text/html", e.currentTarget);
+      },
+      dragEnd: function(e) {
+        this.dragged.style.display = "block";
+        this.dragged.parentNode.removeChild(placeholder);
+
+        // update state
+        var from = Number(this.dragged.dataset.id);
+        var to = Number(this.over.dataset.id);
+        if(from < to) to--;
+        if(this.nodePlacement == "after") to++;
+        layers.splice(to, 0, layers.splice(from, 1)[0]);
+        this.setState({layers: layers});
+        glLayer.draw();
+      },
+      dragOver: function(e) {
+        e.preventDefault();
+        this.dragged.style.display = "none";
+        if(e.target.className == "placeholder" || e.target.tagName == "EM" || e.target.tagName == "SPAN" || e.target.tagName == "I") return;
+        this.over = e.target;
+        e.target.parentNode.insertBefore(placeholder, e.target);
+
+        // Inside the dragOver method
+        var relY = e.clientY - this.over.offsetTop;
+        var height = this.over.offsetHeight / 2;
+        var parent = e.target.parentNode;
+
+        if(relY > height) {
+          this.nodePlacement = "after";
+          parent.insertBefore(placeholder, e.target.nextElementSibling);
+        }
+        else if(relY < height) {
+          this.nodePlacement = "before"
+          parent.insertBefore(placeholder, e.target);
+        }
+
+      },
+      render: function() {
+        return (
+          <ul className="layer-list" onDragOver={this.dragOver}>
+            {this.state.layers.map(function(key, i) {
+              return (
+                <li
+                  data-id={i}
+                  key={i}
+                  draggable="true"
+                  onDragEnd={this.dragEnd}
+                  onDragStart={this.dragStart}
+                >
+                  <LayerControls layer={key} />
+                </li>
+              );
+            }, this)}
+          </ul>
+        );
+      }
+    });
+    var LayerControls = React.createClass({
+      getInitialState: function() {
+        return {
+          enabled: this.props.layer.enabled,
+        };
+      },
+      handleRemoveLayer: function() {
+        this.props.layer.enabled = !this.props.layer.enabled;
+        this.setState({ enabled: this.props.layer.enabled });
+
+        // handle removing layer from map
+        if (!this.props.layer.enabled) {
+          this.props.layer.tileLayer._removeAllTiles();
+          map.removeLayer(this.props.layer.tileLayer);
+        } else {
+          this.props.layer.reinitializeLayer();
+          this.props.layer.tileLayer.addTo(map);
+        }
+        glLayer.draw();
+
+        // reset a few toolboxes
+        renderImageControlsToolbox();
+        renderQueryToolbox();
+        renderProjectionServiceToolbox();
+
+      },
+      render: function() {
+        if (!this.state.enabled) {
+          var componentStyle = {
+            textDecoration: "line-through",
+          }
+        } else {
+          var componentStyle = {}
+        }
+        return (
+          <span style={componentStyle}>
+            <i className="fa fa-bars" aria-hidden="true"></i>
+            <span style={{paddingLeft: 10}}>{this.props.layer.name}</span>
+            <span style={{float: "right"}}><a onClick={this.handleRemoveLayer}><i className="fa fa-ban" aria-hidden="true"></i></a></span>
+            <br />
+            <span><em>{this.props.layer.type} layer</em></span>
+            <span style={{paddingLeft: 150}}>token: <em>{this.props.layer.token}</em>  / channel:  <em>{this.props.layer.channel}</em> / server: <em>{this.props.layer.server}</em></span>
+          </span>
+        );
+      }
+    });
+    var AddDataForm = React.createClass({
+      getInitialState: function() {
+        return {
+          server: null,
+          owner: null,
+          project: null,
+          stack: null,
+          //channel: null,
+          infoMsg: null,
+          errorMsg: null
+        };
+      },
+      handleServerChange: function(e) {
+        this.setState({server: null});
+        if (this.timeoutReference) clearTimeout(this.timeoutReference);
+        var value = e.target.value;
+        this.timeoutReference = setTimeout(function() {
+          this.setState({
+            infoMsg: null,
+            token: null,
+            channel: null,
+            server: value
+          })
+        }.bind(this), 1000);
+
+      },
+      handleOwnerChange: function(owner) {
+        this.setState({
+          infoMsg: null,
+          stack: null,
+          owner: owner
+        });
+      },
+      handleProjectChange: function(project) {
+        this.setState({
+          infoMsg: null,
+          project: project
+        });
+      },
+      handleStackChange: function(stack) {
+        this.setState({
+          infoMsg: null,
+          stack : stack
+        });
+      },
+      handleAddStack: function() {
+        var url = "http://" + ndv.currentserver + "/getRenderTile/" + this.state.server + "/" + this.state.owner + "/" + this.state.project + "/" + this.state.stack + "/xy/{zindex}/{y}_{x}_{z}.png";
+
+        var newLayer = new NDVLayer(this.state.stack, 'image', 2, url, this.state.server, this.state.project, this.state.stack, "", false);
+
+        this.props.updateLayersList();
+        glLayer.draw();
+        if (layers.length == 1) {
+          // if this is the first layer
+          renderProjInfoToolbox();
+          updateScaleBar();
+        }
+        var sucessMsg = "Successfully added " + this.state.stack + " to map layers!";
+        this.setState({infoMsg: sucessMsg});
+      },
+      setErrorMsg: function(msg) {
+        this.setState({errorMsg: msg});
+      },
+      render: function() {
+        return (
+          <form className="form-horizontal">
+            <div className="form-group">
+              <label htmlFor="addDataServer" className="col-sm-1 control-label">Server</label>
+              <div className="col-sm-6">
+                <input className="form-control" id="addDataServer" type="text" placeholder="openconnecto.me" onChange={this.handleServerChange} />
+              </div>
+            </div>
+
+            {this.state.server ? <AddDataOwner server={this.state.server} handleOwnerChange={this.handleOwnerChange} /> : null}
+
+            {this.state.server && this.state.owner ? <AddDataProject server={this.state.server} owner={this.state.owner} handleProjectChange={this.handleProjectChange} /> : null}
+
+            {this.state.server && this.state.owner && this.state.project ? <AddDataStacks
+            server={this.state.server}
+            owner={this.state.owner}
+            project={this.state.project}
+            handleStackChange={this.handleStackChange}
+            setErrorMsg={this.setErrorMsg} /> : null}
+            {this.state.server && this.state.owner && this.state.project && this.state.stack ? <button className="btn btn-primary" type="button" onClick={this.handleAddStack}>Add Layer</button> : null}
+            <div style={{paddingTop: 10}}>
+              {this.state.infoMsg ? <p className="bg-info">{this.state.infoMsg}</p> : null}
+              {this.state.errorMsg ? <p className="bg-danger">{this.state.errorMsg}</p> : null}
+            </div>
+          </form>
+        )
+      }
+    });
+    var AddDataOwner = React.createClass({
+      handleChange: function(e) {
+        if (this.timeoutReference) clearTimeout(this.timeoutReference);
+        var value = e.target.value;
+        this.timeoutReference = setTimeout(function() {
+          this.props.handleOwnerChange(value);
+        }.bind(this), 1000);
+      },
+      render: function() {
+        return (
+          <div className="form-group">
+            <label htmlFor="addDataOwner" className="col-sm-1 control-label">Owner</label>
+            <div className="col-sm-6">
+              <input type="text" id="addDataOwner" className="form-control" onChange={this.handleChange} />
+            </div>
+          </div>
+        );
+      }
+    });
+
+    var AddDataProject = React.createClass({
+      handleChange: function(e) {
+        if (this.timeoutReference) clearTimeout(this.timeoutReference);
+        var value = e.target.value;
+        this.timeoutReference = setTimeout(function() {
+          this.props.handleProjectChange(value);
+        }.bind(this), 1000);
+      },
+      render: function() {
+        return (
+          <div className="form-group">
+            <label htmlFor="addDataProject" className="col-sm-1 control-label">Project</label>
+            <div className="col-sm-6">
+              <input type="text" id="addDataProject" className="form-control" onChange={this.handleChange} />
+            </div>
+          </div>
+        );
+      }
+    });
+
+    var AddDataStacks = React.createClass({
+      getInitialState: function() {
+        return {
+          stacks: null,
+        };
+      },
+      componentDidMount: function() {
+        this.updateStackList();
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      updateStackList: function() {
+        var stacksArr = [];
+        var url = "http://" + this.props.server + "/render-ws/v1/owner/" + this.props.owner + "/stacks/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            for (var i = 0; i < result.length; i++) {
+              var stackJson = result[i];
+              var stackIdJson = stackJson['stackId'];
+              if (stackIdJson['owner'] == this.props.owner && stackIdJson['project'] == this.props.project) {
+                stacksArr.push(stackIdJson['stack']);
+              }
+            }
+            this.setState({ stacks: stacksArr });
+            this.props.handleStackChange(stacksArr[0]);
+          }.bind(this),
+          'json'
+        ).fail(function() {
+          this.props.setErrorMsg("Error: Failed to contact render server (" + url + ")");
+        }.bind(this));
+      },
+      handleChange: function(e) {
+        this.props.handleStackChange(e.target.value);
+      },
+      render: function() {
+        if (this.state.stacks) {
+          return (
+            <div className="form-group">
+              <label htmlFor="addDataStack" className="col-sm-1 control-label">Stack</label>
+              <div className="col-sm-6">
+                <select className="form-control" id="addDataStack"  onChange={this.handleChange}>
+                  {this.state.stacks.map(function(key) {
+                    return <option key={key} value={key}>{key}</option>;
+                  })};
+                </select>
+              </div>
+            </div>
+          );
+        } else {
+          return <span></span>;
+        }
+
+      }
+    });
+
+    /* Synaptogram Service Components */
+    var Synaptogram = React.createClass({
+
+      getInitialState: function() {
+        return {
+          x: 0,
+          y: 0,
+          z: 0,
+          res: 0
+        }
+      },
+      loadFromMapClick: function() {
+
+        var synaptogramClick = function(event) {
+          // get current res
+          var res = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+          //$( this.refs.res ).val(res);
+          this.setState({'res': res});
+
+          // project latlng
+          var coordinates = map.project(event.latlng);
+
+          this.setState({'x': Math.round(coordinates.x)});
+          this.setState({'y': Math.round(coordinates.y)});
+          this.setState({'z': ndv.zindex});
+
+          map.off('click', synaptogramClick);
+
+        }.bind(this);
+
+        map.on('click', synaptogramClick);
+
+      },
+      handleValueChange: function(event) {
+        var value = event.target.value;
+        console.log(event.target);
+      },
+      handleClick: function() {
+        var strWindowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes";
+
+        var x = this.state.x;
+        var y = this.state.y;
+        var z = this.state.z;
+        var res = this.state.res;
+
+        var channels = []
+        for (var layer in layers) {
+          channels.push(layers[layer].channel);
+        }
+        var chanstr = channels.join(',');
+
+        var token = layers[0].token;
+        var server = layers[0].server;
+
+        window.open('http://' + window.location.hostname + '/ndv/tools/synaptogram/' + server + '/' + token + '/' + chanstr + '/' + res + '/' + x + ',5/' + y + ',5/' + z + ',7/', "Synaptogram", strWindowFeatures);
+      },
+      render: function() {
+        return (
+          <div>
+            <button className="btn btn-success" style={{marginBottom: 10}} onClick={this.loadFromMapClick}>
+              Load Coordinates from Map
+            </button>
+            <br />
+            <div id="synaptogramXInput">x:
+              <input type="number" min="0" value={this.state.x} onChange={this.handleValueChange} ref="x" />
+            </div>
+            <br />
+            <div id="synaptogramYInput">y:
+              <input type="number" min="0" value={this.state.y} ref="y" />
+            </div>
+            <br />
+            <div id="synaptogramZInput">z:
+              <input type="number" min="0" value={this.state.z} ref="z" />
+            </div>
+            <br />
+            <div id="synaptogramResInput">res:
+              <input type="number" min="0" value={this.state.res} ref="res" />
+            </div>
+            <br />
+            <button className="btn btn-primary" id="loadSynaptogram" onClick={this.handleClick}>
+              Load Synaptogram
+            </button>
+          </div>
+        );
+      }
+    });
+
+    /* Query Tool Components */
+    var QueryTool = React.createClass({
+      getInitialState: function() {
+        return {
+          layers: [],
+          selectedLayer: null
+        }
+      },
+      componentWillMount: function() {
+        // update options list each time the tool is opened
+        this.updateOptionsList();
+      },
+      updateOptionsList: function() {
+        var newLayers = [];
+        for (var layer in layers) {
+          if (layers[layer].type == 'annotation' && layers[layer].enabled) {
+            newLayers.push(layers[layer])
+          }
+        }
+        this.setState({layers: newLayers});
+      },
+      handleChange: function(event) {
+        var changed = event.target.value;
+        if (changed == 'none') {
+          // disable query tool
+          ndv.querytool = false;
+          ndv.querytoken = 'none';
+          ndv.querychannel = 'none';
+          ndv.queryserver = 'none';
+          return;
+        }
+        for (var layer in layers) {
+          if (layers[layer].name == changed) {
+            ndv.querytoken = layers[layer].token;
+            ndv.querychannel = layers[layer].channel;
+            ndv.queryserver = layers[layer].server;
+          }
+        }
+        ndv.querytool = true;
+
+        this.setState({selectedLayer: event.target.value});
+      },
+      render: function() {
+        if (this.state.selectedLayer) {
+          var filterObjectsByType = <QueryObjectsByType layer={this.state.selectedLayer} />;
+        }
+        return (
+          <div>
+            <form>
+            <div className="form-group">
+              <select className="form-control" onChange={this.handleChange}>
+                <option value="none">None</option>
+                {this.state.layers.map(function(layer) {
+                  return <option value={layer.name} key={layer}>{layer.name}</option>
+                })}
+                </select>
+              </div>
+              </form>
+              {this.state.selectedLayer ? filterObjectsByType : null}
+          </div>
+        );
+      }
+    });
+    var QueryObjectsByType = React.createClass({
+      propTypes: {
+        layer: React.PropTypes.string
+      },
+      getInitialState: function() {
+        return {
+          ramonObjectIds: [],
+          annType: 2
+        }
+      },
+      handleClick: function() {
+        var server = ndv.queryserver;
+        var token = ndv.querytoken;
+        var channel = ndv.querychannel;
+        var url = "http://" + server + "/ocp/ramon/" + token + "/" + channel + "/query/ann_type/" + this.state.annType + "/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            this.setState({
+              ramonObjectIds: result,
+            });
+          }.bind(this),
+          'json'
+        );
+      },
+      updateAnnType: function(event) {
+        this.setState({annType:parseInt(event.target.value)});
+      },
+      render: function() {
+        return (
+          <div>
+            <form className="form-inline">
+              <div className="form-group">
+                <select className="form-control" onChange={this.updateAnnType}>
+                  <option value="2">Synapse</option>
+                  <option value="3">Seed</option>
+                  <option value="4">Segment</option>
+                  <option value="5">Neuron</option>
+                  <option value="6">Organelle</option>
+                  <option value="7">Node</option>
+                  <option value="8">Skeleton</option>
+                  <option value="9">ROI</option>
+                </select>
+              </div>
+              <button onClick={this.handleClick} className="btn btn-primary" type="button">Get All RAMON Objects</button>
+            </form>
+            <div>
+              { (this.state.ramonObjectIds.length > 0) ? <QueryIdsDisplay ids={this.state.ramonObjectIds}/> : null}
+            </div>
+          </div>
+        );
+      }
+    });
+    var QueryIdsDisplay = React.createClass({
+      propTypes: {
+        ids: React.PropTypes.array.isRequired
+      },
+      handleIdClick: function(id) {
+        var queryResultComponent = <QueryResult
+          server={ndv.queryserver}
+          token={ndv.querytoken}
+          channel={ndv.querychannel}
+          id={parseInt(id)}
+           />;
+        ReactDOM.render(<QueryResultController
+          toolboxComponent={queryResultComponent}
+          toolboxName="Query Result"
+          toolboxIconName="fa-exchange"
+          showToolbox={true}
+          />, document.getElementsByClassName('queryres')[0]);
+      },
+      render: function() {
+        return (
+          <div>
+            <ul>
+            {this.props.ids.map(function(id, i) {
+              return (<li key={i}><a href="#" onClick={() => this.handleIdClick(id)}><h5>{id}</h5></a></li>);
+            }.bind(this))}
+            </ul>
+          </div>
+        );
+      }
+    });
+
+    /* Marker Tool Components */
+    var MarkerTool = React.createClass({
+      getInitialState: function() {
+        return {
+          markerClickActive: false,
+        }
+      },
+      handleMarkerCenterButton: function() {
+        addMarkerCenter();
+      },
+      handleClearMarkersButton: function() {
+        var index;
+        for (index = 0; index < ndv.markers.length; index++) {
+          map.removeLayer(ndv.markers[index]);
+        }
+      },
+      handleMarkerOnClickButton: function(event) {
+        if (!this.state.markerClickActive)   {
+          setTimeout(this.enableMarkerOnClick, 300);
+          this.setState({markerClickActive: true});
+        } else {
+          map.off('click', markerOnClick);
+          this.setState({markerClickActive: false});
+        }
+      },
+      enableMarkerOnClick: function() {
+        map.on('click', this.handleMarkerPlaced);
+        // turn off query tool (if it's enabled)
+        map.off('click', onMapClick);
+      },
+      handleMarkerPlaced: function(event) {
+        // place a marker at the click
+        var point = map.project(event.latlng);
+        var marker_options = {
+          title: point.x + " " + point.y + " " + ndv.zindex,
+        }
+
+        // keep track of markers by storing in an array
+        ndv.markers.push(L.marker(event.latlng, marker_options).addTo(map));
+
+        // get current url
+        var markerUrl = getCurrentURL(point);
+        var popup_options = {
+          maxWidth: 750,
+        }
+
+        ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
+
+        // markerOnClick causes lots of problems with controls, so only one marker per click!
+        map.off('click', this.handleMarkerPlaced);
+        // change state
+        this.setState({markerClickActive: false});
+        // turn query tool back on
+        setTimeout(function() {map.on('click', onMapClick)}, 300);
+      },
+      render: function() {
+        if (this.state.markerClickActive) {
+          var markerOnClickButton = <button className="btn btn-success btn-block" onClick={this.handleMarkerOnClickButton}>On Click</button>;
+        } else {
+          var markerOnClickButton = <button className="btn btn-primary btn-block" onClick={this.handleMarkerOnClickButton}>On Click</button>;
+        };
+        return (
+          <div>
+            <div className="form-group">
+              {markerOnClickButton}
+            </div>
+            <div className="form-group">
+              <button id="markerModeCenter" className="btn btn-primary btn-block" onClick={this.handleMarkerCenterButton}>
+                Center
+              </button>
+            </div>
+            <div className="form-group">
+              <button className="btn btn-danger btn-block" onClick={this.handleClearMarkersButton}>Clear Markers</button>
+            </div>
+          </div>
+        );
+      }
+    });
+
+    /* Scale Bar */
+    var ScaleBar = React.createClass({
+      getDefaultProps: function() {
+        return {
+          minbar: 100,
+          maxbar: 300,
+          res: 0
+        }
+      },
+      getInitialState: function() {
+        return {
+          voxelres: null,
+          res: this.props.res
+        };
+      },
+      componentDidMount: function() {
+        var url = "http://" + this.props.server + "/ocp/ca/" + this.props.token + "/info/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var projinfo = result;
+            this.setState({
+              voxelres: projinfo.dataset.voxelres,
+            });
+          }.bind(this),
+          'json'
+        )
+      },
+      componentWillReceiveProps: function (nextProps) {
+        if (nextProps.res != null && isNaN(nextProps.res) == false) {
+          this.setState({res: nextProps.res});
+        }
+      },
+      componentWillUnmount: function() {
+        this.serverRequest.abort();
+      },
+      render: function() {
+        if (this.props.server == null || this.state.voxelres == null) {
+          return null;
+        }
+        var scaleAreaStyle = {
+          color: 'white',
+          paddingLeft: 50,
+          paddingBottom: 25
+        };
+        var scaleBarStyle = {
+          background: "rgba(0, 120, 168, 0.6)",
+          paddingLeft: 10,
+          borderColor: "#000",
+          borderWidth: 2,
+          borderBottomStyle: "solid",
+          borderLeftStyle: "solid",
+          borderRightStyle: "solid"
+        };
+
+        var divisor = 1;
+        if (this.state.res < 0) {
+          divisor = 2**(this.state.res*-1);
+          this.state.res = 0;
+        }
+
+        var curVoxelRes = this.state.voxelres[this.state.res];
+
+        var curRes = (curVoxelRes[0] > curVoxelRes[1]) ? curVoxelRes[1] : curVoxelRes[0];
+
+        var curResScaled = (curRes/divisor) * 250;
+        var scaleBarWidth = 250;
+        var units = 'nm';
+
+        // convert to um if required
+        if (curResScaled > 1000) {
+            curResScaled = curResScaled / 1000;
+            units = 'um'
+        }
+
+        return (
+          <div style={scaleAreaStyle}>
+            <div style={{width: scaleBarWidth}}>
+              <div style={scaleBarStyle}>{curResScaled} {units}</div>
+            </div>
+          </div>
+        );
+      }
+    });
+
+    /* Generic Toolbox Components */
+    var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+
+    var ToolboxShowIcon = React.createClass({
+      render: function() {
+        var iconClassString = "fa fa-stack-1x " + this.props.iconClassName;
+
+        return (
+          <div className="showToolboxIcon" style={{float: "left"}}>
+            <span className="fa-stack fa-2x">
+              <a href="#" onClick={this.props.onClick}>
+                <i className="fa fa-square fa-stack-2x fa-inverse"></i>
+                <i className={iconClassString}></i>
+              </a>
+            </span>
+          </div>
+        );
+      }
+    });
+
+    var ToolboxHideIcon = React.createClass({
+      render: function() {
+        return (
+          <div style={{float: 'right'}}>
+            <a href="#" onClick={this.props.onClick}>
+              <i className="fa fa-times fa-lg"></i>
+            </a>
+          </div>
+        );
+      }
+    })
+
+    var Toolbox = React.createClass({
+      render: function() {
+        var iconClassString = "fa fa-stack-1x " + this.props.iconClassName;
+        return (
+          <div className="toolbox">
+            <ToolboxHideIcon onClick={this.props.onClick} />
+            <div id="controlpanelheader">
+              <div style={{float:"left"}}>
+                <span className="fa-stack fa-2x" style={{paddingBottom: 5 + "px"}}>
+                  <i className="fa fa-square fa-stack-2x fa-inverse"></i>
+                  <i className={iconClassString}></i>
+                </span>
+              </div>
+              <div className="headertext">{this.props.toolboxName}</div>
+            </div>
+            <div>
+              {this.props.toolboxComponent}
+            </div>
+          </div>
+        );
+      }
+    });
+
+    var ToolboxController = React.createClass({
+      propTypes: {
+        toolboxComponent: React.PropTypes.object.isRequired,
+        toolboxName: React.PropTypes.string.isRequired,
+        toolboxIconName: React.PropTypes.string.isRequired
+      },
+      getInitialState: function() {
+        return {
+          showToolbox: false,
+        };
+      },
+      handleClick: function() {
+        this.setState({ showToolbox: !this.state.showToolbox });
+      },
+      render: function() {
+        var boxKey = "boxKey_" + this.props.toolboxIconName;
+        var iconKey = "iconKey_" + this.props.toolboxIconName;
+        return (
+          <div>
+            <ReactCSSTransitionGroup transitionName="toolboxTransition" transitionEnterTimeout={1} transitionLeaveTimeout={1} >
+              { this.state.showToolbox
+                ?
+                <Toolbox
+                  iconClassName={this.props.toolboxIconName}
+                  toolboxName={this.props.toolboxName}
+                  toolboxComponent = {this.props.toolboxComponent}
+                  onClick={this.handleClick}
+                  key={boxKey} />
+                :
+                <ToolboxShowIcon
+                  iconClassName={this.props.toolboxIconName}
+                  onClick={this.handleClick}
+                  key={iconKey}
+                  /> }
+            </ReactCSSTransitionGroup>
+          </div>
+        );
+      }
+    });
+
+    var ToolboxLoading = React.createClass({
+      componentDidMount: function() {
+        var div = $(ReactDOM.findDOMNode(this));
+        // setup spinjs
+        var opts = {
+          lines: 12 // The number of lines to draw
+        , length: 5 // The length of each line
+        , width: 6 // The line thickness
+        , radius: 19 // The radius of the inner circle
+        , scale: 0.75 // Scales overall size of the spinner
+        , corners: 1 // Corner roundness (0..1)
+        , color: '#000' // #rgb or #rrggbb or array of colors
+        , opacity: 0.25 // Opacity of the lines
+        , rotate: 0 // The rotation offset
+        , direction: 1 // 1: clockwise, -1: counterclockwise
+        , speed: 1.6 // Rounds per second
+        , trail: 25 // Afterglow percentage
+        , fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
+        , zIndex: 2e9 // The z-index (defaults to 2000000000)
+        , className: 'spinner' // The CSS class to assign to the spinner
+        , top: '50%' // Top position relative to parent
+        , left: '50%' // Left position relative to parent
+        , shadow: false // Whether to render a shadow
+        , hwaccel: false // Whether to use hardware acceleration
+        , position: 'absolute' // Element positioning
+        }
+        var spinner = new Spinner(opts);
+        spinner.spin(this.refs.div);
+      },
+      render: function() {
+        var divStyle = {
+          paddingTop: 100,
+        };
+        return (
+          <div
+            style={divStyle}
+            ref="div"
+          ></div>
+        );
+      }
+    });
+
+
+    /* Query Result Components */
+    var QueryResultController = React.createClass({
+      propTypes: {
+        toolboxComponent: React.PropTypes.object.isRequired,
+        toolboxName: React.PropTypes.string.isRequired,
+        toolboxIconName: React.PropTypes.string.isRequired,
+        showToolbox: React.PropTypes.bool
+      },
+      getDefaultProps: function() {
+        return {
+          showToolbox: false
+        };
+      },
+      getInitialState: function() {
+        return {
+          showToolbox: this.props.showToolbox,
+        };
+      },
+      componentWillReceiveProps: function(nextProps) {
+        this.setState({showToolbox: true});
+      },
+      handleClick: function() {
+        this.setState({ showToolbox: !this.state.showToolbox });
+      },
+      render: function() {
+        if (this.state.showToolbox) {
+          return <Toolbox
+                  iconClassName={this.props.toolboxIconName}
+                  toolboxName={this.props.toolboxName}
+                  toolboxComponent = {this.props.toolboxComponent}
+                  onClick={this.handleClick} />;
+        } else {
+          return null;
+        }
+      }
+    });
+    var QueryResult = React.createClass({
+      propTypes: {
+        'server': React.PropTypes.string,
+        'token': React.PropTypes.string,
+        'channel': React.PropTypes.string,
+        'id': React.PropTypes.number
+      },
+      ANNO_TYPES: {
+          1 : 'Annotation',
+          2 : 'Synapse',
+          3 : 'Seed',
+          4 : 'Segment',
+          5 : 'Neuron',
+          6 : 'Organelle',
+          7 : 'Node',
+          8 : 'Skeleton',
+          9 : 'ROI',
+      },
+      getDefaultProps: function() {
+        return {
+          'server': null,
+          'token': null,
+          'channel': null,
+          'id': 0,
+        }
+      },
+      getInitialState: function() {
+        return {
+          'ramon': null
+        }
+      },
+      componentWillReceiveProps: function(newProps) {
+        this.getRAMONObject(newProps.server, newProps.token, newProps.channel, newProps.id);
+      },
+      componentDidMount: function() {
+        // assume token and channel are present if server property is present
+        if (this.props.server) {
+          this.getRAMONObject(this.props.server, this.props.token, this.props.channel, this.props.id);
+        }
+      },
+      getRAMONObject: function(server, token, channel, id) {
+        var url = "http://" + server + "/ocp/ramon/" + token + "/" + channel + "/" + id + "/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var ramon = result;
+            this.setState({
+              'ramon': ramon,
+            });
+          }.bind(this),
+          'json'
+        );
+      },
+      handleCenterClick: function() {
+
+        var curRes = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+        if (res < 0) {
+          var res = 0;
+        } else {
+          var res = curRes;
+        }
+        console.log('res: ', res);
+
+        var url = "http://" + this.props.server + "/ocp/ramon/" + this.props.token + "/" + this.props.channel + "/" + this.props.id + "/boundingbox/" + curRes + "/";
+        this.serverRequest = $.get(
+          url,
+          function( result ) {
+            var bbcorner = result[this.props.id]['bbcorner'];
+            var bbdim = result[this.props.id]['bbdim'];
+            for (var i = 0; i < 3; i++) {
+              bbdim[i] = Math.floor(bbdim[i]/2);
+            }
+            //
+            //map.setView
+            if (curRes < 0) {
+              // downsample coordinates to lower res (TODO!)
+            }
+
+            /*
+            console.log('bbcorner: ', bbcorner);
+            console.log('bbdim: ', bbdim);
+            console.log('point: ', L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
+            console.log('z: ', bbcorner[2] + bbdim[2]);
+            */
+
+            var center = map.unproject(L.point(bbcorner[0] + bbdim[0], bbcorner[1] + bbdim[1]));
+            //console.log(curRes);
+            //console.log('center: ', center);
+            map.setView(center, ndv.maxres + ndv.maxres - curRes);
+            chgZIndex(bbcorner[2] + bbdim[2]);
+            addMarkerCenter();
+
+          }.bind(this),
+          'json'
+        );
+      },
+      render: function() {
+        if (this.state.ramon) {
+          // assume we only get one object
+          var ramon_key = Object.keys(this.state.ramon)[0];
+          var ramon_header = this.ANNO_TYPES[this.state.ramon[ramon_key]['ann_type']] + " #" + ramon_key;
+          return (
+            <div>
+              <h5>{ramon_header}</h5>
+              <table className="table table-condensed">
+                <tbody>
+                  {Object.keys(this.state.ramon[ramon_key]).map(function(key, i) {
+                    return (
+                      <tr key={key}>
+                        <td>{key}</td>
+                        <td>{this.state.ramon[ramon_key][key]}</td>
+                      </tr>
+                    );
+                  }.bind(this))}
+                </tbody>
+              </table>
+              <button onClick={this.handleCenterClick} className="btn btn-primary">Center View</button>
+            </div>
+          );
+        } else {
+          return null;
+        };
+      }
+    });
+
+    var queryResultComponent = <QueryResult />;
+    ReactDOM.render(<QueryResultController
+      toolboxComponent={queryResultComponent}
+      toolboxName="Query Result"
+      toolboxIconName="fa-exchange" />, document.getElementsByClassName('queryres')[0]);
+
+    // function for querying ramon info and creating result lives nearby
+    getRamonInfo = function(point, zoom) {
+      // first, make sure that either zoom > 0 or
+      // resample point and zoom to be at level 0
+      if (zoom < 0) {
+        var numScales = 0 - zoom;
+        // scale the x and y coordinates of the point
+        var x = Math.round( point.x / ( 2 * numScales ) );
+        var y = Math.round( point.y / ( 2 * numScales ) );
+        point.x = x;
+        point.y = y;
+        zoom = 0;
+      }
+
+      // get the id of the object at that location
+      var objid = getAnnoId(point, zoom);
+
+      if (parseInt(objid) == 0) {
+        return "No RAMON object here.";
+      }
+
+      // render a new component
+      var queryResultComponent = <QueryResult
+        server={ndv.queryserver}
+        token={ndv.querytoken}
+        channel={ndv.querychannel}
+        id={parseInt(objid)}
+         />;
+      ReactDOM.render(<QueryResultController
+        toolboxComponent={queryResultComponent}
+        toolboxName="Query Result"
+        toolboxIconName="fa-exchange"
+        showToolbox={true}
+        />, document.getElementsByClassName('queryres')[0]);
+
+      var objstr = 'ID: ' + objid;
+
+      return objstr;
+    }
+
+    var renderProjInfoToolbox = function() {
+      if (layers.length == 0) {
+        return;
+      }
+
+      var projInfoComponent = <ProjectInfoController token={layers[Object.keys(layers)[0]].token} server={layers[Object.keys(layers)[0]].server} />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={projInfoComponent}
+        toolboxName="Project Info"
+        toolboxIconName="fa-info" />, document.getElementsByClassName('projinfo')[0]);
+    }
+    renderProjInfoToolbox();
+
+    {% endverbatim %}
+
+    var renderImageControlsToolbox = function() {
+      var imageControlsComponent = <ImageControlsParent blendMode={ndv.blendmode} />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={imageControlsComponent}
+        toolboxName="Image Controls"
+        toolboxIconName="fa-picture-o" />, document.getElementsByClassName('imagecontrols')[0]);
+    };
+    renderImageControlsToolbox();
+
+    var renderLayerToolbox = function() {
+      ReactDOM.render(<LayerControlsParent />, document.getElementById("layerControlsContainer"));
+    };
+    renderLayerToolbox();
+
+    var renderProjectionServiceToolbox = function() {
+      var projectionServiceComponent = <ProjectionServiceController />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={projectionServiceComponent}
+        toolboxName="Max Projection"
+        toolboxIconName="fa-sort-amount-asc" />,
+      document.getElementsByClassName('projectionservice')[0]);
+    };
+    // TODO: re-enable for microns renderProjectionServiceToolbox();
+
+    var renderSynaptogramServiceToolbox =  function() {
+      var synaptogramServiceComponent = <Synaptogram />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={synaptogramServiceComponent}
+        toolboxName="Synaptogram"
+        toolboxIconName="fa-cubes" />,
+      document.getElementsByClassName('synaptogramtoolbox')[0]);
+    }
+    // TODO: re-enable for microns renderSynaptogramServiceToolbox();
+
+    var renderQueryToolbox = function() {
+      var queryToolComponent = <QueryTool />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={queryToolComponent}
+        toolboxName="Query Tool"
+        toolboxIconName="fa-search" />,
+      document.getElementsByClassName('querytool')[0]);
+    };
+    renderQueryToolbox();
+
+    var renderMarkerToolbox = function() {
+      var markerToolComponent = <MarkerTool />;
+      ReactDOM.render( <ToolboxController
+        toolboxComponent={markerToolComponent}
+        toolboxName="Marker Tool"
+        toolboxIconName="fa-map-marker" />,
+      document.getElementsByClassName('markertool')[0]);
+    };
+    renderMarkerToolbox();
+
+    /* scale bar */
+    var updateScaleBar = function() {
+      if (layers.length == 0) {
+        return;
+      }
+      var layer = layers[Object.keys(layers)[0]];
+      ReactDOM.render(
+        <ScaleBar
+          server={layer.server}
+          token={layer.token}
+          res={getCurrentRes()}
+        />, document.getElementsByClassName('scalebar')[0]);
+    }
+    updateScaleBar();
+    map.on('zoomend', updateScaleBar);
+
+    </script>
+    <script>
+
+    var addMarkerCenter = function() {
+      // place a marker at the current map center
+      var center = map.getCenter();
+      var point = map.project(center);
+      var marker_options = {
+        title: point.x + " " + point.y + " " + ndv.zindex,
+      }
+
+      // keep track of markers by storing in an array
+      ndv.markers.push(L.marker(center, marker_options).addTo(map));
+
+      // get current url
+      var markerUrl = getCurrentURL(point);
+
+      var popup_options = {
+        maxWidth: 750,
+      }
+
+      ndv.markers[ndv.markers.length - 1].bindPopup('<a href="' + markerUrl + '">' + markerUrl + '</a>', popup_options);
+    };
+
+    {% if marker == True %}
+      // add a marker to the center on page load
+      addMarkerCenter();
+    {% endif %}
+
+    function getCurrentURL(point) {
+      var script_name = '{{ request.META.SCRIPT_NAME }}';
+      var pathRaw = '{{ request.path }}';
+      var pathArr = pathRaw.split('/');
+      var curZoom = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+
+      if (script_name == '') {
+        var service = pathArr[1];
+        var renderServer = pathArr[2];
+        var renderOwner = pathArr[3];
+        var renderProjects = pathArr[4];
+        var renderStacks = pathArr[5];
+
+        var markerUrl = "http://{{ request.get_host }}/" + service + "/" + renderServer + "/" + renderOwner + "/" + renderProjects + "/" + renderStacks + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+
+      }
+      else {
+        var service = pathArr[2];
+        var renderServer = pathArr[3];
+        var renderOwner = pathArr[4];
+        var renderProjects = pathArr[5];
+        var renderStacks = pathArr[6];
+
+        var markerUrl = "http://{{ request.get_host }}/" + script_name + "/" + service + "/" + renderServer + "/" + renderOwner + "/" + renderProjects + "/" + renderStacks + "/xy/" +  curZoom + "/" + Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+
+      }
+      return markerUrl;
+    };
+
+    // END marker tool palette
+
+    // update current coordinates in nav box
+    function coordinatesUpdate() {
+      $( "#x" ).parent().removeClass("has-error");
+      $( "#y" ).parent().removeClass("has-error");
+      $( "#z" ).parent().removeClass("has-error");
+      var center = map.getCenter();
+      var res = map.getMaxZoom() - ndv.upsample_num - map.getZoom();
+      var coordinates = map.project(center);
+
+      $( "#x" ).val(Math.round(coordinates.x));
+      $( "#y" ).val(Math.round(coordinates.y));
+      $( "#z" ).val(ndv.zindex);
+    };
+    coordinatesUpdate();
+    // update coordinates on pan, zoom, and load
+    map.on('drag', coordinatesUpdate);
+    map.on('zoomend', coordinatesUpdate);
+
+    function resolutionBoxInit() {
+      $( "#res-input" ).val(ndv.res);
+    }
+    resolutionBoxInit();
+
+    function resolutionUpdate() {
+      $( "#res-input" ).val( map.getMaxZoom() - ndv.upsample_num - map.getZoom() );
+    }
+    map.on('zoomend', resolutionUpdate);
+
+    $( "#res-input" ).on('input', function() {
+      var val = $( "#res-input" ).val();
+      // ignore when the user deletes the contents of the box
+      if (val == '') {
+        return;
+      }
+      $( "#res-input" ).parent().removeClass("has-error");
+
+      if (val < (ndv.minres - ndv.upsample_num) || val > ndv.maxres) {
+        $( "#res-input" ).parent().addClass("has-error");
+      }
+      else {
+        map.setZoom( map.getMaxZoom() - ndv.upsample_num - val );
+      }
+    });
+
+    // navigation
+    // first, intercept the form
+    $( "#navigate" ).submit(function( event ) {
+      event.preventDefault();
+      // clear errors
+      $( "#x" ).parent().removeClass("has-error");
+      $( "#y" ).parent().removeClass("has-error");
+      $( "#z" ).parent().removeClass("has-error");
+
+      // if a valid (x,y) pair was entered, pan and place a marker
+      // note, need to pan before changing slices
+      if ( $( "#x" ).val() && $( "#y" ).val()) {
+        var x = $( "#x" ).val();
+        var y = $( "#y" ).val();
+
+        // validate
+        if ( x > ndv.xmax || x < ndv.xmin ) {
+          $( "#x" ).parent().addClass("has-error");
+        }
+        else if ( y > ndv.ymax || y < ndv.ymin ) {
+          $( "#y" ).parent().addClass("has-error");
+        }
+        else {
+          // pan the map to center on these coordinates
+          var point = L.point(x, y);
+          var projpoint = map.unproject(point);
+
+          map.panTo(projpoint);
+          // place a marker
+          //L.marker(projpoint).addTo(map);
+        }
+      }
+      else {
+        if ( $( "#x" ).val() && !$( "#y" ).val() ) {
+          $( "#y" ).parent().addClass("has-error");
+        }
+        else if ( $( "#y" ).val() && !$( "#x" ).val() ) {
+          $( "#x" ).parent().addClass("has-error");
+        }
+      }
+      // if a zindex was entered, navigate to that slice
+      if ( $( "#z" ).val() ) {
+        var z = $( "#z" ).val();
+        if (z <= ndv.zmax && z >= ndv.zmin) {
+          chgZIndex(z);
+        }
+        else {
+          $( "#z" ).parent().addClass("has-error");
+        }
+      }
+
+      // handle timestep if timeseries
+      {% if timeseries == True %}
+        loadTimeStep( $( "#timestep" ).val() );
+      {% endif %}
+    });
+
+		// z-index arrows
+		L.easyButton('fa-arrow-up',
+				incZIndex,
+				'Increase Z-Index'
+		);
+		L.easyButton('fa-arrow-down',
+				decZIndex,
+				'Decrease Z-Index'
+		);
+
+    function chgZIndex(newz) {
+      map.closePopup();
+      var oldzindex = ndv.zindex;
+			ndv.zindex = parseInt(newz);
+			reloadLayers(oldzindex);
+    }
+
+		function incZIndex() {
+      map.closePopup();
+      var oldzindex = ndv.zindex;
+      if ((ndv.zindex + 1) > ndv.zmax) {
+        $( "#z" ).parent().addClass("has-error");
+      }
+      else {
+        $( "#z" ).parent().removeClass("has-error");
+        ndv.zindex = ndv.zindex + 1;
+        reloadLayers(oldzindex);
+      }
+		}
+
+		function decZIndex() {
+      map.closePopup();
+      var oldzindex = ndv.zindex;
+      if ((ndv.zindex - 1) < ndv.zmin) {
+        $( "#z" ).parent().addClass("has-error");
+      }
+      else {
+        $( "#z" ).parent().removeClass("has-error");
+        ndv.zindex = ndv.zindex - 1;
+        reloadLayers(oldzindex);
+      }
+    }
+
+		function reloadLayers() {
+			map.options.fadeAnimation = false;
+      glLayer.disableScreenRender();
+      map.eachLayer( function (layer) {
+        if ( layer.hasOwnProperty('_url') ) {
+          layer.options.zindex = ndv.zindex;
+					layer.smoothRedraw();
+        }
+      });
+      map.options.fadeAnimation = true;
+      glLayer.draw();
+      setTimeout(glLayer.enableScreenRender.bind(glLayer), 300);
+      glLayer.isIdle = false; // enable render loop
+      coordinatesUpdate();
+		}
+
+		// get anno id from coordinate
+    // expects a L.point object for point and a number for zoom
+		function getAnnoId(point, zoom) {
+      var strUrlBase = "http://" + ndv.queryserver + "/ocp/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
+      var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
+      var strUrl = strUrlBase.concat(cutout);
+
+      var strRes = null;
+
+      $.ajax({
+        url: strUrl,
+        success: function(res) {
+          strRes = res;
+        },
+        async: false
+      });
+      return strRes;
+		}
+
+		// popup on click (querytool)
+		var popup = L.popup();
+		function onMapClick(e) {
+      if (ndv.querytool) {
+        var reqPoint = map.project(e.latlng);
+        popup
+          .setLatLng(e.latlng)
+          .setContent( getRamonInfo(reqPoint, map.getMaxZoom() - ndv.upsample_num - map.getZoom()) )
+          .openOn(map);
+      }
+		}
+		map.on('click', onMapClick);
+
+    // keyboard shortcuts
+    $(document).keypress(function(event) {
+      if ( !$(event.target).is('input')) {
+        // disable shortcuts if modal is open
+        if ($("#remoteModal").hasClass('in') == true) {
+          return;
+        }
+        if ($("#layerControls").hasClass('in') == true) {
+          return;
+        }
+        switch (event.which) {
+          case 104: // h -- help
+            toggleKeyboardHelp();
+            break;
+          case 119: // w -- ndv.zindex++
+            incZIndex();
+            break;
+          case 115: // s -- ndv.zindex--
+            decZIndex();
+            break;
+          case 97: // a -- zoom out
+            map.zoomOut()
+            break;
+          case 100: // d -- zoom in
+            map.zoomIn()
+            break;
+          default:
+            // do nothing
+
+        }
+      }
+    });
+    function toggleKeyboardHelp() {
+      if ($( ".keyhelp" ).css("display") == "none") {
+        $( ".keyhelp" ).fadeIn( 1000, function() {
+          // Animation complete
+        });
+      }
+      else {
+        $( ".keyhelp" ).fadeOut( 500, function() {
+          // Animation complete
+        });
+      }
+    }
+
+    // add keyboard help to map
+		var keyhelp = L.control();
+		keyhelp.options.position = 'bottomleft';
+		keyhelp.onAdd = function (map) {
+			this._div = L.DomUtil.create('div', 'keyhelp');
+			this.update();
+			return this._div;
+		};
+
+		keyhelp.update = function () {
+      this._div.innerHTML =
+      "<h5>Keyboard Shortcuts</h5><ul class='list-unstyled'>" +
+        "<li><kbd>h</kbd> display help</li>" +
+        "<li><kbd>w</kbd> increase z-index</li>" +
+        "<li><kbd>a</kbd> zoom out</li>" +
+        "<li><kbd>s</kbd> decrease z-index</li>" +
+        "<li><kbd>d</kbd> zoom in</li>" +
+        "</ul><small>Press <kbd>h</kbd> to close.</small>";
+		};
+
+    keyhelp.addTo(map);
+
+    // play delay
+    $(function() {
+      $('.playdelay-submit').click(function(e) {
+        var val = $('.playdelay-input').val();
+        ndv.playdelay = val;
+      });
+    }); // play delay
+
+    // close the queryinfo window
+    $(function() {
+      $( "#closequerybox" ).click(function() {
+        $( ".queryres" ).hide( "slow" );
+      });
+    });
+
+    // timeseries functions -- TODO, use new layers format
+    function loadTimeStep(newTime) {
+      map.closePopup();
+      if (newTime < {{ starttime }}) {
+        $( "#timestep" ).parent().addClass("has-error");
+      }
+      else if (newTime > {{ endtime }}) {
+        $( "#timestep" ).parent().addClass("has-error");
+      }
+      else {
+        $( "#timestep" ).parent().removeClass("has-error");
+        for (var layer in layers) {
+          if (layers[layer].type == 'timeseries') {
+            var server = layers[layer].server;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw()();
+          }
+        }
+        glLayer.draw();
+      }
+    }
+
+    function timeStepForward() {
+      map.closePopup();
+      for (var layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var curTime = parseInt(layers[layer].tileLayer.options.curtime);
+          if (curTime + 1 <= parseInt({{ endtime }})) {
+            $( "#timestep" ).parent().removeClass("has-error");
+            var newTime = curTime + 1;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw();
+          }
+          else {
+            $( "#timestep" ).parent().addClass("has-error");
+          }
+        }
+      }
+      glLayer.draw();
+      // update timestep box
+      $( "#timestep" ).val(newTimeStr);
+	  }
+
+		function timeStepBack() {
+      map.closePopup();
+      for (var layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var curTime = parseInt(layers[layer].tileLayer.options.curtime);
+          if (curTime - 1 >= parseInt({{ starttime }})) {
+            $( "#timestep" ).parent().removeClass("has-error");
+            var newTime = curTime - 1;
+            layers[layer].tileLayer.options.curtime = newTime;
+            var newTimeStr = newTime.toString();
+            if (layers[layer].tilecache) {
+              var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            else {
+              var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+            }
+            layers[layer].tileLayer.setUrl(newUrl, true);
+            layers[layer].tileLayer.smoothRedraw();
+          }
+          else {
+            $( "#timestep" ).parent().addClass("has-error");
+          }
+        }
+      }
+      glLayer.draw();
+      // update timestep box
+      $( "#timestep" ).val(newTimeStr);
+		}
+
+    function timeBeginning() {
+      map.closePopup();
+      for (var layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var newTimeStr = {{ starttime }};
+          layers[layer].tileLayer.options.curtime = newTimeStr;
+          if (layers[layer].tilecache) {
+            var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          else {
+            var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          layers[layer].tileLayer.setUrl(newUrl, true);
+          layers[layer].tileLayer.smoothRedraw();
+        }
+      }
+      glLayer.draw();
+      // update timestep box
+      $( "#timestep" ).val(newTimeStr);
+    }
+
+    function timeEnd() {
+      map.closePopup();
+      for (var layer in layers) {
+        if (layers[layer].type == 'timeseries') {
+          var server = layers[layer].server;
+          var newTimeStr = {{ endtime }};
+          layers[layer].tileLayer.options.curtime = newTimeStr;
+          if (layers[layer].tilecache) {
+            var newUrl = 'http://' + server + '/ocptilecache/tilecache/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          else {
+            var newUrl = 'http://' + server + '/ocp/catmaid/' + webtoken + '/xy/' + newTimeStr + '/{zindex}/{y}_{x}_{z}.png';
+          }
+          layers[layer].tileLayer.setUrl(newUrl, true);
+          layers[layer].tileLayer.smoothRedraw();
+        }
+      }
+      glLayer.draw();
+      // update timestep box
+      $( "#timestep" ).val(newTimeStr);
+		}
+
+    var play;
+    $(function() {
+      $( "#play" ).click(function() {
+        play = setInterval(function() { timeStepForward(); }, 1000*ndv.playdelay); // 1 second default
+      });
+    });
+    $(function() {
+      $( "#pause" ).click(function() {
+        clearTimeout(play);
+      });
+    });
+    $(function() {
+      $( "#beginning" ).click(function() {
+        timeBeginning();
+      });
+    });
+    $(function() {
+      $( "#end" ).click(function() {
+        timeEnd();
+      });
+    });
+    $(function() {
+      $( "#forward" ).click(function() {
+        timeStepForward();
+      });
+    });
+    $(function() {
+      $( "#back" ).click(function() {
+        timeStepBack();
+      });
+    });
+
+  </script>
+  {% if timeseries == True %}
+
+  <footer class="footer">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <div id="timeseries-control-box">
+            <div id="timeseries-control-buttons">
+              <a href="#" id="beginning"><i class="fa fa-lg fa-backward fa-border"></i></a>
+
+              <a href="#" id="back"><i class="fa fa-lg fa-step-backward fa-border"></i></a>
+
+              <a href="#" id="play"><i class="fa fa-lg fa-play fa-border"></i></a>
+
+              <a href="#" id="pause"><i class="fa fa-lg fa-pause fa-border"></i></a>
+
+              <a href="#" id="forward"><i class="fa fa-lg fa-step-forward fa-border"></i></a>
+
+              <a href="#" id="end"><i class="fa fa-lg fa-forward fa-border"></i></a>
+            </div>
+            <div>
+            <small>Play Delay (sec):</small>
+            <input class="playdelay-input" type="number" step="any" min="0" max="100" value="1" />
+              <a class="playdelay-submit" href="#"><i class="fa fa-clone fa-lg"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  {% endif %}
+
+  {# after generating the main UI, open dataview, etc #}
+  {% if viewtype == 'dataview' %}
+    <script>
+      $(window).load(function() {
+        $( '#remoteModal' ).load("{% url 'renderDataview' dv_token %}")
+        $( '#remoteModal' ).modal('show');
+      });
+    </script>
+  {% endif %}
+  {% if manage %}
+    {% if user.is_authenticated %}
+    <script>
+      $(window).load(function() {
+        $( "#remoteModal" ).load("{% url 'viewProjects' %}");
+        $( "#remoteModal" ).modal('show');
+      });
+    </script>
+    {% else %}
+    <script>
+      $(window).load(function() {
+        $( "#login" ).modal('show');
+      });
+    </script>
+    {% endif %}
+  {% endif %}
+
+</body>
+{# jquery and bootstrap js #}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+{# jquery ui (for slider) #}
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+{# jquery ui on mobile #}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+</html>
