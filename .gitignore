@@ -6,6 +6,12 @@ settings_secret.py
 settings.py
 activation_email.txt
 
+##################
+# Node Packages  #
+##################
+
+node_modules/
+
 ###################
 # Compiled source #
 ###################
@@ -22,7 +28,6 @@ activation_email.txt
 # Data Files #
 ##############
 *.h5
-*.JSON
 *.csv
 
 ######################
@@ -30,4 +35,5 @@ activation_email.txt
 ######################
 .DS_Store
 *.swp
+
 

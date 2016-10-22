@@ -816,7 +816,7 @@ def renderView(request, webargs):
       'version': VERSION,
       'viewtype': 'renderview',
   }
-  return render(request, 'ndv/renderViewer.html', context)
+  return render(request, 'ndv/viewer.html', context)
 
 # Manage
 @login_required

@@ -1,0 +1,30 @@
+{
+  "name": "NeuroDataViz",
+  "version": "1.0.0",
+  "description": "A WebGL viewer for neuroscience data",
+  "main": "viewer/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run webpack; npm run http-server -p 8080",
+    "dev": "webpack-dev-server --hot --inline --progress --colors",
+    "django": "npm run webpack --progress --colors"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "global": "^4.3.1",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
+    "three": "^0.81.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.17.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.16.0",
+    "babel-preset-react": "^6.16.0",
+    "http-server": "^0.9.0",
+    "react-hot-loader": "^3.0.0-beta.6",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.16.2"
+  }
+}
