@@ -62,7 +62,7 @@ export default class Tile {
           // TODO: read these from parent!
           opacity: { type: "f", value: 1 },
           minval: { type: "f", value: 0.0 },
-          maxval: { type: "f", value: 0.4 },
+          maxval: { type: "f", value: 1.0 },
           gamma: { type: "f", value: 1.0 },
         };
 
@@ -124,9 +124,9 @@ export default class Tile {
           color: { type: "c", value: Colors.GetColor(self.tileLayer.color) },
           texture: { type: "t", value: texture },
           // TODO: read these from parent!
-          opacity: { type: "f", value: 1 },
+          opacity: { type: "f", value: 1.0 },
           minval: { type: "f", value: 0.0 },
-          maxval: { type: "f", value: 0.4 },
+          maxval: { type: "f", value: 1.0 },
           gamma: { type: "f", value: 1.0 },
         };
 

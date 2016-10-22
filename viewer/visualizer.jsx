@@ -3,6 +3,8 @@ import TileLayer from './tilelayer.js';
 import Tile from './tile.js';
 import State from './state.js';
 
+import ToolboxMenu from './toolbox/toolbox.jsx';
+
 var THREE = require('three');
 
 class Visualizer extends React.Component {
@@ -342,7 +344,13 @@ class Visualizer extends React.Component {
 
   render() {
     return (
-      <div id="visualizer-target"></div>
+      <div>
+        <div id="visualizer-target">
+          <div style={{position: "absolute", right: 0}}>
+            <ToolboxMenu />
+          </div>
+        </div>
+      </div>
     );
   }
 }

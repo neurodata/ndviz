@@ -171,7 +171,14 @@
   }
 
   {% for layer in layers %}
-    var url = "http://{{ request.META.HTTP_HOST }}/getRenderTile/{{ renderServer }}/{{ owner }}/{{ layer.token }}/{{ layer.channel }}/xy/{z}/{y}_{x}_{res}.png";
+    // TODO set url based on backend
+    //var url = "http://{{ request.META.HTTP_HOST }}/getRenderTile/{{ renderServer }}/{{ owner }}/{{ layer.token }}/{{ layer.channel }}/xy/{z}/{y}_{x}_{res}.png";
+    {% if layer.channel %}
+    var webtoken = '{{ layer.token }}/{{ layer.channel }}';
+    {% else %}
+    var webtoken = '{{ layer.token }}';
+    {% endif %}
+    var url = 'http://{{ layer.server }}/nd/catmaid/' + webtoken + '/xy/{z}/{y}_{x}_{res}.png';
     console.log('url = ' + url);
 
     window.addLayer("{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", 2, url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", 'render');
