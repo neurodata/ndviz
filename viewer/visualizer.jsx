@@ -118,9 +118,9 @@ class Visualizer extends React.Component {
     let self = this;
 
     self.camera.aspect = window.innerWidth / window.innerHeight;
-    self.camera.updateProjectionMatrix();
 
     self.renderer.setSize( window.innerWidth, window.innerHeight );
+    self.camera.updateProjectionMatrix();
   }
 
   onDocumentMouseDown(event) {
