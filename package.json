@@ -16,7 +16,8 @@
     "react": "^15.3.2",
     "react-addons-css-transition-group": "^15.3.2",
     "react-dom": "^15.3.2",
-    "three": "^0.81.2"
+    "three": "^0.81.2",
+    "webpack": "^1.13.3"
   },
   "devDependencies": {
     "babel-core": "^6.17.0",

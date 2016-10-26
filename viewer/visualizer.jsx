@@ -3,7 +3,6 @@ import TileLayer from './tilelayer.js';
 import Tile from './tile.js';
 import State from './state.js';
 
-import ToolboxMenu from './toolbox/toolbox.jsx';
 
 var THREE = require('three');
 
@@ -33,7 +32,7 @@ class Visualizer extends React.Component {
     this._addEventListeners = this._addEventListeners.bind(this);
 
     this.layers = [];
-    this.state = null;
+    this.viewerState = this.props.viewerState;
 
     this.cameraDistance = this.props.cameraDistance || 1000;
 
@@ -50,11 +49,11 @@ class Visualizer extends React.Component {
   getInitialAppState() {
     let self = this;
     // import variables from window.config into state
-    self.state = new State(window.config.xstart, window.config.xoffset, window.config.xsize, window.config.ystart, window.config.yoffset, window.config.ysize, window.config.zstart, window.config.zoffset, window.config.zsize, window.config.minres, window.config.maxres, window.config.res);
+    //self.viewerState = new State(window.config.xstart, window.config.xoffset, window.config.xsize, window.config.ystart, window.config.yoffset, window.config.ysize, window.config.zstart, window.config.zoffset, window.config.zsize, window.config.minres, window.config.maxres, window.config.res);
 
     // create layers from window.config
     for (let layer of window.config.layers) {
-      var tmpLayer = new TileLayer(self.getCurrentZIndex(), self.getCurrentRes(), layer.tilesize, layer.color, layer.url, self.state);
+      var tmpLayer = new TileLayer(self.getCurrentZIndex(), self.getCurrentRes(), layer.tilesize, layer.color, layer.url, self.viewerState);
       self.addLayer(tmpLayer);
     }
 
@@ -62,12 +61,12 @@ class Visualizer extends React.Component {
 
   getCurrentZIndex() {
     let self = this;
-    return self.state.zindex;
+    return self.viewerState.zindex;
   }
 
   getCurrentRes() {
     let self = this;
-    return self.state.res;
+    return self.viewerState.res;
   }
 
   _addEventListeners() {
@@ -242,14 +241,14 @@ class Visualizer extends React.Component {
   incZIndex() {
     let self = this;
 
-    self.state.zindex++;
+    self.viewerState.zindex++;
     self._updateZIndex();
   }
 
   decZIndex() {
     let self = this;
 
-    self.state.zindex++;
+    self.viewerState.zindex--;
     self._updateZIndex();
   }
 
@@ -257,7 +256,7 @@ class Visualizer extends React.Component {
     let self = this;
 
     for (let layer of self.layers) {
-      layer.updateZIndex(self.state.zindex, self.renderScene);
+      layer.updateZIndex(self.viewerState.zindex, self.renderScene);
     }
   }
 
@@ -285,11 +284,11 @@ class Visualizer extends React.Component {
 
     console.log(newRes);
     if (self.getCurrentRes() < 0 || newRes < 0) {
-      self.state.res = newRes;
+      self.viewerState.res = newRes;
       console.log('ABTODO!')
       return;
     }
-    self.state.res = newRes;
+    self.viewerState.res = newRes;
 
     // update all layers
     for (let layer of self.layers) {
@@ -344,13 +343,7 @@ class Visualizer extends React.Component {
 
   render() {
     return (
-      <div>
-        <div id="visualizer-target">
-          <div style={{position: "absolute", right: 0}}>
-            <ToolboxMenu />
-          </div>
-        </div>
-      </div>
+      <div id="visualizer-target"></div>
     );
   }
 }

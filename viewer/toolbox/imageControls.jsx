@@ -1,6 +1,6 @@
 import React from 'react';
 
-class ImageControlsParent extends React.Component {
+export default class ImageControlsParent extends React.Component {
   constructor(props) {
     super(props);
 
