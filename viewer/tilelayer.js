@@ -3,13 +3,11 @@ var THREE = require('three');
 
 export default class TileLayer  {
   // the constructor only builds a TileLayer object. tiles are loaded on add
-  constructor(zindex, res, tilesize, color, url, state, stateLayer) {
+  constructor(zindex, res, tilesize, url, state, stateLayer) {
     this.zindex = zindex;
     this.res = res;
     this.cameraPixelRes = res > 0 ? res : 0;
     this.tilesize = tilesize;
-
-    this.color = color;
 
     this.baseUrl = url;
 
@@ -182,7 +180,7 @@ export default class TileLayer  {
     let self = this;
 
     for (let tile of self.tiles.values()) {
-      tile.updateTileMaterial(render);
+      tile.updateTileUniforms(render);
     }
 
   }

@@ -36,6 +36,8 @@ export default class Visualizer {
     this.layers = [];
     this.viewerState = viewerState;
 
+    this.dragging = true;
+
     //this.cameraDistance = this.props.cameraDistance || 1000;
 
     //this.onReady = this.props.onReady || (() => {});
@@ -47,7 +49,7 @@ export default class Visualizer {
 
     // read layers from state and add to scene
     for (let layer of self.viewerState.layers) {
-      var tmpLayer = new TileLayer(self.getCurrentZIndex(), self.getCurrentRes(), layer.tilesize, layer.color, layer.url, self.viewerState, layer);
+      var tmpLayer = new TileLayer(self.getCurrentZIndex(), self.getCurrentRes(), layer.tilesize, layer.url, self.viewerState, layer);
       self.addLayer(tmpLayer);
     }
 
@@ -65,15 +67,12 @@ export default class Visualizer {
 
   disablePan() {
     let self = this;
-    removeEventListener('mousedown', self.onDocumentMouseDown);
-    removeEventListener('mouseup', self.onDocumentMouseUp);
+    self.dragging = false;
   }
 
   enablePan() {
     let self = this;
-    // pan listeners
-    addEventListener('mousedown', self.onDocumentMouseDown, false);
-    addEventListener('mouseup', self.onDocumentMouseUp, false);
+    self.dragging = true;
   }
 
   _addEventListeners() {
@@ -82,9 +81,10 @@ export default class Visualizer {
     addEventListener('resize', self.onWindowResize,
     false);
 
-    // AB TODO: move these to enable/disable functions for pan, zoom, change z so we can disable pan when sliding, for exmaple
-
-    // change z listeners (AB TODO)
+    // pan
+    addEventListener('mousedown', self.onDocumentMouseDown, false);
+    addEventListener('mouseup', self.onDocumentMouseUp, false);
+    // change z listeners
     addEventListener('wheel', self.onDocumentScroll, false);
     // key press
     addEventListener('keypress', self.onDocumentKeyPress, false);
@@ -132,6 +132,10 @@ export default class Visualizer {
 
   onDocumentMouseDown(event) {
     let self = this;
+
+    if (!self.dragging) {
+      return;
+    }
 
     event.preventDefault();
 

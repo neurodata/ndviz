@@ -35,7 +35,7 @@ export default class Tile {
   updateZIndex(zindex, render) {
     let self = this;
     self.z = zindex;
-    self.updateTileMaterial(render);
+    self.updateTile(render);
   }
 
   updatePosition(offset) {
@@ -44,7 +44,25 @@ export default class Tile {
     self.mesh.position.add(offset);
   }
 
-  updateTileMaterial(render=null, onLoad=null) {
+  updateTileUniforms(render=null) {
+    let self = this;
+
+    if (self.mesh) {
+      self.mesh.material.uniforms.color.value = Colors.GetColor(self.tileLayer.stateLayer.color);
+
+      self.mesh.material.uniforms.opacity.value = self.tileLayer.stateLayer.opacity;
+
+      self.mesh.material.uniforms.minval.value = self.tileLayer.stateLayer.minval;
+      self.mesh.material.uniforms.maxval.value = self.tileLayer.stateLayer.maxval;
+      self.mesh.material.uniforms.gamma.value = self.tileLayer.stateLayer.gamma;
+    }
+
+    if (render) {
+      render();
+    }
+  }
+
+  updateTile(render=null, onLoad=null) {
     let self = this;
 
     var loader = new THREE.TextureLoader();
@@ -119,7 +137,7 @@ export default class Tile {
 
         // some default uniforms
         var uniforms = {
-          color: { type: "c", value: Colors.GetColor(self.tileLayer.color) },
+          color: { type: "c", value: Colors.GetColor(self.tileLayer.stateLayer.color) },
           texture: { type: "t", value: texture },
           opacity: { type: "f", value: self.tileLayer.stateLayer.opacity },
           minval: { type: "f", value: self.tileLayer.stateLayer.minval },

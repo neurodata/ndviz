@@ -40,22 +40,24 @@ ToolboxMenu.propTypes = {
 class Toolbox extends React.Component {
   constructor(props) {
     super(props);
-
-    this.onMouseOver = this.onMouseOver.bind(this);
-  }
-  onMouseOver() {
-    var visualizer = this.props.visualizer;
-    visualizer.disablePan();
-    // TODO disable click
-    // TODO disable zoom
   }
   componentDidMount() {
     var container = ReactDOM.findDOMNode(this).parentNode;
-    container.addEventListener('mouseover', this.onMouseOver);
+    container.addEventListener('mouseover', function() {
+      this.props.visualizer.disablePan();
+    }.bind(this));
+    container.addEventListener('mouseout', function() {
+      this.props.visualizer.enablePan();
+    }.bind(this));
   }
   componentWillUnmount() {
     var container = ReactDOM.findDOMNode(this).parentNode;
-    container.removeEventListener('mouseover', this.onMouseOver);
+    container.removeEventListener('mouseover', function() {
+      this.props.visualizer.disablePan();
+    }.bind(this));
+    container.removeEventListener('mouseout', function() {
+      this.props.visualizer.enablePan();
+    }.bind(this));
   }
   render() {
     var iconClassString = "fa fa-stack-1x " + this.props.iconClassName;
