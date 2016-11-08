@@ -3,7 +3,7 @@ var THREE = require('three');
 
 export default class TileLayer  {
   // the constructor only builds a TileLayer object. tiles are loaded on add
-  constructor(zindex, res, tilesize, color, url, state) {
+  constructor(zindex, res, tilesize, color, url, state, stateLayer) {
     this.zindex = zindex;
     this.res = res;
     this.cameraPixelRes = res > 0 ? res : 0;
@@ -14,6 +14,7 @@ export default class TileLayer  {
     this.baseUrl = url;
 
     this.state = state;
+    this.stateLayer = stateLayer;
 
     this.offset = new THREE.Vector3();
 

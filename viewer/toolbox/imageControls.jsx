@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 export default class ImageControlsParent extends React.Component {
   constructor(props) {
@@ -8,11 +9,6 @@ export default class ImageControlsParent extends React.Component {
 
     this.state = {
       blendMode: this.props.blendMode
-    };
-  }
-  getDefaultProps() {
-    return {
-      blendMode: 1
     };
   }
   handleBlendModeChange(event) {
@@ -26,7 +22,7 @@ export default class ImageControlsParent extends React.Component {
   render() {
     return (
       <div>
-        <ImageControlsController />
+        <ImageControlsController viewerState={this.props.viewerState} />
         <br />
         <div id="blendmode">
           Blending:
@@ -53,6 +49,11 @@ export default class ImageControlsParent extends React.Component {
 
 ImageControlsParent.propTypes = {
   blendMode: React.PropTypes.number, // blend mode passed as string via django
+  viewerState: React.PropTypes.object.isRequired
+}
+
+ImageControlsParent.defaultProps = {
+  blendMode: 1
 }
 
 class ImageControlsController extends React.Component {
@@ -73,6 +74,7 @@ class ImageControlsController extends React.Component {
     this.setState({collapsed: false})
   }
   render() {
+    var layers = this.props.viewerState.layers;
     return (
       <div id="image-sliders">
         <small><a href="#" onClick={this.setCollapsedTrue}>Collapse All</a> / <a href="#" onClick={this.setCollapsedFalse}>Expand All</a></small>
@@ -81,7 +83,10 @@ class ImageControlsController extends React.Component {
           if (layer.enabled) {
             return (
               <div key={layerKey}>
-                <ImageControlsLayer layer={layer} collapsed={this.state.collapsed} />
+                <ImageControlsLayer
+                  layer={layer}
+                  collapsed={this.state.collapsed}
+                />
               </div>
             );
           } else {
@@ -91,6 +96,10 @@ class ImageControlsController extends React.Component {
       </div>
     );
   }
+}
+
+ImageControlsController.propTypes = {
+  viewerState: React.PropTypes.object.isRequired
 }
 
 class ImageControlsLayer extends React.Component {
@@ -107,22 +116,11 @@ class ImageControlsLayer extends React.Component {
     this.state = {
       collapsed: this.props.collapsed,
       opacity: this.props.layer.opacity,
-      minVal: this.props.layer.min,
-      maxVal: this.props.layer.max,
+      minVal: this.props.layer.minval,
+      maxVal: this.props.layer.maxval,
       gamma: this.props.layer.gamma,
       color: this.props.layer.color
     };
-  }
-  getDefaultProps() {
-    return {
-      collapsed: false,
-      opacity: 1,
-      minVal: 0,
-      maxVal: 1,
-      gamma: 1,
-      color: null,
-      enabled: true
-    }
   }
   componentWillReceiveProps(nextProps) {
     this.setState({collapsed: nextProps.collapsed})
@@ -230,6 +228,16 @@ ImageControlsLayer.propTypes = {
   collapsed: React.PropTypes.bool
 }
 
+ImageControlsLayer.defaultProps =  {
+  collapsed: false,
+  opacity: 1,
+  minVal: 0,
+  maxVal: 1,
+  gamma: 1,
+  color: null,
+  enabled: true
+}
+
 class ImageControlsSlider extends React.Component {
   constructor(props) {
     super(props);
@@ -239,14 +247,6 @@ class ImageControlsSlider extends React.Component {
     this.state = {
       value: this.props.defaultValue
     }
-  }
-  getDefaultProps() {
-    return {
-      minValue: 0,
-      maxValue: 100,
-      step: 1,
-      divisor: 1
-    };
   }
   handleValueChange(event, ui) {
     this.props.layer[this.props.layerProp] = ui.value/this.props.divisor;
@@ -282,6 +282,13 @@ ImageControlsSlider.propTypes = {
   divisor: React.PropTypes.number
 }
 
+ImageControlsSlider.defaultProps = {
+  minValue: 0,
+  maxValue: 100,
+  step: 1,
+  divisor: 1
+}
+
 class ImageControlsColor extends React.Component {
   constructor(props) {
     super(props);
@@ -291,11 +298,6 @@ class ImageControlsColor extends React.Component {
     this.state = {
       color: this.props.layer.color
     }
-  }
-  getDefaultProps() {
-    return {
-      color: null
-    };
   }
   handleColorChange(event) {
     var color = event.target.value;
@@ -334,3 +336,7 @@ ImageControlsColor.propTypes = {
   onColorChange: React.PropTypes.func.isRequired,
   color: React.PropTypes.string
 };
+
+ImageControlsColor.defaultProps = {
+  color: null
+}

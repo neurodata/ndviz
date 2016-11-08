@@ -1,12 +1,16 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 import ImageControlsParent from './imageControls.jsx';
 import ProjectInfoController from './projectInfo.jsx'
 
 export default class ToolboxMenu extends React.Component {
+  constructor(props) {
+    super(props);
+  }
   render() {
-    var imageControlsComponent = <ImageControlsParent blendMode={1} />;
+    var imageControlsComponent = <ImageControlsParent viewerState={this.props.viewerState} blendMode={1} />;
     var projInfoComponent = <ProjectInfoController server="openconnecto.me" token="kasthuri11"/>
     return (
       <div>
@@ -14,22 +18,45 @@ export default class ToolboxMenu extends React.Component {
           toolboxComponent={projInfoComponent}
           toolboxName="Project Info"
           toolboxIconName="fa-info"
+          visualizer={this.props.visualizer}
         />
         <ToolboxController
           toolboxComponent={imageControlsComponent}
           toolboxName="Image Controls"
           toolboxIconName="fa-picture-o"
+          visualizer={this.props.visualizer}
         />
       </div>
     );
   }
 }
 
+ToolboxMenu.propTypes = {
+  viewerState: React.PropTypes.object.isRequired,
+  visualizer: React.PropTypes.object.isRequired
+}
+
 class Toolbox extends React.Component {
   constructor(props) {
     super(props);
-  }
 
+    this.onMouseOver = this.onMouseOver.bind(this);
+  }
+  onMouseOver() {
+    var visualizer = this.props.visualizer;
+    console.log(visualizer);
+    visualizer.disablePan();
+    // TODO disable click
+    // TODO disable zoom
+  }
+  componentDidMount() {
+    var container = ReactDOM.findDOMNode(this).parentNode;
+    container.addEventListener('mouseover', this.onMouseOver);
+  }
+  componentWillUnmount() {
+    var container = ReactDOM.findDOMNode(this).parentNode;
+    container.removeEventListener('mouseover', this.onMouseOver);
+  }
   render() {
     var iconClassString = "fa fa-stack-1x " + this.props.iconClassName;
     return (
@@ -45,7 +72,7 @@ class Toolbox extends React.Component {
           <div className="headertext">{this.props.toolboxName}</div>
         </div>
         <div>
-          {this.props.toolboxComponents}
+          {this.props.toolboxComponent}
         </div>
       </div>
     )
@@ -108,7 +135,9 @@ class ToolboxController extends React.Component {
               toolboxName={this.props.toolboxName}
               toolboxComponent = {this.props.toolboxComponent}
               onClick={this.handleClick}
-              key={boxKey} />
+              visualizer={this.props.visualizer}
+              key={boxKey}
+              />
             :
             <ToolboxShowIcon
               iconClassName={this.props.toolboxIconName}
@@ -125,5 +154,6 @@ class ToolboxController extends React.Component {
 ToolboxController.propTypes = {
   toolboxComponent: React.PropTypes.object.isRequired,
   toolboxName: React.PropTypes.string.isRequired,
-  toolboxIconName: React.PropTypes.string.isRequired
+  toolboxIconName: React.PropTypes.string.isRequired,
+  visualizer: React.PropTypes.object.isRequired
 }

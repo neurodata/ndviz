@@ -21,6 +21,9 @@ class Visualizer extends React.Component {
     this.onDocumentMouseDown = this.onDocumentMouseDown.bind(this);
     this.onDocumentMouseUp = this.onDocumentMouseUp.bind(this);
 
+    this.disablePan = this.disablePan.bind(this);
+    this.enablePan = this.enablePan.bind(this);
+
     this.updateResolution = this.updateResolution.bind(this);
 
     this.onDocumentScroll = this.onDocumentScroll.bind(this);
@@ -44,16 +47,15 @@ class Visualizer extends React.Component {
     let self = this;
 
     self._addEventListeners();
+    self.enablePan();
   }
 
   getInitialAppState() {
     let self = this;
-    // import variables from window.config into state
-    //self.viewerState = new State(window.config.xstart, window.config.xoffset, window.config.xsize, window.config.ystart, window.config.yoffset, window.config.ysize, window.config.zstart, window.config.zoffset, window.config.zsize, window.config.minres, window.config.maxres, window.config.res);
 
-    // create layers from window.config
-    for (let layer of window.config.layers) {
-      var tmpLayer = new TileLayer(self.getCurrentZIndex(), self.getCurrentRes(), layer.tilesize, layer.color, layer.url, self.viewerState);
+    // read layers from state and add to scene
+    for (let layer of self.viewerState.layers) {
+      var tmpLayer = new TileLayer(self.getCurrentZIndex(), self.getCurrentRes(), layer.tilesize, layer.color, layer.url, self.viewerState, layer);
       self.addLayer(tmpLayer);
     }
 
@@ -69,15 +71,27 @@ class Visualizer extends React.Component {
     return self.viewerState.res;
   }
 
+  disablePan() {
+    let self = this;
+    removeEventListener('mousedown', self.onDocumentMouseDown);
+    removeEventListener('mouseup', self.onDocumentMouseUp);
+  }
+
+  enablePan() {
+    let self = this;
+    // pan listeners
+    addEventListener('mousedown', self.onDocumentMouseDown, false);
+    addEventListener('mouseup', self.onDocumentMouseUp, false);
+  }
+
   _addEventListeners() {
     let self = this;
 
     addEventListener('resize', self.onWindowResize,
     false);
 
-    // pan listeners
-    addEventListener('mousedown', self.onDocumentMouseDown, false);
-    addEventListener('mouseup', self.onDocumentMouseUp, false);
+    // AB TODO: move these to enable/disable functions for pan, zoom, change z so we can disable pan when sliding, for exmaple
+
     // change z listeners (AB TODO)
     addEventListener('wheel', self.onDocumentScroll, false);
     // key press

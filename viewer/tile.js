@@ -59,11 +59,10 @@ export default class Tile {
         var uniforms = {
           color: { type: "c", value: Colors.GetColor(self.tileLayer.color) },
           texture: { type: "t", value: texture },
-          // TODO: read these from parent!
-          opacity: { type: "f", value: 1 },
-          minval: { type: "f", value: 0.0 },
-          maxval: { type: "f", value: 1.0 },
-          gamma: { type: "f", value: 1.0 },
+          opacity: { type: "f", value: self.tileLayer.stateLayer.opacity },
+          minval: { type: "f", value: self.tileLayer.stateLayer.minval },
+          maxval: { type: "f", value: self.tileLayer.stateLayer.maxval },
+          gamma: { type: "f", value: self.tileLayer.stateLayer.gamma },
         };
 
         // TODO only enable these when sliders have been moved
@@ -123,11 +122,10 @@ export default class Tile {
         var uniforms = {
           color: { type: "c", value: Colors.GetColor(self.tileLayer.color) },
           texture: { type: "t", value: texture },
-          // TODO: read these from parent!
-          opacity: { type: "f", value: 1.0 },
-          minval: { type: "f", value: 0.0 },
-          maxval: { type: "f", value: 1.0 },
-          gamma: { type: "f", value: 1.0 },
+          opacity: { type: "f", value: self.tileLayer.stateLayer.opacity },
+          minval: { type: "f", value: self.tileLayer.stateLayer.minval },
+          maxval: { type: "f", value: self.tileLayer.stateLayer.maxval },
+          gamma: { type: "f", value: self.tileLayer.stateLayer.gamma },
         };
 
         // TODO only enable these when sliders have been moved
