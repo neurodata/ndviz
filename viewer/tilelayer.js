@@ -177,4 +177,13 @@ export default class TileLayer  {
       tile.updateZIndex(self.zindex, render);
     }
   }
+
+  reload(render) {
+    let self = this;
+
+    for (let tile of self.tiles.values()) {
+      tile.updateTileMaterial(render);
+    }
+
+  }
 }

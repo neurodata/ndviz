@@ -22,7 +22,10 @@ export default class ImageControlsParent extends React.Component {
   render() {
     return (
       <div>
-        <ImageControlsController viewerState={this.props.viewerState} />
+        <ImageControlsController
+          visualizer={this.props.visualizer}
+          viewerState={this.props.viewerState}
+          />
         <br />
         <div id="blendmode">
           Blending:
@@ -85,6 +88,7 @@ class ImageControlsController extends React.Component {
               <div key={layerKey}>
                 <ImageControlsLayer
                   layer={layer}
+                  visualizer={this.props.visualizer}
                   collapsed={this.state.collapsed}
                 />
               </div>
@@ -129,14 +133,13 @@ class ImageControlsLayer extends React.Component {
     this.setState({collapsed: !this.state.collapsed});
   }
   handleOpacityChange(opacity) {
+
     if (opacity == 0 && this.state.opacity > 0) {
       // remove all tiles, we are going dark
-      this.props.layer.tileLayer._removeAllTiles();
-      map.removeLayer(this.props.layer.tileLayer);
+      this.props.layer.enabled = false;
     } else if (opacity > 0 && this.state.opacity == 0) {
       // readd all tiles, we are back in business
-      this.props.layer.reinitializeLayer();
-      this.props.layer.tileLayer.addTo(map);
+      this.props.layer.enabled = true;
     }
 
     this.setState({opacity: opacity});
@@ -171,31 +174,34 @@ class ImageControlsLayer extends React.Component {
               defaultValue={this.state.opacity}
               handleChange={this.handleOpacityChange}
               className="opacity"
-              divisor={100} />
+              divisor={100}
+              visualizer={this.props.visualizer} />
           </div>
           <br />
           <div className="controls-slider-name">Min ({Math.round(this.state.minVal*255)})</div>
           <div id="slider">
             <ImageControlsSlider
               layer={this.props.layer}
-              layerProp="min"
+              layerProp="minval"
               defaultValue={this.state.minVal}
               handleChange={this.handleMinChange}
               className="minslider"
               maxValue={255}
-              divisor={255} />
+              divisor={255}
+              visualizer={this.props.visualizer} />
           </div>
           <br />
           <div className="controls-slider-name">Max ({Math.round(this.state.maxVal*255)})</div>
           <div id="slider">
             <ImageControlsSlider
               layer={this.props.layer}
-              layerProp="max"
+              layerProp="maxval"
               defaultValue={this.state.maxVal}
               handleChange={this.handleMaxChange}
               className="maxslider"
               maxValue={255}
-              divisor={255} />
+              divisor={255}
+              visualizer={this.props.visualizer} />
           </div>
           <br />
           <div className="controls-slider-name">Gamma ({this.state.gamma})</div>
@@ -207,14 +213,16 @@ class ImageControlsLayer extends React.Component {
               handleChange={this.handleGammaChange}
               className="gammaslider"
               maxValue={2}
-              step={0.1} />
+              step={0.1}
+              visualizer={this.props.visualizer} />
           </div>
           <br />
           <div className="colorbox">
             <div className="controls-slider-name">Color {this.state.color ? '(' + this.state.color + ')' : ''}</div>
             <ImageControlsColor
             layer={this.props.layer}
-            onColorChange={this.handleColorChange} />
+            onColorChange={this.handleColorChange}
+            visualizer={this.props.visualizer} />
           </div>
           <br />
         </div>
@@ -225,6 +233,7 @@ class ImageControlsLayer extends React.Component {
 
 ImageControlsLayer.propTypes = {
   layer: React.PropTypes.object.isRequired,
+  visualizer: React.PropTypes.object.isRequired,
   collapsed: React.PropTypes.bool
 }
 
@@ -261,8 +270,8 @@ class ImageControlsSlider extends React.Component {
       value: this.state.value*this.props.divisor,
       slide: this.handleValueChange,
       step: this.props.step,
-      start: function(event, ui) { map.dragging.disable(); },
-      stop: function(event, ui) { map.dragging.enable(); glLayer.draw(); }
+      start: function(event, ui) { },
+      stop: function(event, ui) { this.props.visualizer.reloadLayers(); }.bind(this)
     });
   }
   render() {
@@ -305,14 +314,14 @@ class ImageControlsColor extends React.Component {
       this.setState({color: null});
       this.props.onColorChange(null);
       this.props.layer.color = color;
-      glLayer.draw();
+      this.props.visualizer.reloadLayers();
       return;
     }
 
     this.setState({color: color})
     this.props.layer.color = color;
     this.props.onColorChange(color);
-    glLayer.draw();
+    this.props.visualizer.reloadLayers();
   }
   render() {
     return (

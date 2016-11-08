@@ -57,14 +57,13 @@ export default class Tile {
 
         // some default uniforms
         var uniforms = {
-          color: { type: "c", value: Colors.GetColor(self.tileLayer.color) },
+          color: { type: "c", value: Colors.GetColor(self.tileLayer.stateLayer.color) },
           texture: { type: "t", value: texture },
           opacity: { type: "f", value: self.tileLayer.stateLayer.opacity },
           minval: { type: "f", value: self.tileLayer.stateLayer.minval },
           maxval: { type: "f", value: self.tileLayer.stateLayer.maxval },
           gamma: { type: "f", value: self.tileLayer.stateLayer.gamma },
         };
-
         // TODO only enable these when sliders have been moved
         var defines = {
           REMAP: true,

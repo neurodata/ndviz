@@ -32,6 +32,7 @@ export default class Visualizer {
     this.getCurrentRes = this.getCurrentRes.bind(this);
     this._addEventListeners = this._addEventListeners.bind(this);
 
+    /* properties */
     this.layers = [];
     this.viewerState = viewerState;
 
@@ -324,6 +325,14 @@ export default class Visualizer {
     var idx = self.layers.indexOf(layer);
     if (index > -1) {
       self.layers.splice(index, 1);
+    }
+  }
+
+  reloadLayers() {
+    let self = this;
+
+    for(let layer of self.layers) {
+      layer.reload(self.renderScene);
     }
   }
 

@@ -10,7 +10,8 @@ export default class ToolboxMenu extends React.Component {
     super(props);
   }
   render() {
-    var imageControlsComponent = <ImageControlsParent viewerState={this.props.viewerState} blendMode={1} />;
+    var imageControlsComponent = <ImageControlsParent viewerState={this.props.viewerState} visualizer={this.props.visualizer}
+    blendMode={1} />;
     var projInfoComponent = <ProjectInfoController server="openconnecto.me" token="kasthuri11"/>
     return (
       <div>
