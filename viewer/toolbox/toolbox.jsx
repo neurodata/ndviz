@@ -44,7 +44,6 @@ class Toolbox extends React.Component {
   }
   onMouseOver() {
     var visualizer = this.props.visualizer;
-    console.log(visualizer);
     visualizer.disablePan();
     // TODO disable click
     // TODO disable zoom

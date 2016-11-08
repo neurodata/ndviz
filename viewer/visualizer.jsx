@@ -1,16 +1,14 @@
-import React from 'react';
+//import React from 'react';
 import TileLayer from './tilelayer.js';
 import Tile from './tile.js';
-import State from './state.js';
-
+//import State from './state.js';
 
 var THREE = require('three');
 
-class Visualizer extends React.Component {
-  constructor(props) {
-    super(props);
-
+export default class Visualizer {
+  constructor(viewerState) {
     let self = this;
+
 
     this.init = this.init.bind(this);
     this.animate = this.animate.bind(this);
@@ -35,19 +33,12 @@ class Visualizer extends React.Component {
     this._addEventListeners = this._addEventListeners.bind(this);
 
     this.layers = [];
-    this.viewerState = this.props.viewerState;
+    this.viewerState = viewerState;
 
-    this.cameraDistance = this.props.cameraDistance || 1000;
+    //this.cameraDistance = this.props.cameraDistance || 1000;
 
-    this.onReady = this.props.onReady || (() => {});
-    this.onReady(self);
-  }
-
-  componentDidMount() {
-    let self = this;
-
-    self._addEventListeners();
-    self.enablePan();
+    //this.onReady = this.props.onReady || (() => {});
+    //this.onReady(self);
   }
 
   getInitialAppState() {
@@ -125,6 +116,8 @@ class Visualizer extends React.Component {
     // get initial state and add layers
     self.getInitialAppState();
 
+    self._addEventListeners();
+    self.enablePan();
   }
 
   onWindowResize() {
@@ -354,12 +347,4 @@ class Visualizer extends React.Component {
       self.init();
       self.renderScene();
   }
-
-  render() {
-    return (
-      <div id="visualizer-target"></div>
-    );
-  }
 }
-
-export default Visualizer;

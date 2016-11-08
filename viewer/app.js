@@ -28,27 +28,23 @@ class NDViz extends React.Component {
     }
 
     // setup the visualizer
-    //var visualizer = 
+    this.mainVisualizer = new Visualizer(this.stateObject);
 
   }
   triggerRender() {
-    this.refs.mainVisualizer.triggerRender();
+    this.mainVisualizer.triggerRender();
   }
   componentDidMount() {
     this.triggerRender();
   }
   render() {
-    var visualizer = <Visualizer
-      ref="mainVisualizer"
-      viewerState={this.stateObject}
-    />
     return (
       <div>
-        {visualizer}
+        <div id="visualizer-target"></div>
         <div style={{position: "absolute", top: 50, right: 0, paddingRight: 10, paddingTop: 5}}>
           <ToolboxMenu
             viewerState={this.stateObject}
-            visualizer={visualizer}
+            visualizer={this.mainVisualizer}
           />
         </div>
       </div>
