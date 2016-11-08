@@ -78,10 +78,6 @@ html, body, #map {
   max-height: 600px;
 }
 
-.showToolboxIcon {
-  padding-top: 10px;
-}
-
 #imagecontrolshide, #projinfobox, #projectModeBox, #synaptogramModeBox {
   padding: 8px 8px;
   width: 300px;

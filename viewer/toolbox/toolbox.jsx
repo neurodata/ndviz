@@ -57,7 +57,7 @@ class ToolboxShowIcon extends React.Component {
     var iconClassString = "fa fa-stack-1x " + this.props.iconClassName;
 
     return (
-      <div className="showToolboxIcon" style={{float: "left"}}>
+      <div className="showToolboxIcon" style={{float: "right"}}>
         <div className="helperText">{this.props.helperText}</div>
         <span className="fa-stack fa-2x">
           <a href="#" onClick={this.props.onClick}>
@@ -99,8 +99,8 @@ class ToolboxController extends React.Component {
     var boxKey = "boxKey_" + this.props.toolboxIconName;
     var iconKey = "iconKey_" + this.props.toolboxIconName;
     return (
-      <div>
-        <ReactCSSTransitionGroup transitionName="toolboxTransition" transitionEnterTimeout={1} transitionLeaveTimeout={1} >
+      <div id={this.props.toolboxName.replace(/\s+/g, '')} style={{"clear": "both", "paddingTop": 10}}>
+        <ReactCSSTransitionGroup transitionName="toolboxTransition" transitionEnterTimeout={1} transitionLeaveTimeout={1}>
           { this.state.showToolbox
             ?
             <Toolbox
