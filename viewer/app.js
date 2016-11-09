@@ -20,9 +20,11 @@ class NDViz extends React.Component {
 
     // read window layers into state
     if (window.config.layers) {
+      var order = 0;
       for (let layer of window.config.layers) {
 
-        var tmpLayer = new StateLayer(layer.name, layer.url, layer.tilesize, layer.color);
+        var tmpLayer = new StateLayer(layer.name, layer.url, layer.tilesize, layer.color, order);
+        order++;
         this.stateObject.addLayer(tmpLayer);
       }
     }

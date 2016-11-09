@@ -16,8 +16,8 @@ export default class ImageControlsParent extends React.Component {
     this.setState({
       blendMode: value
     });
-    //updateGlobalBlendMode(value) // AB TODO
-    console.log('updating blend mode: ' + value);
+    this.props.viewerState.blending = value;
+    this.props.visualizer.reloadLayers();
   }
   render() {
     return (

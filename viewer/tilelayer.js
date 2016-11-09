@@ -4,6 +4,9 @@ var THREE = require('three');
 export default class TileLayer  {
   // the constructor only builds a TileLayer object. tiles are loaded on add
   constructor(zindex, res, tilesize, url, state, stateLayer) {
+
+    // TODO: add render ordering 
+
     this.zindex = zindex;
     this.res = res;
     this.cameraPixelRes = res > 0 ? res : 0;

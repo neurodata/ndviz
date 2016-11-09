@@ -55,6 +55,8 @@ export default class Tile {
       self.mesh.material.uniforms.minval.value = self.tileLayer.stateLayer.minval;
       self.mesh.material.uniforms.maxval.value = self.tileLayer.stateLayer.maxval;
       self.mesh.material.uniforms.gamma.value = self.tileLayer.stateLayer.gamma;
+
+      self.mesh.material.blending = self.tileLayer.state.blending;
     }
 
     if (render) {
@@ -99,6 +101,7 @@ export default class Tile {
 
         self.mesh.material = material;
         self.mesh.needsUpdate = true;
+        self.mesh.renderOrder = this.tileLayer.stateLayer.ordering;
 
         if (render) {
           render();
@@ -160,6 +163,7 @@ export default class Tile {
           blending: self.tileLayer.state.blendmode,
         });
         self.mesh = new THREE.Mesh( geometry, material );
+        self.mesh.renderOrder = this.tileLayer.stateLayer.ordering;
 
         var halfTileSize = self.size / 2;
 

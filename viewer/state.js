@@ -21,8 +21,8 @@ class State {
     this.res = res;
 
     // preset state
-    //this.blendmode = THREE.NormalBlending;
-    this.blendmode = THREE.AdditiveBlending;
+    this.blendmode = THREE.NormalBlending;
+    //this.blendmode = THREE.AdditiveBlending;
 
     this.fragmentShader = document.getElementById('fragmentShader').text;
     this.vertexShader = document.getElementById('vertexShader').text;
@@ -37,12 +37,14 @@ class State {
 }
 
 class StateLayer {
-  constructor(name, url, tilesize, color, enabled=true) {
+  constructor(name, url, tilesize, color, ordering, enabled=true) {
     this.name = name;
     this.url = url;
     this.tilesize = tilesize;
     this.color = color;
     this.enabled = enabled;
+
+    this.ordering = ordering;
 
     // some default values
     this.opacity = 1.0;

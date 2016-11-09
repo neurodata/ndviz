@@ -6,6 +6,13 @@ html, body, #map {
   height: 100%;
   width: 100%;
 }
+
+#visualizer-target {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .has-error .form-control{
   border-width: 3px;
   border-color: #FF2D2D !important;
