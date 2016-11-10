@@ -171,7 +171,12 @@
   }
 
   {% for layer in layers %}
-    // TODO set url based on backend
+
+    {% if viewtype == 'renderview' %}
+
+    console.log('renderview');
+
+    {% else %}
     //var url = "http://{{ request.META.HTTP_HOST }}/getRenderTile/{{ renderServer }}/{{ owner }}/{{ layer.token }}/{{ layer.channel }}/xy/{z}/{y}_{x}_{res}.png";
     {% if layer.channel %}
     var webtoken = '{{ layer.token }}/{{ layer.channel }}';
@@ -182,6 +187,7 @@
     console.log('url = ' + url);
 
     window.addLayer("{{ layer.layer_name|cut:" " }}", "{{ layer.layertype }}", 2, url, "{{ layer.server }}", "{{ layer.token }}", "{{ layer.channel }}", "{{ layer.color }}", 'render');
+    {% endif %}
   {% endfor %}
 
   </script>
