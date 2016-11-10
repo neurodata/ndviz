@@ -748,9 +748,10 @@ def renderView(request, webargs):
   ymin = jsoninfo['stats']['stackBounds']['minY']
   zmin = jsoninfo['stats']['stackBounds']['minZ']
 
-  xmax = jsoninfo['stats']['stackBounds']['maxX']
-  ymax = jsoninfo['stats']['stackBounds']['maxY']
-  zmax = jsoninfo['stats']['stackBounds']['maxZ']
+  # render bounds are inclusive 
+  xmax = jsoninfo['stats']['stackBounds']['maxX'] + 1
+  ymax = jsoninfo['stats']['stackBounds']['maxY'] + 1
+  zmax = jsoninfo['stats']['stackBounds']['maxZ'] + 1
 
   layers = []
   # convert the specified stack to a layer
