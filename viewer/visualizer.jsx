@@ -124,10 +124,17 @@ export default class Visualizer {
   onWindowResize() {
     let self = this;
 
-    self.camera.aspect = window.innerWidth / window.innerHeight;
+    // resize camera
+    self.camera.left = window.innerWidth / -2;
+    self.camera.right = window.innerWidth / 2;
+    self.camera.top = window.innerHeight / 2;
+    self.camera.bottom = window.innerHeight / -2;
+
+    //self.camera.aspect = window.innerWidth / window.innerHeight;
+    self.camera.updateProjectionMatrix();
 
     self.renderer.setSize( window.innerWidth, window.innerHeight );
-    self.camera.updateProjectionMatrix();
+    self.renderScene();
   }
 
   onDocumentMouseDown(event) {
