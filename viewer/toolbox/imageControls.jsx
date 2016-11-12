@@ -16,7 +16,7 @@ export default class ImageControlsParent extends React.Component {
     this.setState({
       blendMode: value
     });
-    this.props.viewerState.blending = value;
+    this.props.viewerState.blendmode = value;
     this.props.visualizer.reloadLayers();
   }
   render() {

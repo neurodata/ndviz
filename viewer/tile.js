@@ -56,7 +56,7 @@ export default class Tile {
       self.mesh.material.uniforms.maxval.value = self.tileLayer.stateLayer.maxval;
       self.mesh.material.uniforms.gamma.value = self.tileLayer.stateLayer.gamma;
 
-      self.mesh.material.blending = self.tileLayer.state.blending;
+      self.mesh.material.blending = self.tileLayer.state.blendmode;
     }
 
     if (render) {
