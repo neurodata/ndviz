@@ -40,7 +40,6 @@ export default class Tile {
 
   updatePosition(offset) {
     let self = this;
-
     self.mesh.position.add(offset);
   }
 
@@ -76,9 +75,12 @@ export default class Tile {
         let self = this;
 
         // some default uniforms
+        var scale = Math.pow(2, -self.tileLayer.state.res);
+        console.log('update scaling by ' + scale);
         var uniforms = {
           color: { type: "c", value: Colors.GetColor(self.tileLayer.stateLayer.color) },
           texture: { type: "t", value: texture },
+          scale: { type: "f", value: scale },
           opacity: { type: "f", value: self.tileLayer.stateLayer.opacity },
           minval: { type: "f", value: self.tileLayer.stateLayer.minval },
           maxval: { type: "f", value: self.tileLayer.stateLayer.maxval },
@@ -129,6 +131,8 @@ export default class Tile {
   addToScene(scene, offset, render=null) {
     let self = this;
 
+    //let curTileSize = self.size*Math.pow(2 , self.tileLayer.stateLayer.res);
+
     var geometry = new THREE.PlaneGeometry(self.size, self.size);
     var loader = new THREE.TextureLoader();
     loader.load(
@@ -139,9 +143,12 @@ export default class Tile {
         let self = this;
 
         // some default uniforms
+        var scale = Math.pow(2, -self.tileLayer.state.res);
+        console.log('scaling by ' + scale);
         var uniforms = {
           color: { type: "c", value: Colors.GetColor(self.tileLayer.stateLayer.color) },
           texture: { type: "t", value: texture },
+          scale: { type: "f", value: scale },
           opacity: { type: "f", value: self.tileLayer.stateLayer.opacity },
           minval: { type: "f", value: self.tileLayer.stateLayer.minval },
           maxval: { type: "f", value: self.tileLayer.stateLayer.maxval },
@@ -172,7 +179,9 @@ export default class Tile {
           offset.y - self.y*self.size - halfTileSize,
           0
         );
-
+        pos.multiplyScalar(1.0/scale);
+        //pos.multiplyScalar(scale);
+        console.log(pos);
         self.mesh.position.copy(pos);
 
         scene.add( self.mesh );

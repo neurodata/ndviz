@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 
   {# css file #}
-  <link rel="stylesheet" href="{% static 'ndv/css/viewer.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/viewer.css' %}" />
 
   {% if GOOGLE_ANALYTICS_PROPERTY_ID %}
     {% include "ndv/analytics.html" %}
@@ -88,9 +88,12 @@
 
   <script id="vertexShader" type="x-shader/x-vertex">
     varying vec2 vUv;
+
+    uniform float scale;
+
     void main() {
       vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,scale);
     }
   </script>
 

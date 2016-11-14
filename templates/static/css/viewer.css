@@ -1,3 +1,12 @@
+body {
+  padding: 50px 0px 0px 0px; /* 50px for navbar */
+  margin: 0;
+}
+html, body, #map {
+  height: 100%;
+  width: 100%;
+}
+
 @charset "UTF-8";
 @font-face {
   font-family: 'Gentona Book';
@@ -54,16 +63,6 @@
   src: local("☺"),  url("../fonts/quadon/Quadon-MediumItalic.eot?#iefix") format("embedded-opentype"), url("../fonts/quadon/Quadon-MediumItalic.woff") format("woff"), url("../fonts/quadon/Quadon-MediumItalic.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
-}
-
-body {
-  padding: 50px 0px 0px 0px; /* 50px for navbar */
-  margin: 0;
-}
-html, body {
-  height: 100%;
-  width: 100%;
-  font: 18px/1.5 "Gentona Book", "Arial", sans-serif !important;
 }
 
 

@@ -113,6 +113,8 @@ export default class Visualizer {
       window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2,
       1, 1024.0);
     self.camera.position.z = 1;
+    self.camera.zoom = Math.pow(2 , self.viewerState.res);
+    self.camera.updateProjectionMatrix();
 
     // get initial state and add layers
     self.getInitialAppState();
@@ -284,14 +286,14 @@ export default class Visualizer {
     let self = this;
 
     if(zoomIn) {
-      //self.camera.zoom *= 2;
-      //self.camera.updateProjectionMatrix();
-      //self.renderScene();
+      self.camera.zoom *= 2;
+      self.camera.updateProjectionMatrix();
+      self.renderScene();
       self.updateResolution(self.getCurrentRes() - 1);
     } else {
-      //self.camera.zoom *= 0.5;
-      //self.camera.updateProjectionMatrix();
-      //self.renderScene();
+      self.camera.zoom *= 0.5;
+      self.camera.updateProjectionMatrix();
+      self.renderScene();
       self.updateResolution(self.getCurrentRes() + 1);
     }
   }

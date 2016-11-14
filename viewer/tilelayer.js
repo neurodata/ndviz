@@ -5,7 +5,7 @@ export default class TileLayer  {
   // the constructor only builds a TileLayer object. tiles are loaded on add
   constructor(zindex, res, tilesize, url, state, stateLayer) {
 
-    // TODO: add render ordering 
+    // TODO: add render ordering
 
     this.zindex = zindex;
     this.res = res;
@@ -27,6 +27,9 @@ export default class TileLayer  {
   _loadTiles(offset) {
     let self = this;
 
+    // TODO: kill?
+    var scale = Math.pow(2, -self.state.res);
+
     var halfWidth = window.innerWidth/2;
     var halfHeight = window.innerHeight/2;
 
@@ -43,7 +46,6 @@ export default class TileLayer  {
 
     for (var x = tilesToLoadWidth.x; x < tilesToLoadWidth.y; x++) {
       for (var y = tilesToLoadHeight.x; y < tilesToLoadHeight.y; y++) {
-        //console.log(x ', ' y);
         tmpTiles.add(x + "," + y);
       }
     }
@@ -153,6 +155,7 @@ export default class TileLayer  {
     var tilesToLoad = tilesToAdd.size;
     for (let coordinate of tilesToAdd) {
       let tile = self.storeTile(coordinate);
+      // ABTODO -- can we add a scale factor here??
       tile.addToScene(scene, offsetCoords, function() {
         render();
         tilesToLoad--;
