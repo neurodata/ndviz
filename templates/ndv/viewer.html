@@ -1758,24 +1758,20 @@
       },
       handleChange: function(event) {
         var changed = event.target.value;
-        if (changed == 'none') {
+
+        if (changed == -1) {
           // disable query tool
           ndv.querytool = false;
           ndv.querytoken = 'none';
           ndv.querychannel = 'none';
           ndv.queryserver = 'none';
-          return;
+        } else {
+          ndv.querytool = true; 
+          ndv.querytoken = this.state.layers[changed].token;
+          ndv.querychannel = this.state.layers[changed].channel;
+          ndv.queryserver = this.state.layers[changed].server;
+          this.setState({selectedLayer: changed});
         }
-        for (var layer in layers) {
-          if (layers[layer].name == changed) {
-            ndv.querytoken = layers[layer].token;
-            ndv.querychannel = layers[layer].channel;
-            ndv.queryserver = layers[layer].server;
-          }
-        }
-        ndv.querytool = true;
-        // AB TODO: store the actual layer object (i think)
-        this.setState({selectedLayer: event.target.value});
       },
       render: function() {
         if (this.state.selectedLayer) {
@@ -1786,7 +1782,7 @@
             <form>
             <div className="form-group">
               <select className="form-control" onChange={this.handleChange}>
-                <option value="none">None</option>
+                <option value={-1}>None</option>
                 {this.state.layers.map(function(layer, i) {
                   return <option value={i} key={i + "_" + layer.name}>{layer.name}</option>
                 })}
