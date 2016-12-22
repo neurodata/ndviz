@@ -265,7 +265,7 @@
       // TODO: refactor along with timeseries code
       var curtime = 0;
       if (type == 'timeseries') {
-        curtime = {{ time }};
+        curtime = parseInt("{{ time }}");
       }
 
       this.initializeLayer = function() {
