@@ -2546,8 +2546,8 @@
 
       // get the id of the object at that location
       var objid = getAnnoId(point, zoom);
-
-      if (parseInt(objid) == 0) {
+      console.log(objid);
+      if (objid == null || parseInt(objid) == 0) {
         return "No RAMON object here.";
       }
 
@@ -2937,16 +2937,17 @@
 		// get anno id from coordinate
     // expects a L.point object for point and a number for zoom
 		function getAnnoId(point, zoom) {
-      var strUrlBase = "http://" + ndv.queryserver + "/ocp/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
+      var strUrlBase = "http://" + ndv.queryserver + "/nd/ca/" + ndv.querytoken + "/" + ndv.querychannel + "/id/" + zoom + "/";
       var cutout = Math.round(point.x) + "/" + Math.round(point.y) + "/" + ndv.zindex + "/";
       var strUrl = strUrlBase.concat(cutout);
-
+      console.log(strUrl);
       var strRes = null;
 
       $.ajax({
         url: strUrl,
         success: function(res) {
           strRes = res;
+          console.log(res);
         },
         async: false
       });
