@@ -1,3 +1,7 @@
+# Distribution / build 
+build/*
+dist/* 
+
 #############
 # Django Files #
 #############
@@ -19,10 +23,30 @@ activation_email.txt
 *.log
 
 ##############
+# Node Files #
+##############
+# Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# node-waf configuration
+.lock-wscript
+
+# Dependency directory
+# https://docs.npmjs.com/cli/shrinkwrap#caveats
+node_modules
+
+# Debug log from npm
+npm-debug.log.*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+##############
 # Data Files #
 ##############
 *.h5
-*.JSON
 *.csv
 
 ######################
@@ -31,3 +55,4 @@ activation_email.txt
 .DS_Store
 *.swp
 
+dist 
