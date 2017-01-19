@@ -16,6 +16,12 @@ module.exports = function(grunt) {
             cwd: "./views",
             src: ["**"],
             dest: "./dist/views"
+          },
+          {
+            expand: true, 
+            cwd: "./static",
+            src: ["**"],
+            dest: "./dist/public/static/"
           }
         ]
       }

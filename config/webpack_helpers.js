@@ -31,16 +31,6 @@ function modifyViewerOptions(options) {
     resolveReal(__dirname, '../node_modules')
   ];
 
-  // Add React support 
-  /*
-  options.resolve = {
-      extensions: ['.ts', '.js', '.jsx', '.tsx'],
-      plugins: [
-        new AliasPlugin(aliasMappings, 'described-resolve', 'resolve'),
-      ],
-  };
-  */
-
   // This references the tsconfig.json file of this project, rather than of
   // neuroglancer.
   options.tsconfigPath = resolveReal(__dirname, '../tsconfig.json');
@@ -53,6 +43,19 @@ function modifyViewerOptions(options) {
 
 exports.getViewerConfig = function(options) {
   let config = original_webpack_helpers.getViewerConfig(modifyViewerOptions(options));
-  console.log(config);
+
+  // Add JSX support by overwriting the resolved extensions list 
+  config[0]['resolve']['extensions'] = [ '.ts', '.tsx', '.js', '.jsx' ];
+
+  // Add JSX/TSX loaders 
+  config[0]['module']['rules'][0]['test'] = /\.tsx?$/;
+  config[0]['module']['rules'].push({ test: /\.jsx$/, loader: 'babel-loader', query: { presets: ['react'] } });
+
+  /*
+  console.log(config[0]);
+  console.log(config[0]['module']['rules']);
+  console.log(config[0]['module']['rules'][0]['loader']);
+  */
+  
   return config; 
 };
