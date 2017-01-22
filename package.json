@@ -56,7 +56,7 @@
     "webpack-dev-server": "^2.1.0-beta.12"
   },
   "scripts": {
-    "start": "node ./bin/server",
+    "start": "PORT=8000 node ./bin/server",
     "grunt": "grunt",
     "dev": "NODE_ENV=development nodemon ./bin/server",
     "test": "echo \"Error: no test specified\" && exit 1",
