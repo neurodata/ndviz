@@ -1,5 +1,4 @@
-
-import {Viewer} from 'neuroglancer/viewer';
+import {Viewer} from 'ndviz/viewer';
 import {getCurrentState} from 'neuroglancer/url_hash_state';
 
 export function initializeNdvizViewer(viewer: Viewer) {
