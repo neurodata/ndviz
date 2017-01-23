@@ -26,6 +26,12 @@ RUN npm install
 
 # Bundle app source
 COPY . /usr/src/app
+
+# Compile typescript and copy files 
+RUN npm run build 
+RUN npm run grunt 
+
+
 CMD [ "npm", "start" ]
 
 EXPOSE 8000 

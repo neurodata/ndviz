@@ -54,5 +54,4 @@ pids
 ######################
 .DS_Store
 *.swp
-
-dist 
+.baseDir.ts
