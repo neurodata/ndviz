@@ -7,8 +7,5 @@ export function initializeNdvizViewer(viewer: Viewer) {
     let currentState = getCurrentState();
     if (currentState['layout'] === undefined) {
         viewer.layoutName.value = "xy";
-    } 
-
-    console.log(viewer.keyMap);
-    console.log(viewer.keyCommands);    
+    }   
 }

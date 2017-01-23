@@ -23,6 +23,8 @@ html, body {
   height: 100vh;
   background-color: black;
   color: white;
+  -webkit-font-smoothing: antialiased;
+  font: 12px/1.5 "Gentona Book", "Arial", sans-serif;
 }
 
 body {

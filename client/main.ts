@@ -31,7 +31,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let viewer = (<any>window)['viewer'] = makeDefaultViewer();
   makeDefaultKeyBindings(viewer.keyMap);
   initializeNdvizViewer(viewer);
-  addToolboxes(viewer); 
+  //addToolboxes(viewer); 
   //makeExtraKeyBindings(viewer.keyMap);
   //viewer.keyCommands.set('navigate-to-origin', navigateToOrigin);
 });

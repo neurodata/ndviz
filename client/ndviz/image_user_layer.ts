@@ -20,16 +20,16 @@ import {LayerListSpecification, registerLayerType, registerVolumeLayerType} from
 import {getVolumeWithStatusMessage} from 'neuroglancer/layer_specification';
 import {Overlay} from 'neuroglancer/overlay';
 import {VolumeType} from 'neuroglancer/sliceview/base';
-import {FRAGMENT_MAIN_START, getTrackableFragmentMain} from 'neuroglancer/sliceview/image_renderlayer';
+import {FRAGMENT_MAIN_START} from 'neuroglancer/sliceview/image_renderlayer';
 import {trackableAlphaValue} from 'neuroglancer/trackable_alpha';
-import {mat4} from 'neuroglancer/util/geom';
+import {vec3, mat4, identityMat4} from 'neuroglancer/util/geom';
 import {makeWatchableShaderError} from 'neuroglancer/webgl/dynamic_shader';
 import {RangeWidget} from 'neuroglancer/widget/range';
 import {ShaderCodeWidget} from 'neuroglancer/widget/shader_code_widget';
 
 import {trackableColorValue} from 'ndviz/trackable_color';
 import {trackableMinValue, trackableMaxValue, TrackableThresholdValue} from 'ndviz/trackable_threshold';
-import {ImageRenderLayer} from 'ndviz/sliceview/image_renderlayer';
+import {ImageRenderLayer, getTrackableFragmentMain} from 'ndviz/sliceview/image_renderlayer';
 import {ColorPickerWidget} from 'ndviz/widget/color_widget';
 
 require('neuroglancer/image_user_layer.css');
@@ -42,6 +42,10 @@ export class ImageUserLayer extends UserLayer {
   color = trackableColorValue(); 
   min = trackableMinValue();
   max = trackableMaxValue();
+
+  tmpOpacity = trackableAlphaValue(0.7);
+  tmpColor = trackableColorValue(3);
+
   fragmentMain = getTrackableFragmentMain();
   shaderError = makeWatchableShaderError();
   renderLayer: ImageRenderLayer;
@@ -77,6 +81,28 @@ export class ImageUserLayer extends UserLayer {
       }
     });
   }
+
+  addSecondaryLayer() {
+
+    let localTransform:mat4 = mat4.create(); 
+    let translationVector = vec3.fromValues(0, 0, 10); 
+    mat4.translate(localTransform, localTransform, translationVector);
+
+    getVolumeWithStatusMessage(this.renderLayer.chunkManager, this.volumePath).then(volume => {
+      let secondaryLayer = new ImageRenderLayer(volume, {
+        opacity: this.tmpOpacity, 
+        color: this.tmpColor,
+        min: this.min,
+        max: this.max,
+        fragmentMain: this.fragmentMain,
+        shaderError: this.shaderError,
+        volumeSourceOptions: {transform: mat4.clone(localTransform)},
+      });
+      this.addRenderLayer(secondaryLayer);
+      this.shaderError.changed.dispatch();
+    });
+  }
+
   toJSON() {
     let x: any = {'type': 'image'};
     x['source'] = this.volumePath;

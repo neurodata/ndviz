@@ -19,15 +19,6 @@ COLOR_VECTORS.set(COLOR_CODES.CYAN, vec3.fromValues(0,1,1));
 COLOR_VECTORS.set(COLOR_CODES.MAGENTA, vec3.fromValues(1,0,1));
 COLOR_VECTORS.set(COLOR_CODES.YELLOW, vec3.fromValues(1,1,0));
 
-
-const DEFAULT_FRAGMENT_MAIN_BLEGH = `void main() {
-  emitRGB(vec3(
-    toNormalized(getDataValue()),
-    0,
-    0
-  ));
- }`;
-
 const DEFAULT_FRAGMENT_MAIN = `void main() {
   emitThresholdColorRGB(
     vec3(
@@ -66,7 +57,6 @@ export class ImageRenderLayer extends NeuroglancerImageRenderLayer.ImageRenderLa
         this.max = max;
         this.registerSignalBinding(opacity.changed.add(() => { this.redrawNeeded.dispatch(); }));
         this.registerSignalBinding(color.changed.add(() => { 
-            
             this.redrawNeeded.dispatch(); 
         }));
         this.registerSignalBinding(min.changed.add(() => { this.redrawNeeded.dispatch(); }));
