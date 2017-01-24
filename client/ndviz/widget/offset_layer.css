@@ -1,0 +1,8 @@
+.offset-layer-container {
+  /*display: flex;*/
+  flex-direction: column;
+}
+
+/* .image-dropdown-top-row .range-slider {
+  flex: 1;
+} */

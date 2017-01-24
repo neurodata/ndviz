@@ -28,9 +28,12 @@ import {RangeWidget} from 'neuroglancer/widget/range';
 import {ShaderCodeWidget} from 'neuroglancer/widget/shader_code_widget';
 
 import {trackableColorValue} from 'ndviz/trackable_color';
-import {trackableMinValue, trackableMaxValue, TrackableThresholdValue} from 'ndviz/trackable_threshold';
+import {trackableMinValue, trackableMaxValue, TrackableThresholdValue, } from 'ndviz/trackable_threshold';
+import {trackableBooleanValue, TrackableBooleanValue} from 'ndviz/trackable_boolean';
+import {trackableOffsetValue, TrackableOffsetValue} from 'ndviz/trackable_offset';
 import {ImageRenderLayer, getTrackableFragmentMain} from 'ndviz/sliceview/image_renderlayer';
 import {ColorPickerWidget} from 'ndviz/widget/color_widget';
+import {OffsetLayerWidget} from 'ndviz/widget/offset_layer';
 
 require('neuroglancer/image_user_layer.css');
 require('neuroglancer/help_button.css');
@@ -43,12 +46,15 @@ export class ImageUserLayer extends UserLayer {
   min = trackableMinValue();
   max = trackableMaxValue();
 
-  tmpOpacity = trackableAlphaValue(0.7);
-  tmpColor = trackableColorValue(3);
+  secondaryOpacity = trackableAlphaValue(0.5);
+  secondaryColor = trackableColorValue();
+  secondaryOffset = trackableOffsetValue(1);
+  secondaryLayerEnabled = trackableBooleanValue(false);
 
   fragmentMain = getTrackableFragmentMain();
   shaderError = makeWatchableShaderError();
   renderLayer: ImageRenderLayer;
+  secondaryLayer: ImageRenderLayer; 
   transform = new CoordinateTransform();
   constructor(manager: LayerListSpecification, x: any) {
     super();
@@ -80,27 +86,12 @@ export class ImageUserLayer extends UserLayer {
         this.shaderError.changed.dispatch();
       }
     });
-  }
 
-  addSecondaryLayer() {
-
-    let localTransform:mat4 = mat4.create(); 
-    let translationVector = vec3.fromValues(0, 0, 10); 
-    mat4.translate(localTransform, localTransform, translationVector);
-
-    getVolumeWithStatusMessage(this.renderLayer.chunkManager, this.volumePath).then(volume => {
-      let secondaryLayer = new ImageRenderLayer(volume, {
-        opacity: this.tmpOpacity, 
-        color: this.tmpColor,
-        min: this.min,
-        max: this.max,
-        fragmentMain: this.fragmentMain,
-        shaderError: this.shaderError,
-        volumeSourceOptions: {transform: mat4.clone(localTransform)},
-      });
-      this.addRenderLayer(secondaryLayer);
-      this.shaderError.changed.dispatch();
-    });
+    this.registerSignalBinding(
+      this.secondaryLayerEnabled.changed.add(() => {
+        if (this.secondaryLayerEnabled.value === true) this.addSecondaryLayer();
+        else                                           this.removeSecondaryLayer();
+    }));
   }
 
   toJSON() {
@@ -115,6 +106,35 @@ export class ImageUserLayer extends UserLayer {
     return x;
   }
   makeDropdown(element: HTMLDivElement) { return new ImageDropdown(element, this); }
+
+  addSecondaryLayer() {
+    let localTransform = mat4.clone(this.transform.transform); 
+    let translationVector = vec3.fromValues(0, 0, -this.secondaryOffset.value); 
+    mat4.translate(localTransform, localTransform, translationVector);
+
+    getVolumeWithStatusMessage(this.renderLayer.chunkManager, this.volumePath).then(volume => {
+      let secondaryLayer = this.secondaryLayer = new ImageRenderLayer(volume, {
+        opacity: this.secondaryOpacity, 
+        color: this.secondaryColor,
+        min: this.min,
+        max: this.max,
+        fragmentMain: this.fragmentMain,
+        shaderError: this.shaderError,
+        volumeSourceOptions: {transform: mat4.clone(localTransform)},
+      });
+      this.addRenderLayer(secondaryLayer);
+      this.shaderError.changed.dispatch();
+    });
+  }
+
+  removeSecondaryLayer() {
+    this.renderLayers.map((value, index) => {
+      if (value === this.secondaryLayer) {
+        this.renderLayers.splice(index, 1);
+      }});
+    this.secondaryLayer.dispose();
+    this.layersChanged.dispatch();
+  }
 }
 
 function makeShaderCodeWidget(layer: ImageUserLayer) {
@@ -130,17 +150,40 @@ class ImageDropdown extends UserLayerDropdown {
   minWidget = this.registerDisposer(new RangeWidget(this.layer.min));
   maxWidget = this.registerDisposer(new RangeWidget(this.layer.max));
   colorWidget = this.registerDisposer(new ColorPickerWidget(this.layer.color));
+  
+  offsetLayerWidget = this.registerDisposer(new OffsetLayerWidget(this.layer));
+  offsetSliderWidget = this.registerDisposer(new RangeWidget(this.layer.secondaryOffset, {min: 0, max: 25, step: 1}));
+
 
   codeWidget = this.registerDisposer(makeShaderCodeWidget(this.layer));
   constructor(public element: HTMLDivElement, public layer: ImageUserLayer) {
     super();
     element.classList.add('image-dropdown');
-    let {opacityWidget, minWidget, maxWidget} = this;
+    let {opacityWidget, minWidget, maxWidget, offsetLayerWidget, offsetSliderWidget} = this;
     let topRow = document.createElement('div');
     topRow.className = 'image-dropdown-top-row';
     opacityWidget.promptElement.textContent = 'Opacity';   
     minWidget.promptElement.textContent = 'Min';
     maxWidget.promptElement.textContent = 'Max';
+  
+    // Add an offset layer 
+    offsetSliderWidget.promptElement.textContent = `Z Offset Value: ${this.layer.secondaryOffset.value}`;
+    this.layer.secondaryOffset.changed.add(() => {
+      offsetSliderWidget.promptElement.textContent = `Z Offset Value: ${this.layer.secondaryOffset.value}`;
+    });
+    this.layer.secondaryLayerEnabled.changed.add(() => {
+      if (this.layer.secondaryLayerEnabled.value === true) offsetSliderWidget.inputElement.disabled = true; 
+      else                                                 offsetSliderWidget.inputElement.disabled = false;
+    });
+
+    let offsetLayerToggle = document.createElement('button');
+    offsetLayerToggle.textContent = 'Offset Layer Toggle';
+    offsetLayerToggle.className = 'offset-button';
+    offsetLayerToggle.title = 'Add/remove a duplicate layer offset by a set distance in z.'
+    this.registerEventListener(
+      offsetLayerToggle, 'click', () => { 
+        offsetLayerWidget.toggle(); 
+      });
 
     let spacer = document.createElement('div');
     spacer.style.flex = '1';
@@ -172,6 +215,10 @@ class ImageDropdown extends UserLayerDropdown {
     element.appendChild(this.maxWidget.element);
 
     element.appendChild(this.colorWidget.element); 
+
+    element.appendChild(offsetSliderWidget.element);
+    element.appendChild(offsetLayerToggle); 
+    element.appendChild(this.offsetLayerWidget.element);
 
     element.appendChild(this.codeWidget.element);
     this.codeWidget.textEditor.refresh();
