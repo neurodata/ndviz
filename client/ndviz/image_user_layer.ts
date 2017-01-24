@@ -27,7 +27,7 @@ import {makeWatchableShaderError} from 'neuroglancer/webgl/dynamic_shader';
 import {RangeWidget} from 'neuroglancer/widget/range';
 import {ShaderCodeWidget} from 'neuroglancer/widget/shader_code_widget';
 
-import {trackableColorValue} from 'ndviz/trackable_color';
+import {trackableColorValue, COLOR_CODES} from 'ndviz/trackable_color';
 import {trackableMinValue, trackableMaxValue, TrackableThresholdValue, } from 'ndviz/trackable_threshold';
 import {trackableBooleanValue, TrackableBooleanValue} from 'ndviz/trackable_boolean';
 import {trackableOffsetValue, TrackableOffsetValue} from 'ndviz/trackable_offset';
@@ -62,8 +62,9 @@ export class ImageUserLayer extends UserLayer {
     if (typeof volumePath !== 'string') {
       throw new Error('Invalid image layer specification');
     }
+
     this.opacity.restoreState(x['opacity']);
-    this.color.restoreState(x['color']);
+    this.color.restoreState(COLOR_CODES[x['color']]);
     this.min.restoreState(x['min']);
     this.max.restoreState(x['max']);
     this.fragmentMain.restoreState(x['shader']);
@@ -92,6 +93,16 @@ export class ImageUserLayer extends UserLayer {
         if (this.secondaryLayerEnabled.value === true) this.addSecondaryLayer();
         else                                           this.removeSecondaryLayer();
     }));
+
+    this.registerSignalBinding(
+      this.opacity.changed.add(() => { this.layersChanged.dispatch() }));
+    this.registerSignalBinding(
+      this.color.changed.add(() => { this.layersChanged.dispatch() }));
+    this.registerSignalBinding(
+      this.min.changed.add(() => { this.layersChanged.dispatch() }));
+    this.registerSignalBinding(
+      this.max.changed.add(() => { this.layersChanged.dispatch() }));  
+
   }
 
   toJSON() {
