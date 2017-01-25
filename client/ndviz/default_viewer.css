@@ -16,7 +16,6 @@
 
 html, body {
   margin: 0px;
-  margin-top: 25px;
   padding: 0px;
   overflow: hidden;
   width: 100vw;
@@ -31,4 +30,8 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+}
+
+#container {
+  margin-top: 50px !important; /* for nav */ 
 }

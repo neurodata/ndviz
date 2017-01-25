@@ -466,7 +466,7 @@ footer.dark,
 
 #ngcontainer {
     position: absolute;
-    bottom: 50px;
+    bottom: 0;
     right: 0; 
     z-index: 100;
     background-color: rgba(40,40,46, 0.7);
