@@ -8,6 +8,7 @@ import errorHandler = require("errorhandler");
 import methodOverride = require("method-override");
 
 import { IndexRoute } from "./routes/index"; 
+import { LegacyRoute } from "./routes/legacyRedirect";
 
 /**
  * The server.
@@ -113,6 +114,7 @@ export class Server {
         router = express.Router(); 
 
         IndexRoute.create(router); 
+        LegacyRoute.create(router);
 
         // use router middleware 
         this.app.use(router);

@@ -43,3 +43,13 @@ export class BaseRoute {
 
     }
 }
+
+export class RedirectRoute {
+    public redirect(req: Request, res: Response, newUrl: string, statusCode?: number) {
+        if (statusCode) {
+            res.redirect(statusCode, newUrl);
+        } else {
+            res.redirect(newUrl);
+        }
+    }
+}
