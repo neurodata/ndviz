@@ -55,13 +55,13 @@ export class ImageRenderLayer extends NeuroglancerImageRenderLayer.ImageRenderLa
         this.color = color;
         this.min = min;
         this.max = max;
-        this.registerSignalBinding(opacity.changed.add(() => { this.redrawNeeded.dispatch(); }));
-        this.registerSignalBinding(color.changed.add(() => { 
+        this.registerDisposer(opacity.changed.add(() => { this.redrawNeeded.dispatch(); }));
+        this.registerDisposer(color.changed.add(() => { 
             this.redrawNeeded.dispatch(); 
         }));
-        this.registerSignalBinding(min.changed.add(() => { this.redrawNeeded.dispatch(); }));
-        this.registerSignalBinding(max.changed.add(() => { this.redrawNeeded.dispatch(); }));
-        this.registerSignalBinding(fragmentMain.changed.add(() => {
+        this.registerDisposer(min.changed.add(() => { this.redrawNeeded.dispatch(); }));
+        this.registerDisposer(max.changed.add(() => { this.redrawNeeded.dispatch(); }));
+        this.registerDisposer(fragmentMain.changed.add(() => {
             this.shaderUpdated = true;
             this.redrawNeeded.dispatch();
         }));

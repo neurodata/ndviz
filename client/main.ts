@@ -14,24 +14,8 @@
  * limitations under the License.
  */
 
-import 'ndviz/image_user_layer';
-import 'neuroglancer/segmentation_user_layer';
-import 'neuroglancer/single_mesh_user_layer';
-import 'neuroglancer/annotation/user_layer';
-
-//import {makeExtraKeyBindings} from 'my-neuroglancer-project/extra_key_bindings';
-//import {navigateToOrigin} from 'my-neuroglancer-project/navigate_to_origin';
-import {makeDefaultKeyBindings} from 'neuroglancer/default_key_bindings';
-import {makeDefaultViewer} from 'ndviz/default_viewer';
-//import {initializeNdvizViewer} from 'ndviz/initialize_viewer';
-
-//import {addToolboxes} from 'ndviz/add_toolboxes';
+import {setupDefaultViewer} from 'ndviz/ui/default_viewer_setup';
 
 window.addEventListener('DOMContentLoaded', () => {
-  let viewer = (<any>window)['viewer'] = makeDefaultViewer();
-  makeDefaultKeyBindings(viewer.keyMap);
-  //initializeNdvizViewer(viewer);
-  //addToolboxes(viewer); 
-  //makeExtraKeyBindings(viewer.keyMap);
-  //viewer.keyCommands.set('navigate-to-origin', navigateToOrigin);
+  const viewer = setupDefaultViewer(); 
 });

@@ -29,7 +29,6 @@
     "react-dom": "^15.4.2",
     "react-hot-loader": "^3.0.0-beta.6",
     "spin.js": "^2.3.2",
-    "signals": "^1.0.0",    
     "swig": "^1.4.2",
     "three": "^0.81.2",
     "webpack": "^2.2.0"
@@ -47,7 +46,6 @@
     "@types/react": "^0.14.57",
     "@types/react-addons-css-transition-group": "^15.0.0",
     "@types/spin.js": "^2.3.0",
-    "@types/signals": "0.0.17",
     "concurrently": "^3.1.0",
     "grunt": "^1.0.1",
     "grunt-contrib-copy": "^1.0.0",

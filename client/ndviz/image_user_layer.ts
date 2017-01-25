@@ -69,7 +69,7 @@ export class ImageUserLayer extends UserLayer {
     this.max.restoreState(x['max']);
     this.fragmentMain.restoreState(x['shader']);
     this.transform.restoreState(x['transform']);
-    this.registerSignalBinding(
+    this.registerDisposer(
         this.fragmentMain.changed.add(() => { this.specificationChanged.dispatch(); }));
     this.volumePath = volumePath;
     getVolumeWithStatusMessage(manager.chunkManager, volumePath).then(volume => {
@@ -88,19 +88,19 @@ export class ImageUserLayer extends UserLayer {
       }
     });
 
-    this.registerSignalBinding(
+    this.registerDisposer(
       this.secondaryLayerEnabled.changed.add(() => {
         if (this.secondaryLayerEnabled.value === true) this.addSecondaryLayer();
         else                                           this.removeSecondaryLayer();
     }));
 
-    this.registerSignalBinding(
+    this.registerDisposer(
       this.opacity.changed.add(() => { this.layersChanged.dispatch() }));
-    this.registerSignalBinding(
+    this.registerDisposer(
       this.color.changed.add(() => { this.layersChanged.dispatch() }));
-    this.registerSignalBinding(
+    this.registerDisposer(
       this.min.changed.add(() => { this.layersChanged.dispatch() }));
-    this.registerSignalBinding(
+    this.registerDisposer(
       this.max.changed.add(() => { this.layersChanged.dispatch() }));  
 
   }

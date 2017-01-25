@@ -38,6 +38,15 @@ function modifyViewerOptions(options) {
   // This references the main.ts of this project, rather than of
   // neuroglancer.
   options.frontendModules = [resolveReal(__dirname, '../client/main.ts')];
+
+  // Custom supported layers for ndviz 
+  options.supportedLayers = [
+    'ndviz/image_user_layer',
+    'neuroglancer/segmentation_user_layer',
+    'neuroglancer/single_mesh_user_layer',
+    'neuroglancer/annotation/user_layer',
+  ]
+
   return options;
 }
 
