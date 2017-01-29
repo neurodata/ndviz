@@ -26,5 +26,15 @@ export function setupMultiStepIncrement(viewer: Viewer) {
     viewer.keyCommands.set('z+=10', function () {
         let tmpOffset = vec3.fromValues(0, 0, 10);
         this.navigationState.pose.translateVoxelsRelative(tmpOffset);
-    })
+    });
+
+    viewer.keyCommands.set('z-=100', function () {
+        let tmpOffset = vec3.fromValues(0, 0, -100);
+        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
+    });
+
+    viewer.keyCommands.set('z+=100', function () {
+        let tmpOffset = vec3.fromValues(0, 0, 100);
+        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
+    });
 }
