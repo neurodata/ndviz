@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-import {setupDefaultViewer} from 'ndviz/ui/default_viewer_setup';
-import {makeExtraKeyBindings} from 'ndviz/extra_key_bindings';
-import {setupMultiStepIncrement} from 'ndviz/navigate_set_increments';
+import {Viewer} from 'ndviz/viewer';
+import {vec3} from 'neuroglancer/util/geom';
 
-window.addEventListener('DOMContentLoaded', () => {
-  const viewer = setupDefaultViewer(); 
-  makeExtraKeyBindings(viewer.keyMap);
-  setupMultiStepIncrement(viewer);
-});
+export function setupMultiStepIncrement(viewer: Viewer) {
+    viewer.keyCommands.set('z-=10', function () {
+        let tmpOffset = vec3.fromValues(0, 0, -10);
+        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
+    });
+
+    viewer.keyCommands.set('z+=10', function () {
+        let tmpOffset = vec3.fromValues(0, 0, 10);
+        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
+    })
+}

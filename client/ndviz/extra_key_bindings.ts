@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-import {setupDefaultViewer} from 'ndviz/ui/default_viewer_setup';
-import {makeExtraKeyBindings} from 'ndviz/extra_key_bindings';
-import {setupMultiStepIncrement} from 'ndviz/navigate_set_increments';
+import {KeySequenceMap} from 'neuroglancer/util/keyboard_shortcut_handler';
 
-window.addEventListener('DOMContentLoaded', () => {
-  const viewer = setupDefaultViewer(); 
-  makeExtraKeyBindings(viewer.keyMap);
-  setupMultiStepIncrement(viewer);
-});
+export function makeExtraKeyBindings(keyMap: KeySequenceMap) {
+  keyMap.bind('shift+comma', 'z-=10');
+  keyMap.bind('shift+period', 'z+=10');
+}
