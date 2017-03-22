@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response, Router } from "express";
 import { RedirectRoute } from "./route";
 
+interface LayerObject {
+    [key: string]: Object;
+};
+
 /** 
  * Legacy render redirect 
  */
@@ -32,13 +36,14 @@ export class LegacyRoute extends RedirectRoute {
             'source': source
         }
 
-        let layerParent: Object = { 'layer1' : layer }
+        let layerKey: string = JSON.stringify(req.params['stack']); 
+        let layerParent: LayerObject = {}; 
+        layerParent[req.params['stack']] = layer; 
 
         let params: Object = {
             'layers': layerParent
         }
         let newUrl = `/#!${JSON.stringify(params)}`;
-
         this.redirect(req, res, newUrl, 302); 
     }
 }
