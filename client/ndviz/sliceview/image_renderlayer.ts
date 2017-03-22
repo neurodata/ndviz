@@ -1,23 +1,15 @@
-import * as NeuroglancerImageRenderLayer from 'neuroglancer/sliceview/image_renderlayer';
+import * as NeuroglancerImageRenderLayer from 'neuroglancer/sliceview/volume/image_renderlayer';
 
 import {TrackableAlphaValue, trackableAlphaValue} from 'neuroglancer/trackable_alpha';
 import {trackableMinValue, trackableMaxValue, TrackableThresholdValue} from 'ndviz/trackable_threshold';
-import {MultiscaleVolumeChunkSource, SliceView} from 'neuroglancer/sliceview/frontend';
-import {VolumeSourceOptions} from 'neuroglancer/sliceview/base';
+import {MultiscaleVolumeChunkSource} from 'neuroglancer/sliceview/volume/frontend';
+import {SliceView} from 'neuroglancer/sliceview/frontend';
+import {VolumeSourceOptions} from 'neuroglancer/sliceview/volume/base';
 import {makeTrackableFragmentMain, makeWatchableShaderError, TrackableFragmentMain} from 'neuroglancer/webgl/dynamic_shader';
 import {ShaderBuilder} from 'neuroglancer/webgl/shader';
 import {vec3} from 'neuroglancer/util/geom';
 
-import {TrackableColorValue, trackableColorValue, COLOR_CODES} from 'ndviz/trackable_color.ts';
-
-const COLOR_VECTORS = new Map<number,vec3>();
-COLOR_VECTORS.set(COLOR_CODES.NONE, vec3.fromValues(1,1,1));
-COLOR_VECTORS.set(COLOR_CODES.RED, vec3.fromValues(1,0,0));
-COLOR_VECTORS.set(COLOR_CODES.GREEN, vec3.fromValues(0,1,0));
-COLOR_VECTORS.set(COLOR_CODES.BLUE, vec3.fromValues(0,0,1));
-COLOR_VECTORS.set(COLOR_CODES.CYAN, vec3.fromValues(0,1,1));
-COLOR_VECTORS.set(COLOR_CODES.MAGENTA, vec3.fromValues(1,0,1));
-COLOR_VECTORS.set(COLOR_CODES.YELLOW, vec3.fromValues(1,1,0));
+import {TrackableColorValue, trackableColorValue, COLOR_CODES, COLOR_VECTORS} from 'ndviz/trackable_color.ts';
 
 const DEFAULT_FRAGMENT_MAIN = `void main() {
   emitThresholdColorRGB(
@@ -47,9 +39,9 @@ export class ImageRenderLayer extends NeuroglancerImageRenderLayer.ImageRenderLa
         max = trackableMaxValue(1.),
         fragmentMain = getTrackableFragmentMain(),
         shaderError = makeWatchableShaderError(),
-        volumeSourceOptions = <VolumeSourceOptions>{},
+        sourceOptions = <VolumeSourceOptions>{},
     } = {}) {
-        super(multiscaleSource, {shaderError, volumeSourceOptions});
+        super(multiscaleSource, {shaderError, sourceOptions});
         this.fragmentMain = fragmentMain;
         this.opacity = opacity;
         this.color = color;
