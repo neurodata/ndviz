@@ -33,7 +33,7 @@ export class ImageRenderLayer extends NeuroglancerImageRenderLayer.ImageRenderLa
     min: TrackableThresholdValue;
     max: TrackableThresholdValue;
     constructor(multiscaleSource: MultiscaleVolumeChunkSource, {
-        opacity = trackableAlphaValue(0.5),
+        opacity = trackableAlphaValue(1.0),
         color = trackableColorValue(COLOR_CODES.NONE),
         min = trackableMinValue(0.),
         max = trackableMaxValue(1.),
