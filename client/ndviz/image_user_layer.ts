@@ -41,7 +41,7 @@ require('neuroglancer/maximize_button.css');
 
 export class ImageUserLayer extends UserLayer {
   volumePath: string;
-  opacity = trackableAlphaValue();
+  opacity = trackableAlphaValue(1.0);
   color = trackableColorValue(); 
   min = trackableMinValue();
   max = trackableMaxValue();
