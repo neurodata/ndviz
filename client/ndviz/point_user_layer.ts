@@ -13,39 +13,40 @@ import {verifyOptionalString} from 'neuroglancer/util/json';
 import {trackableColorValue, COLOR_CODES} from 'ndviz/trackable_color';
 import {getPointsWithStatusMessage} from 'neuroglancer/point_user_layer';
 import {ColorPickerWidget} from 'ndviz/widget/color_widget';
-
+import {trackableIntValue} from 'ndviz/trackable_int';
 
 export class PointUserLayer extends UserLayer {
     pointsPath: string|undefined; 
     opacity = trackableAlphaValue();
     color = trackableColorValue();
+    lineWidth = trackableIntValue(1.0);
 
     renderLayer: PointRenderLayer; 
 
     constructor(manager: LayerListSpecification, x: any) {
         super();
 
-        let pointPath = x['point'];
-        
         this.opacity.restoreState(x['opacity']);
         this.color.restoreState(COLOR_CODES[x['color']]);
-
+        this.lineWidth.restoreState(x['lineWidth']);
 
         let pointsPath = this.pointsPath = verifyOptionalString(x['point']);
         if (pointsPath !== undefined) {
             getPointsWithStatusMessage(manager.chunkManager, pointsPath).then(points => {
                 if (!this.wasDisposed) {
                     let renderLayer = this.renderLayer =
-                        new PointRenderLayer(points, {opacity: this.opacity, color: this.color, sourceOptions: {}});
+                        new PointRenderLayer(points, {opacity: this.opacity, lineWidth: this.lineWidth, color: this.color, sourceOptions: {}});
                     this.addRenderLayer(renderLayer);
                 }
             });
         }
     
         this.registerDisposer(
-        this.opacity.changed.add(() => { this.layersChanged.dispatch() }));
+            this.opacity.changed.add(() => { this.layersChanged.dispatch() }));
         this.registerDisposer(
-        this.color.changed.add(() => { this.layersChanged.dispatch() }));
+            this.color.changed.add(() => { this.layersChanged.dispatch() }));
+        this.registerDisposer(
+            this.lineWidth.changed.add(() => { this.layersChanged.dispatch() }));
     }
 
     toJSON() {
@@ -53,6 +54,7 @@ export class PointUserLayer extends UserLayer {
         x['point'] = this.pointsPath;
         x['opacity'] = this.opacity.toJSON();
         x['color'] = this.color.toJSON();
+        x['lineWidth'] = this.lineWidth.toJSON();
         return x;
     }
 
@@ -62,15 +64,16 @@ export class PointUserLayer extends UserLayer {
 class PointDropdown extends UserLayerDropdown {
     opacityWidget = this.registerDisposer(new RangeWidget(this.layer.opacity));
     colorWidget = this.registerDisposer(new ColorPickerWidget(this.layer.color));
+    lineWidthWidget = this.registerDisposer(new RangeWidget(this.layer.lineWidth, { min: 0, max: 20, step: 1}));
 
     constructor(public element: HTMLDivElement, public layer: PointUserLayer) {
         super();
             element.classList.add('image-dropdown');
-            let {opacityWidget} = this;
+            let {opacityWidget, lineWidthWidget} = this;
             let topRow = document.createElement('div');
             topRow.className = 'image-dropdown-top-row';
             opacityWidget.promptElement.textContent = 'Opacity';   
-        
+            lineWidthWidget.promptElement.textContent = 'Line Width';
             let spacer = document.createElement('div');
             spacer.style.flex = '1';
             let helpLink = document.createElement('a');
@@ -89,6 +92,7 @@ class PointDropdown extends UserLayerDropdown {
 
             element.appendChild(topRow);
             element.appendChild(this.opacityWidget.element);
+            element.appendChild(this.lineWidthWidget.element);
 
             element.appendChild(this.colorWidget.element); 
     }
