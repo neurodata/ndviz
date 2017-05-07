@@ -1,4 +1,4 @@
-FROM node:7.4-slim
+FROM node:7.7-slim
 
 # Update container and install packages 
 RUN apt-get update 
@@ -12,6 +12,9 @@ WORKDIR /usr/src
 RUN git clone https://github.com/neurodata/neuroglancer.git 
 
 WORKDIR /usr/src/neuroglancer 
+RUN git checkout allen
+RUN git pull 
+
 RUN npm install 
 RUN npm link 
 
@@ -30,7 +33,6 @@ COPY . /usr/src/app
 # Compile typescript and copy files 
 RUN npm run build 
 RUN npm run grunt 
-
 
 CMD [ "npm", "start" ]
 
