@@ -1,4 +1,4 @@
-FROM node:7.7-slim
+FROM node:7.10-slim
 
 # Update container and install packages 
 RUN apt-get update 
