@@ -11,7 +11,7 @@ export function setupDefaultViewer() {
     hashBinding.updateFromUrlHash();
 
     bindDefaultCopyHandler(viewer);
-    bindDefaultCopyHandler(viewer);
+    bindDefaultPasteHandler(viewer);
 
     return viewer; 
 }

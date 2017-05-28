@@ -42,7 +42,7 @@ function modifyViewerOptions(options) {
   // Custom supported layers for ndviz 
   options.supportedLayers = [
     'ndviz/image_user_layer',
-    'ndviz/point_user_layer',
+    'neuroglancer/vector_graphics_user_layer',
     'neuroglancer/segmentation_user_layer',
     'neuroglancer/single_mesh_user_layer',
     'neuroglancer/annotation/user_layer',

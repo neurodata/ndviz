@@ -7,7 +7,7 @@ export class ColorPickerWidget extends RefCounted {
     element = document.createElement('div');
     private clearButton = document.createElement('button');
     private itemContainer = document.createElement('span');
-    private items = new Map<string, ItemElement>(); 
+    // private items = new Map<string, ItemElement>(); 
 
     constructor(public colorValue: TrackableColorValue) {
         super(); 

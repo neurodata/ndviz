@@ -1,14 +1,13 @@
 import * as NeuroglancerImageRenderLayer from 'neuroglancer/sliceview/volume/image_renderlayer';
 
-import {TrackableAlphaValue, trackableAlphaValue} from 'neuroglancer/trackable_alpha';
-import {trackableMinValue, trackableMaxValue, TrackableThresholdValue} from 'ndviz/trackable_threshold';
+import {trackableAlphaValue} from 'neuroglancer/trackable_alpha';
 import {MultiscaleVolumeChunkSource} from 'neuroglancer/sliceview/volume/frontend';
 import {SliceView} from 'neuroglancer/sliceview/frontend';
 import {VolumeSourceOptions} from 'neuroglancer/sliceview/volume/base';
-import {makeTrackableFragmentMain, makeWatchableShaderError, TrackableFragmentMain} from 'neuroglancer/webgl/dynamic_shader';
+import {makeTrackableFragmentMain, makeWatchableShaderError} from 'neuroglancer/webgl/dynamic_shader';
 import {ShaderBuilder} from 'neuroglancer/webgl/shader';
-import {vec3} from 'neuroglancer/util/geom';
 
+import {trackableMinValue, trackableMaxValue, TrackableThresholdValue} from 'ndviz/trackable_threshold';
 import {TrackableColorValue, trackableColorValue, COLOR_CODES, COLOR_VECTORS} from 'ndviz/trackable_color.ts';
 
 const DEFAULT_FRAGMENT_MAIN = `void main() {
@@ -21,8 +20,6 @@ const DEFAULT_FRAGMENT_MAIN = `void main() {
    );
  }
 `
-
-const glsl_COLORMAPS = require<string>('neuroglancer/webgl/colormaps.glsl');
 
 export function getTrackableFragmentMain(value = DEFAULT_FRAGMENT_MAIN) {
   return makeTrackableFragmentMain(value);

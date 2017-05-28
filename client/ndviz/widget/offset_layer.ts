@@ -1,4 +1,3 @@
-import {TrackableValue} from 'neuroglancer/trackable_value';
 import {RefCounted} from 'neuroglancer/util/disposable';
 import {ImageUserLayer} from 'ndviz/image_user_layer';
 import {removeFromParent} from 'neuroglancer/util/dom';
