@@ -17,6 +17,7 @@
 'use strict';
 
 const path = require('path');
+const webpackLinkPlugin = require('webpack-link');
 const original_webpack_helpers = require('neuroglancer/config/webpack_helpers');
 const resolveReal = require('neuroglancer/config/resolve_real');
 const AliasPlugin = require('./webpack_alias_plugin');
@@ -46,7 +47,7 @@ function modifyViewerOptions(options) {
     'neuroglancer/segmentation_user_layer',
     'neuroglancer/single_mesh_user_layer',
     'neuroglancer/annotation/user_layer',
-  ]
+  ];
 
   return options;
 }
@@ -61,11 +62,5 @@ exports.getViewerConfig = function(options) {
   config[0]['module']['rules'][0]['test'] = /\.tsx?$/;
   config[0]['module']['rules'].push({ test: /\.jsx$/, loader: 'babel-loader', query: { presets: ['react'] } });
 
-  /*
-  console.log(config[0]);
-  console.log(config[0]['module']['rules']);
-  console.log(config[0]['module']['rules'][0]['loader']);
-  */
-  
   return config; 
 };
