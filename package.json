@@ -40,7 +40,8 @@
     "nodemon": "^1.11.0",
     "tslint": "^4.0.2",
     "tslint-eslint-rules": "^3.2.1",
-    "webpack-dev-server": "^2.2.0"
+    "webpack-dev-server": "^2.2.0",
+    "webpack-link": "^0.2.0"
   },
   "scripts": {
     "start": "node ./bin/server",
