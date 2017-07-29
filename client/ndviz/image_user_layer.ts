@@ -31,7 +31,7 @@ import {trackableColorValue, COLOR_CODES} from 'ndviz/trackable_color';
 import {trackableMinValue, trackableMaxValue} from 'ndviz/trackable_threshold';
 import {trackableBooleanValue} from 'ndviz/trackable_boolean';
 import {trackableOffsetValue} from 'ndviz/trackable_offset';
-import {ImageRenderLayer, getTrackableFragmentMain} from 'ndviz/sliceview/image_renderlayer';
+import {ImageRenderLayer, getTrackableFragmentMain} from 'ndviz/sliceview/volume/image_renderlayer';
 import {ColorPickerWidget} from 'ndviz/widget/color_widget';
 import {OffsetLayerWidget} from 'ndviz/widget/offset_layer';
 
