@@ -18,8 +18,8 @@
 
 const path = require('path');
 const webpackLinkPlugin = require('webpack-link');
-const original_webpack_helpers = require('neuroglancer/config/webpack_helpers');
-const resolveReal = require('neuroglancer/config/resolve_real');
+const original_webpack_helpers = require(path.resolve('node_modules/neuroglancer/config/webpack_helpers'));
+const resolveReal = require(path.resolve('node_modules/neuroglancer/config/resolve_real'));
 const AliasPlugin = require('./webpack_alias_plugin');
 
 function modifyViewerOptions(options) {
