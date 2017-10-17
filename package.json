@@ -41,7 +41,7 @@
     "webpack-link": "^0.2.0"
   },
   "scripts": {
-    "start": "node ./bin/server",
+    "start": "PORT=80 node ./bin/server",
     "prestart": "grunt",
     "start-dev": "PORT=8000 node ./bin/server",
     "grunt": "grunt",
