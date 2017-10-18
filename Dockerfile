@@ -40,4 +40,4 @@ RUN npm run grunt
 
 CMD [ "npm", "start" ]
 
-EXPOSE 80 
+EXPOSE 8080
