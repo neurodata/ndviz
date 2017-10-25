@@ -28,15 +28,15 @@
     "method-override": "^2.3.7",
     "morgan": "^1.7.0",
     "swig": "^1.4.2",
-    "ts-loader": "2.3.2",
-    "typescript": "2.4",
+    "ts-loader": "^3.0.2",
+    "typescript": "^2.5.3",
     "webpack": "^3.5.5"
   },
   "devDependencies": {
     "concurrently": "^3.1.0",
     "nodemon": "^1.11.0",
-    "tslint": "^4.0.2",
-    "tslint-eslint-rules": "^3.2.1",
+    "tslint": "^5.5.0",
+    "tslint-eslint-rules": "^4.1.1",
     "webpack-dev-server": "^2.2.0",
     "webpack-link": "^0.2.0"
   },

@@ -32,6 +32,8 @@ body {
   flex-direction: column;
 }
 
-#container {
+#neuroglancer-container {
   margin-top: 50px !important; /* for nav */ 
+  width: 100vw;
+  flex: 1;
 }

@@ -20,6 +20,6 @@ import {setupMultiStepIncrement} from 'ndviz/navigate_set_increments';
 
 window.addEventListener('DOMContentLoaded', () => {
   const viewer = setupDefaultViewer(); 
-  makeExtraKeyBindings(viewer.keyMap);
+  makeExtraKeyBindings(viewer.inputEventMap);
   setupMultiStepIncrement(viewer);
 });

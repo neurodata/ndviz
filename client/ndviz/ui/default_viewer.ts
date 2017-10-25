@@ -22,6 +22,6 @@ import {DisplayContext} from 'neuroglancer/display_context';
 import {Viewer} from 'ndviz/viewer';
 
 export function makeDefaultViewer() {
-  let display = new DisplayContext(document.getElementById('container')!);
+  let display = new DisplayContext(document.getElementById('neuroglancer-container')!);
   return new Viewer(display);
 }

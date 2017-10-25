@@ -16,25 +16,14 @@
 
 import {Viewer} from 'ndviz/viewer';
 import {vec3} from 'neuroglancer/util/geom';
+import {registerActionListener} from 'neuroglancer/util/event_action_map';
 
 export function setupMultiStepIncrement(viewer: Viewer) {
-    viewer.keyCommands.set('z-=10', function () {
-        let tmpOffset = vec3.fromValues(0, 0, -10);
-        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
-    });
+    registerActionListener(viewer.element, 'z-=10', () => viewer.navigationState.pose.translateVoxelsRelative(vec3.fromValues(0, 0, -10)));
 
-    viewer.keyCommands.set('z+=10', function () {
-        let tmpOffset = vec3.fromValues(0, 0, 10);
-        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
-    });
+    registerActionListener(viewer.element, 'z+=10', () => viewer.navigationState.pose.translateVoxelsRelative(vec3.fromValues(0, 0, 10)));
+    
+    registerActionListener(viewer.element, 'z-=100', () => viewer.navigationState.pose.translateVoxelsRelative(vec3.fromValues(0, 0, -100)));
 
-    viewer.keyCommands.set('z-=100', function () {
-        let tmpOffset = vec3.fromValues(0, 0, -100);
-        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
-    });
-
-    viewer.keyCommands.set('z+=100', function () {
-        let tmpOffset = vec3.fromValues(0, 0, 100);
-        this.navigationState.pose.translateVoxelsRelative(tmpOffset);
-    });
+    registerActionListener(viewer.element, 'z+=100', () => viewer.navigationState.pose.translateVoxelsRelative(vec3.fromValues(0, 0, 100))); 
 }

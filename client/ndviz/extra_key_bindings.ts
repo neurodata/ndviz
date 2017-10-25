@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import {KeySequenceMap} from 'neuroglancer/util/keyboard_shortcut_handler';
+import {EventActionMap} from 'neuroglancer/util/event_action_map';
 
-export function makeExtraKeyBindings(keyMap: KeySequenceMap) {
-  keyMap.bind('shift+comma', 'z-=10');
-  keyMap.bind('shift+period', 'z+=10');
-  keyMap.bind('control+shift+comma', 'z-=100');
-  keyMap.bind('control+shift+period', 'z+=100');
+export function makeExtraKeyBindings(map: EventActionMap) {
+  map.set('shift+comma', 'z-=10');
+  map.set('shift+period', 'z+=10');
+  map.set('control+shift+comma', 'z-=100');
+  map.set('control+shift+period', 'z+=100');
 }

@@ -13,7 +13,7 @@ export class ColorPickerWidget extends RefCounted {
         super(); 
 
         let {element, clearButton, itemContainer} = this; 
-        element.className = 'segment-set-widget noselect';
+        element.className = 'segment-set-widget neuroglancer-noselect';
         clearButton.className = 'clear-button';
         clearButton.title = 'Remove Color';
         this.registerEventListener(clearButton, 'click', () => { colorValue.value =  COLOR_CODES.NONE });
