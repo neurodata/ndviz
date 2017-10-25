@@ -18,7 +18,7 @@ RUN git clone https://github.com/neurodata/neuroglancer.git
 WORKDIR /usr/src/neuroglancer 
 RUN git checkout ndmaster
 RUN git pull 
-RUN uptime
+
 RUN npm install 
 RUN npm link 
 
