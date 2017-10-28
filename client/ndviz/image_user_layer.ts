@@ -15,6 +15,7 @@
  */
 
 import {CoordinateTransform} from 'neuroglancer/coordinate_transform';
+import {DataSourceProvider} from 'neuroglancer/datasource';
 import {UserLayer, UserLayerDropdown} from 'neuroglancer/layer';
 import {LayerListSpecification, registerLayerType, registerVolumeLayerType} from 'neuroglancer/layer_specification';
 import {getVolumeWithStatusMessage} from 'neuroglancer/layer_specification';
@@ -56,6 +57,10 @@ export class ImageUserLayer extends UserLayer {
   renderLayer: ImageRenderLayer;
   secondaryLayer: ImageRenderLayer; 
   transform = new CoordinateTransform();
+
+  // Needed for adding secondary layer
+  dataSourceProvider: DataSourceProvider;
+
   constructor(manager: LayerListSpecification, x: any) {
     super();
     let volumePath = x['source'];
@@ -72,7 +77,8 @@ export class ImageUserLayer extends UserLayer {
     this.registerDisposer(
         this.fragmentMain.changed.add(() => { this.specificationChanged.dispatch(); }));
     this.volumePath = volumePath;
-    getVolumeWithStatusMessage(manager.chunkManager, volumePath).then(volume => {
+    this.dataSourceProvider = manager.dataSourceProvider;
+    getVolumeWithStatusMessage(this.dataSourceProvider, manager.chunkManager, volumePath).then(volume => {
       if (!this.wasDisposed) {
         let renderLayer = this.renderLayer = new ImageRenderLayer(volume, {
           opacity: this.opacity,
@@ -123,7 +129,7 @@ export class ImageUserLayer extends UserLayer {
     let translationVector = vec3.fromValues(0, 0, -this.secondaryOffset.value); 
     mat4.translate(localTransform, localTransform, translationVector);
 
-    getVolumeWithStatusMessage(this.renderLayer.chunkManager, this.volumePath).then(volume => {
+    getVolumeWithStatusMessage(this.dataSourceProvider, this.renderLayer.chunkManager, this.volumePath).then(volume => {
       let secondaryLayer = this.secondaryLayer = new ImageRenderLayer(volume, {
         opacity: this.secondaryOpacity, 
         color: this.secondaryColor,
