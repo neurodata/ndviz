@@ -11,6 +11,13 @@ RUN apt-get -y install git
 RUN npm install -g webpack@^3.8.1
 RUN npm install -g webpack-dev-server@^2.9.4
 
+# 20171206
+# Update copy-concurrently in move-concurrently manually
+# We need to do this until move-concurrently updates their bundled version of copy-concurrently to fix this issue
+WORKDIR /usr/local/lib/node_modules/npm/node_modules/move-concurrently/
+RUN sed -i 's/"copy-concurrently": "^1.0.0"/"copy-concurrently": "^1.0.5"/g' package.json
+RUN npm install
+
 # Install neuroglancer from neurodata source 
 WORKDIR /usr/src 
 RUN git clone https://github.com/neurodata/neuroglancer.git 
