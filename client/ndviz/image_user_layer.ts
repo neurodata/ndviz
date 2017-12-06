@@ -27,6 +27,7 @@ import {vec3, mat4} from 'neuroglancer/util/geom';
 import {makeWatchableShaderError} from 'neuroglancer/webgl/dynamic_shader';
 import {RangeWidget} from 'neuroglancer/widget/range';
 import {ShaderCodeWidget} from 'neuroglancer/widget/shader_code_widget';
+import {trackableBlendModeValue} from 'neuroglancer/trackable_blend';
 
 import {trackableColorValue, COLOR_CODES} from 'ndviz/trackable_color';
 import {trackableMinValue, trackableMaxValue} from 'ndviz/trackable_threshold';
@@ -34,6 +35,7 @@ import {trackableBooleanValue} from 'ndviz/trackable_boolean';
 import {trackableOffsetValue} from 'ndviz/trackable_offset';
 import {ImageRenderLayer, getTrackableFragmentMain} from 'ndviz/sliceview/volume/image_renderlayer';
 import {ColorPickerWidget} from 'ndviz/widget/color_widget';
+import {BlendModeWidget} from 'ndviz/widget/blend_mode_widget';
 import {OffsetLayerWidget} from 'ndviz/widget/offset_layer';
 
 require('neuroglancer/image_user_layer.css');
@@ -43,6 +45,7 @@ require('neuroglancer/maximize_button.css');
 export class ImageUserLayer extends UserLayer {
   volumePath: string;
   opacity = trackableAlphaValue(1.0);
+  blendMode = trackableBlendModeValue();  
   color = trackableColorValue(); 
   min = trackableMinValue();
   max = trackableMaxValue();
@@ -69,6 +72,7 @@ export class ImageUserLayer extends UserLayer {
     }
 
     this.opacity.restoreState(x['opacity']);
+    this.blendMode.restoreState(x['blend']);    
     this.color.restoreState(COLOR_CODES[x['color']]);
     this.min.restoreState(x['min']);
     this.max.restoreState(x['max']);
@@ -83,6 +87,7 @@ export class ImageUserLayer extends UserLayer {
         let renderLayer = this.renderLayer = new ImageRenderLayer(volume, {
           opacity: this.opacity,
           color: this.color,
+          blendMode: this.blendMode,
           min: this.min,
           max: this.max,
           fragmentMain: this.fragmentMain,
@@ -105,6 +110,8 @@ export class ImageUserLayer extends UserLayer {
     this.registerDisposer(
       this.color.changed.add(() => { this.layersChanged.dispatch() }));
     this.registerDisposer(
+      this.blendMode.changed.add(() => { this.layersChanged.dispatch() }));
+    this.registerDisposer(
       this.min.changed.add(() => { this.layersChanged.dispatch() }));
     this.registerDisposer(
       this.max.changed.add(() => { this.layersChanged.dispatch() }));  
@@ -115,6 +122,7 @@ export class ImageUserLayer extends UserLayer {
     let x: any = {'type': 'image'};
     x['source'] = this.volumePath;
     x['opacity'] = this.opacity.toJSON();
+    x['blend'] = this.blendMode.toJSON();    
     x['color'] = this.color.toJSON();
     x['min'] = this.min.toJSON();
     x['max'] = this.max.toJSON();
@@ -167,7 +175,7 @@ class ImageDropdown extends UserLayerDropdown {
   minWidget = this.registerDisposer(new RangeWidget(this.layer.min));
   maxWidget = this.registerDisposer(new RangeWidget(this.layer.max));
   colorWidget = this.registerDisposer(new ColorPickerWidget(this.layer.color));
-  
+  blendWidget = this.registerDisposer(new BlendModeWidget(this.layer.blendMode))
   offsetLayerWidget = this.registerDisposer(new OffsetLayerWidget(this.layer));
   offsetSliderWidget = this.registerDisposer(new RangeWidget(this.layer.secondaryOffset, {min: 0, max: 25, step: 1}));
 
@@ -176,10 +184,11 @@ class ImageDropdown extends UserLayerDropdown {
   constructor(public element: HTMLDivElement, public layer: ImageUserLayer) {
     super();
     element.classList.add('image-dropdown');
-    let {opacityWidget, minWidget, maxWidget, offsetLayerWidget, offsetSliderWidget} = this;
+    let {opacityWidget, blendWidget, minWidget, maxWidget, offsetLayerWidget, offsetSliderWidget} = this;
     let topRow = document.createElement('div');
     topRow.className = 'image-dropdown-top-row';
-    opacityWidget.promptElement.textContent = 'Opacity';   
+    opacityWidget.promptElement.textContent = 'Opacity';  
+    blendWidget.promptElement.textContent = 'Blend Mode'; 
     minWidget.promptElement.textContent = 'Min';
     maxWidget.promptElement.textContent = 'Max';
   
@@ -232,6 +241,7 @@ class ImageDropdown extends UserLayerDropdown {
     element.appendChild(this.maxWidget.element);
 
     element.appendChild(this.colorWidget.element); 
+    element.appendChild(this.blendWidget.element);
 
     element.appendChild(offsetSliderWidget.element);
     element.appendChild(offsetLayerToggle); 

@@ -1,9 +1,7 @@
 import * as Neuroglancer from 'neuroglancer/viewer'; 
 import {DisplayContext} from 'neuroglancer/display_context';
-import {TrackableBlendValue, trackableBlendValue, BLEND_MODES} from 'ndviz/trackable_blend';
 
 export class Viewer extends Neuroglancer.Viewer {
-  blendMode: TrackableBlendValue = trackableBlendValue(BLEND_MODES.DEFAULT);
 
   constructor(public display: DisplayContext) {
     super(display); 
@@ -11,8 +9,6 @@ export class Viewer extends Neuroglancer.Viewer {
     this.layout.defaultSpecification = 'xy';
     this.layout.reset();
     
-    // TODO -- this is probably broken 
-    this.blendMode.defaultValue = BLEND_MODES.ADDITIVE;
     this.makeNavUI();
     this.makeSideNav();
   }

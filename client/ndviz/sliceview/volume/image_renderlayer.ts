@@ -9,6 +9,7 @@ import {ShaderBuilder} from 'neuroglancer/webgl/shader';
 
 import {trackableMinValue, trackableMaxValue, TrackableThresholdValue} from 'ndviz/trackable_threshold';
 import {TrackableColorValue, trackableColorValue, COLOR_CODES, COLOR_VECTORS} from 'ndviz/trackable_color.ts';
+import { trackableBlendModeValue } from 'neuroglancer/trackable_blend';
 
 const DEFAULT_FRAGMENT_MAIN = `void main() {
   emitThresholdColorRGB(
@@ -32,6 +33,7 @@ export class ImageRenderLayer extends NeuroglancerImageRenderLayer.ImageRenderLa
     constructor(multiscaleSource: MultiscaleVolumeChunkSource, {
         opacity = trackableAlphaValue(1.0),
         color = trackableColorValue(COLOR_CODES.NONE),
+        blendMode = trackableBlendModeValue("default"),
         min = trackableMinValue(0.),
         max = trackableMaxValue(1.),
         fragmentMain = getTrackableFragmentMain(),
@@ -42,11 +44,15 @@ export class ImageRenderLayer extends NeuroglancerImageRenderLayer.ImageRenderLa
         this.fragmentMain = fragmentMain;
         this.opacity = opacity;
         this.color = color;
+        this.blendMode = blendMode;
         this.min = min;
         this.max = max;
         this.registerDisposer(opacity.changed.add(() => { this.redrawNeeded.dispatch(); }));
         this.registerDisposer(color.changed.add(() => { 
             this.redrawNeeded.dispatch(); 
+        }));
+        this.registerDisposer(blendMode.changed.add(() => {
+            this.redrawNeeded.dispatch();
         }));
         this.registerDisposer(min.changed.add(() => { this.redrawNeeded.dispatch(); }));
         this.registerDisposer(max.changed.add(() => { this.redrawNeeded.dispatch(); }));
