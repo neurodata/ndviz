@@ -29,7 +29,7 @@
     "morgan": "^1.7.0",
     "swig": "^1.4.2",
     "ts-loader": "^3.0.2",
-    "typescript": "^2.5.3",
+    "typescript": "^2.6.1",
     "webpack": "^3.5.5"
   },
   "devDependencies": {
