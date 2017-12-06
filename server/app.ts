@@ -3,9 +3,9 @@ import * as cookieParser from "cookie-parser";
 import * as express from "express";
 import * as logger from "morgan";
 import * as path from "path";
-import * as swig from "swig";
-import errorHandler = require("errorhandler");
-import methodOverride = require("method-override");
+import * as nunjucks from "nunjucks";
+import * as errorHandler from "errorhandler";
+import * as methodOverride from "method-override";
 
 import { IndexRoute } from "./routes/index"; 
 import { LegacyRoute } from "./routes/legacyRedirect";
@@ -71,8 +71,12 @@ export class Server {
         // add static paths 
         this.app.use(express.static(path.join(__dirname, "public")));
 
-        // configure swig 
-        this.app.engine("html", swig.renderFile); 
+        // configure nunjucks 
+        nunjucks.configure('views', {
+            autoescape: true,
+            express   : this.app
+          });
+
         this.app.set("view engine", "html");
         this.app.set("views", path.join(__dirname, "views"));
 

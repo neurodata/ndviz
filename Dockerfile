@@ -8,8 +8,8 @@ RUN apt-get -y upgrade
 RUN apt-get -y install git 
 
 # Install webpack and webpack-dev-server globally
-RUN npm install -g webpack@^3.5.5
-RUN npm install -g webpack-dev-server@^2.2.0
+RUN npm install -g webpack@^3.8.1
+RUN npm install -g webpack-dev-server@^2.9.4
 
 # Install neuroglancer from neurodata source 
 WORKDIR /usr/src 
