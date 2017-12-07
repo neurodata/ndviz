@@ -1,16 +1,45 @@
 import * as Neuroglancer from 'neuroglancer/viewer'; 
 import {DisplayContext} from 'neuroglancer/display_context';
+import { trackableBlendModeValue, TrackableBlendModeValue } from 'neuroglancer/trackable_blend';
+import { BlendModeWidget } from 'ndviz/widget/blend_mode_widget';
+import { TopLevelLayerListSpecification } from 'ndviz/layer_specification';
 
 export class Viewer extends Neuroglancer.Viewer {
-
+  globalBlendMode: TrackableBlendModeValue;
+  layerSpecification: TopLevelLayerListSpecification;
+  
   constructor(public display: DisplayContext) {
     super(display); 
 
     this.layout.defaultSpecification = 'xy';
     this.layout.reset();
     
+    this.globalBlendMode = trackableBlendModeValue();
+
+    const {state} = this;
+    state.add('blend', this.globalBlendMode);
+
+    this.layerSpecification = new TopLevelLayerListSpecification(
+      this.dataSourceProvider, this.layerManager, this.chunkManager, this.layerSelectedValues,
+      this.navigationState.voxelSize, this.globalBlendMode);
+
+    state.children.set('layers', this.layerSpecification);
+    this.layerSpecification.changed.dispatch;
+
+    this.updateUI();
     this.makeNavUI();
     this.makeSideNav();
+  }
+
+  private updateUI() {
+    const {contextMenu} = this;
+    const {element} = contextMenu;
+    const labelElement = document.createElement('label');
+    labelElement.textContent = 'New layer blend';    
+    const widget = contextMenu.registerDisposer(new BlendModeWidget(this.globalBlendMode));
+    widget.element.classList.add('neuroglancer-viewer-context-menu-limit-widget');
+    labelElement.appendChild(widget.element);
+    element.appendChild(labelElement);
   }
 
   private makeNavUI() {

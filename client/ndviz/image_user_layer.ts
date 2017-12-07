@@ -17,7 +17,6 @@
 import {CoordinateTransform} from 'neuroglancer/coordinate_transform';
 import {DataSourceProvider} from 'neuroglancer/datasource';
 import {UserLayer, UserLayerDropdown} from 'neuroglancer/layer';
-import {LayerListSpecification, registerLayerType, registerVolumeLayerType} from 'neuroglancer/layer_specification';
 import {getVolumeWithStatusMessage} from 'neuroglancer/layer_specification';
 import {Overlay} from 'neuroglancer/overlay';
 import {VolumeType} from 'neuroglancer/sliceview/volume/base';
@@ -27,7 +26,7 @@ import {vec3, mat4} from 'neuroglancer/util/geom';
 import {makeWatchableShaderError} from 'neuroglancer/webgl/dynamic_shader';
 import {RangeWidget} from 'neuroglancer/widget/range';
 import {ShaderCodeWidget} from 'neuroglancer/widget/shader_code_widget';
-import {trackableBlendModeValue} from 'neuroglancer/trackable_blend';
+import {trackableBlendModeValue, TrackableBlendModeValue} from 'neuroglancer/trackable_blend';
 
 import {trackableColorValue, COLOR_CODES} from 'ndviz/trackable_color';
 import {trackableMinValue, trackableMaxValue} from 'ndviz/trackable_threshold';
@@ -37,6 +36,7 @@ import {ImageRenderLayer, getTrackableFragmentMain} from 'ndviz/sliceview/volume
 import {ColorPickerWidget} from 'ndviz/widget/color_widget';
 import {BlendModeWidget} from 'ndviz/widget/blend_mode_widget';
 import {OffsetLayerWidget} from 'ndviz/widget/offset_layer';
+import {LayerListSpecification, registerLayerType, registerVolumeLayerType} from 'ndviz/layer_specification';
 
 require('neuroglancer/image_user_layer.css');
 require('neuroglancer/help_button.css');
@@ -45,7 +45,7 @@ require('neuroglancer/maximize_button.css');
 export class ImageUserLayer extends UserLayer {
   volumePath: string;
   opacity = trackableAlphaValue(1.0);
-  blendMode = trackableBlendModeValue();  
+  blendMode: TrackableBlendModeValue;
   color = trackableColorValue(); 
   min = trackableMinValue();
   max = trackableMaxValue();
@@ -71,8 +71,10 @@ export class ImageUserLayer extends UserLayer {
       throw new Error('Invalid image layer specification');
     }
 
+    this.blendMode = trackableBlendModeValue(manager.globalBlendMode.value);  
+
     this.opacity.restoreState(x['opacity']);
-    this.blendMode.restoreState(x['blend']);    
+    this.blendMode.restoreState(x['blend']);              
     this.color.restoreState(COLOR_CODES[x['color']]);
     this.min.restoreState(x['min']);
     this.max.restoreState(x['max']);
