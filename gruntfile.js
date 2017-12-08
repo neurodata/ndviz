@@ -7,14 +7,13 @@ module.exports = function(grunt) {
         files: [
           {
             expand: true,
-            cwd: "./build",
+            cwd: "./build" + "/" + (grunt.option('env') || "dev"),
             src: ["*.js", "*.js.map", "*.css", "*.css.map"],
             dest: "./dist/public/"
           },
           {
             expand: true,
-            cwd: "./views",
-            src: ["**"],
+            cwd: "./build" + "/" + (grunt.option('env') || "dev"),        src: ["*.html"],
             dest: "./dist/views"
           },
           {
@@ -45,7 +44,7 @@ module.exports = function(grunt) {
         tasks: ["ts"]
       },
       views: {
-        files: ["views/**/*.html"],
+        files: ["./build" + "/" + (grunt.option('env') || "dev") + "/**"],
         tasks: ["copy"]
       }
     }

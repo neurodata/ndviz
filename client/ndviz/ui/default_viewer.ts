@@ -20,8 +20,18 @@ import 'neuroglancer/sliceview/chunk_format_handlers';
 
 import {DisplayContext} from 'neuroglancer/display_context';
 import {Viewer} from 'ndviz/viewer';
+import {ViewerOptions} from 'neuroglancer/viewer';
+import {disableContextMenu, disableWheel} from 'neuroglancer/ui/disable_default_actions';
+import { StatusMessage } from 'neuroglancer/status';
 
-export function makeDefaultViewer() {
-  let display = new DisplayContext(document.getElementById('neuroglancer-container')!);
-  return new Viewer(display);
+export function makeDefaultViewer(options?: Partial<ViewerOptions>) {
+  disableContextMenu();
+  disableWheel();
+  try {
+    let display = new DisplayContext(document.getElementById('neuroglancer-container')!);
+    return new Viewer(display, options);
+  } catch(error) {
+    StatusMessage.showMessage(`Error: ${error.message}`);
+    throw error;
+  }
 }
