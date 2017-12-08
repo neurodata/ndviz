@@ -8,8 +8,8 @@ export class Viewer extends Neuroglancer.Viewer {
   globalBlendMode: TrackableBlendModeValue;
   layerSpecification: TopLevelLayerListSpecification;
   
-  constructor(public display: DisplayContext) {
-    super(display); 
+  constructor(public display: DisplayContext, options: Partial<Neuroglancer.ViewerOptions> = {}) {
+    super(display, options); 
 
     this.layout.defaultSpecification = 'xy';
     this.layout.reset();

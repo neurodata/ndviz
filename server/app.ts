@@ -72,14 +72,13 @@ export class Server {
         this.app.use(express.static(path.join(__dirname, "public")));
 
         // configure nunjucks 
-        nunjucks.configure('views', {
+        this.app.set("view engine", "html");        
+        nunjucks.configure('dist/views', {
             autoescape: true,
             express   : this.app
           });
 
-        this.app.set("view engine", "html");
-        this.app.set("views", path.join(__dirname, "views"));
-
+        
         // use logger middleware 
         this.app.use(logger("dev"));
 

@@ -24,6 +24,7 @@
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-ts": "^6.0.0-beta.17",
+    "html-webpack-plugin": "^2.30.1",
     "http-server": "^0.10.0",
     "lodash": "^4.17.4",
     "method-override": "^2.3.10",
@@ -43,13 +44,17 @@
   },
   "scripts": {
     "start": "node ./bin/server",
-    "prestart": "grunt",
+    "prestart": "grunt --env=min",
     "start-dev": "PORT=8000 node ./bin/server",
     "grunt": "grunt",
     "dev": "NODE_ENV=development nodemon ./bin/server",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --config ./config/webpack.config.js --display-modules",
-    "watch": "webpack --config ./config/webpack.config.js --watch --display-modules"
+    "build": "webpack --config ./config/webpack.config.js --display-modules --env=dev",
+    "build-min": "webpack --config ./config/webpack.config.js --display-modules --env=min",
+    "watch": "webpack --config ./config/webpack.config.js --watch --display-modules",
+    "build-python": "webpack --config ./config/webpack.config.js --display-modules --env=python-dev",
+    "build-python-min": "webpack --config ./config/webpack.config.js --display-modules --env=python-min",
+    "dev-server-python": "webpack-dev-server --config ./config/webpack.config.js --env=python-dev"
   },
   "repository": {
     "type": "git",
