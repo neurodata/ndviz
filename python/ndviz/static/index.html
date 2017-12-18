@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>NeuroDataViz</title> 
+
+        <!-- Icons --> 
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+        <!-- JQuery UI --> 
+        <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/themes/smoothness/jquery-ui.css">
+
+        <!-- Neurodata --> 
+        <link rel="stylesheet" href="static/css/viewer.css">
+
+        <script type="text/javascript">
+            /* Set the width of the side navigation to 250px */
+            function openNav() {
+                document.getElementById("sidenav").style.width = "250px";
+            }
+
+            /* Set the width of the side navigation to 0 */
+            function closeNav() {
+                document.getElementById("sidenav").style.width = "0";
+            }
+        </script>
+
+    <link href="styles.css" rel="stylesheet"></head>
+    <body>
+        <div id="toolbox"></div>
+        <div id="neuroglancer-container">
+        </div>
+        <div id="ngcontainer">
+            <span id="ngcredit">
+                <a href="https://github.com/google/neuroglancer" target="_blank">Powered by Neuroglancer</a>
+            </span>
+        </div>
+    <script type="text/javascript" src="main.bundle.js"></script></body>
+</html>
