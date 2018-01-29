@@ -39,7 +39,6 @@ import {OffsetLayerWidget} from 'ndviz/widget/offset_layer';
 import {LayerListSpecification, registerLayerType, registerVolumeLayerType} from 'ndviz/layer_specification';
 
 require('neuroglancer/image_user_layer.css');
-require('neuroglancer/help_button.css');
 require('neuroglancer/maximize_button.css');
 
 export class ImageUserLayer extends UserLayer {
