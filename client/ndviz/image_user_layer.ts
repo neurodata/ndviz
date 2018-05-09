@@ -70,7 +70,8 @@ export class ImageUserLayer extends UserLayer {
       throw new Error('Invalid image layer specification');
     }
 
-    this.blendMode = trackableBlendModeValue(manager.globalBlendMode.value);  
+    this.blendMode = trackableBlendModeValue();
+    this.blendMode.value = manager.globalBlendMode.value;
 
     this.opacity.restoreState(x['opacity']);
     this.blendMode.restoreState(x['blend']);              
